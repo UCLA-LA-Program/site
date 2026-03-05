@@ -1,5 +1,6 @@
 resource "aws_iam_role" "amplify-service-role" {
   name = "la-program-amplify-service-role"
+  tags = local.application_tag
 
   assume_role_policy = jsonencode({
     Version = "2012-10-17",
@@ -8,10 +9,7 @@ resource "aws_iam_role" "amplify-service-role" {
         Action = "sts:AssumeRole",
         Effect = "Allow",
         Principal = {
-          Service = [
-            "amplify.us-west-2.amazonaws.com",
-            "amplify.amazonaws.com"
-          ]
+          Service = "amplify.amazonaws.com"
         },
       },
     ],
@@ -28,7 +26,7 @@ resource "aws_amplify_app" "frontend-app" {
   repository = "https://github.com/UCLA-LA-Program/site"
   tags       = local.application_tag
 
-  # access_token = "GITHUB_ACCESS_TOKEN"
+  # access_token = ""
   # access_token is required for setup and can be deleted after amplify app is created
   # refer to https://registry.terraform.io/providers/hashicorp/aws/latest/docs/resources/amplify_app#repository-with-tokens
 
