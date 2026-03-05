@@ -4,8 +4,6 @@ frontend:
   phases:
     preBuild:
       commands:
-        - ls
-        - cd frontend
         - npm ci
     build:
       commands:
