@@ -1,5 +1,5 @@
 import type { Config } from "@react-router/dev/config";
 
 export default {
-  ssr: false, // no server-side rendering
+  ssr: true,
 } satisfies Config;
