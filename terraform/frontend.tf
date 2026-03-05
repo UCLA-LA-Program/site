@@ -34,6 +34,13 @@ resource "aws_amplify_app" "frontend-app" {
   enable_branch_auto_build    = true
   enable_branch_auto_deletion = true
   iam_service_role_arn        = aws_iam_role.amplify-service-role.arn
+
+  # SPA
+  custom_rule {
+    source = "</^[^.]+$|\.(?!(css|gif|ico|jpg|js|png|txt|svg|woff|woff2|ttf|map|json|webp)$)([^.]+$)/>"
+    status = "200"
+    target = "/index.html"
+  }
 }
 
 resource "aws_amplify_branch" "frontend-app-main-branch" {
