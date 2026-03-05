@@ -17,7 +17,7 @@ resource "aws_iam_role" "amplify-service-role" {
 
 resource "aws_iam_role_policy_attachment" "amplify_service_role_attachment" {
   role       = aws_iam_role.amplify-service-role.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmplifyBackendDeployFullAccess" 
+  policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess-Amplify"
 }
 
 resource "aws_amplify_app" "frontend-app" {
@@ -32,7 +32,7 @@ resource "aws_amplify_app" "frontend-app" {
   enable_auto_branch_creation = true
   enable_branch_auto_build    = true
   enable_branch_auto_deletion = true
-  iam_service_role_arn = aws_iam_role.amplify-service-role.arn
+  iam_service_role_arn        = aws_iam_role.amplify-service-role.arn
 }
 
 resource "aws_amplify_branch" "frontend-app-main-branch" {
