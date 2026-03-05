@@ -1,9 +1,11 @@
 version: 1
 frontend:
-  buildpath: frontend
+  buildPath: "/frontend"
   phases:
     preBuild:
       commands:
+        - ls
+        - cd frontend
         - npm ci
     build:
       commands:
