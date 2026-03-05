@@ -1,2 +1,5 @@
-# site
-Learning Assistant website
+# UCLA Learning Assistant Website
+
+## Development Requirements
+
+- AWS CLI
