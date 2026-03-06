@@ -5,11 +5,9 @@ function App() {
   const [message, setMessage] = useState("");
 
   const fetchData = async () => {
-    const response = await fetch("https://api.laprogramucla.com/test"); // Replace with your API endpoint
-    if (!response.ok) {
-      throw new Error("Network response was not ok");
-    }
-    setMessage((message) => message + response.text);
+    const response = await fetch("https://api.laprogramucla.com/test");
+    const text = await response.text();
+    setMessage((message) => message + text);
   };
 
   return (
