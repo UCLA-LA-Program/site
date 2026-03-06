@@ -1,7 +1,8 @@
-import { useState } from "react";
-import "./App.css";
+"use client";
 
-function App() {
+import { useState } from "react";
+
+export default function Home() {
   const [message, setMessage] = useState("");
 
   const fetchData = async () => {
@@ -17,5 +18,3 @@ function App() {
     </div>
   );
 }
-
-export default App;
