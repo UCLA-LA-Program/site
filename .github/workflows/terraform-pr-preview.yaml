@@ -10,6 +10,10 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   TF_IN_AUTOMATION: true
 
+defaults:
+  run:
+    working-directory: ./terraform
+
 jobs:
   terraform:
     name: "Terraform PR Preview Deployment"
@@ -31,7 +35,7 @@ jobs:
       - name: Terraform Format
         id: format
         continue-on-error: true
-        run: terraform fmt -check -recursive
+        run: terraform fmt -check -recursive -no-color
 
       - name: Terraform Init
         run: terraform init
@@ -39,7 +43,7 @@ jobs:
       - name: Terraform Validate
         id: validate
         continue-on-error: true
-        run: terraform validate
+        run: terraform validate -no-color
 
       - name: Terraform Plan
         id: plan
@@ -52,7 +56,7 @@ jobs:
           # Terraform PR Preview
 
           <details>
-          <summary>Terraform Format</summary>
+          <summary>Terraform Format: ${{ steps.format.outcome == 'success' && '✅ Passed' || '❌ Failed' }}</summary>
 
           \`\`\`
           ${{ steps.format.outputs.stdout }}
@@ -61,7 +65,7 @@ jobs:
           </details>
 
           <details>
-          <summary>Terraform Validate</summary>
+          <summary>Terraform Validate: ${{ steps.validate.outcome == 'success' && '✅ Passed' || '❌ Failed' }}</summary>
 
           \`\`\`
           ${{ steps.validate.outputs.stdout }}
@@ -70,7 +74,7 @@ jobs:
           </details>
 
           <details open>
-          <summary>Terraform Plan</summary>
+          <summary>Terraform Plan: ${{ steps.plan.outcome == 'success' && '✅ Passed' || '❌ Failed' }}</summary>
 
           \`\`\`
           ${{ steps.plan.outputs.stdout }}
@@ -87,7 +91,9 @@ jobs:
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
             const body = `${marker}
-            ## Terraform Plan for commit ${context.sha} available in the workflow summary here: ${runUrl}
+            ## Terraform Plan for ${context.sha} 
+
+            A full result of the Terraform plan is available in the workflow summary here: ${runUrl}
             `;
 
             const { owner, repo } = context.repo;
