@@ -30,6 +30,7 @@ jobs:
 
       - name: Terraform Format
         id: format
+        continue-on-error: true
         run: terraform fmt -check -recursive
 
       - name: Terraform Init
@@ -37,10 +38,12 @@ jobs:
 
       - name: Terraform Validate
         id: validate
+        continue-on-error: true
         run: terraform validate
 
       - name: Terraform Plan
         id: plan
+        continue-on-error: true
         run: terraform plan -no-color
 
       - name: Publish Results to Step Summary
@@ -76,7 +79,7 @@ jobs:
           </details>
           EOF
 
-      - name: Comment PR with plan link
+      - name: Add Comment to PR
         uses: actions/github-script@v7
         with:
           script: |
@@ -113,3 +116,7 @@ jobs:
                 body
               });
             }
+
+      - name: Ensure Success
+        if: steps.format.outcome == 'failure' || steps.validate.outcome == 'failure' || steps.plan.outcome == 'failure'
+        run: exit 1
