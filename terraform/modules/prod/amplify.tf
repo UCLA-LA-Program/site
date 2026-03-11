@@ -38,15 +38,7 @@ resource "aws_amplify_app" "frontend_app" {
   # Amplify console -> App settings -> Branch settings -> Reconnect Repository -> add the app to the repository
   # the access token can be deleted after this process and terraform reapplied safely
 
-  enable_auto_branch_creation = true
-  auto_branch_creation_patterns = [
-    "*",
-    "*/**",
-  ]
-
-  auto_branch_creation_config {
-    enable_auto_build = true
-  }
+  enable_auto_branch_creation = false
 
   custom_rule {
     source = "https://${var.domain}"
@@ -62,6 +54,11 @@ resource "aws_amplify_branch" "main" {
   framework              = "Next.js"
   stage                  = "PRODUCTION"
   enable_skew_protection = true
+  enable_auto_build = true
+
+  environment_variables = {
+    API_URL = var.api_domain
+  }
 }
 
 # set up Amplify Deploy to serve production traffic through owned domain

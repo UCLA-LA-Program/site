@@ -8,7 +8,7 @@ variable "domain" {
   nullable = false
 }
 
-variable "api_subdomain" {
+variable "api_domain" {
   type     = string
   nullable = false
 }

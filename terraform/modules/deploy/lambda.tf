@@ -1,6 +1,6 @@
 # IAM role for lambda execution
 resource "aws_iam_role" "lambda" {
-  name = "la_program_lambda"
+  name = "${local.resource_prefix}_lambda"
   tags = local.application_tag
 
   assume_role_policy = jsonencode({
@@ -35,7 +35,7 @@ data "archive_file" "lambda_zips" {
 resource "aws_lambda_function" "api" {
   for_each = local.lambda_names
 
-  function_name = "la_program_${each.value}"
+  function_name = "${local.resource_prefix}_${each.value}"
   tags          = local.application_tag
   role          = aws_iam_role.lambda.arn
 

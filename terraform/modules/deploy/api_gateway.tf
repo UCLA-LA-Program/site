@@ -1,11 +1,11 @@
 resource "aws_apigatewayv2_api" "api" {
-  name          = "la_program_api"
+  name          = "${local.resource_prefix}_api"
   tags          = local.application_tag
   protocol_type = "HTTP"
 
   cors_configuration {
     allow_origins = [
-      "https://www.${var.domain}"
+      var.cors_domain,
     ]
     allow_methods = [
       "*"

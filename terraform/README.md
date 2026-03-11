@@ -54,19 +54,15 @@ The `prod` module contains resources meant to be updated only when the productio
 
 ## Workspaces
 
-We maintain multiple Terraform workspaces: `release` is used for the live deployment whereas short-lived workspaces named after the branch name are used for PR previews.
+We maintain multiple Terraform workspaces: `default` is used for the live deployment whereas short-lived workspaces named after the PR number are used for PR previews.
 
-Upon PR, a new workspace is created and the `deploy` module is redeployed using this workspace for testing purposes.
+Upon PR, a new workspace (named something like `pr-10`) is created and the `deploy` module is redeployed using this workspace for testing purposes.
 
-Upon merge to `main`, we redeploy using the `release` workspace. This means we redeploy both `deploy` and `prod` under the `main` workspace.
+Upon merge to `main`, we redeploy using the `default` workspace. This means we redeploy both `deploy` and `prod` under the `default` workspace.
 
 > [!CAUTION]
 > Note that PR previews do not redeploy `prod`. As such, all changes to `prod` are blind and should be done extremely carefully. This also indicates that generally speaking no resources related to data integrity should live in `prod`.
 
-## Remote State
+## Remote State/AWS Authentication
 
-Terraform state is stored remotely in AWS S3. Access is controlled through Github Secrets and is not version controlled. Refer to `main.tf` for more information.
-
-## Authentication to AWS
-
-AWS access keys are stored in Github Secrets. Please update these if needed.
+Terraform state is stored remotely in AWS S3. The AWS access credentials used for for both access to this bucket and to generally apply Terraform changes are stored in Github Secrets.

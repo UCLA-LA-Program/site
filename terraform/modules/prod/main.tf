@@ -8,7 +8,3 @@ terraform {
 
   required_version = "~> 1.14"
 }
-
-locals {
-  api_domain = "${var.api_subdomain}.${var.domain}"
-}

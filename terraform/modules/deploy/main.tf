@@ -19,7 +19,11 @@ locals {
   lambda_paths = fileset("../backend", "*.py")
   lambda_names = { for path in local.lambda_paths : path => trimsuffix(path, ".py") }
 
+  # shorter name for application tag applied to everything
   application_tag = aws_servicecatalogappregistry_application.application.application_tag
+
+  # prefix for all resources to avoid naming conflicts
+  resource_prefix = terraform.workspace == "default" ? "la_program" : "la_program_${terraform.workspace}"
 }
 
 # app registry application created in order to tag everything for ease-of-visibility

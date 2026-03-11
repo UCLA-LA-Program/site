@@ -1,6 +1,6 @@
 # set up API Gateway to serve production traffic through api. subdomain
 resource "aws_apigatewayv2_domain_name" "api" {
-  domain_name = local.api_domain
+  domain_name = var.api_domain
 
   domain_name_configuration {
     certificate_arn = aws_acm_certificate_validation.cert.certificate_arn
