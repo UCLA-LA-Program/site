@@ -9,7 +9,7 @@ resource "aws_acm_certificate" "cert" {
 }
 
 data "aws_route53_zone" "zone" {
-  name = local.domain
+  name = var.domain
 }
 
 resource "aws_route53_record" "cert_validation" {

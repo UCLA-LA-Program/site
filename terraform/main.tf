@@ -1,21 +1,45 @@
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.34"
+    }
+
+    archive = {
+      source  = "hashicorp/archive"
+      version = "~> 2.7.1"
+    }
+  }
+
+  # access to the backend is controlled through Github secrets and not version controlled
+  backend "s3" {
+    bucket = "laprogram-terraform-state"
+    key    = "state"
+    region = "us-west-2"
+    use_lockfile = true
+  }
+
+  required_version = "~> 1.14"
+}
+
 provider "aws" {
   region = "us-west-2"
 }
 
-# app registry application created in order to tag everything for ease-of-visibility
-resource "aws_servicecatalogappregistry_application" "application" {
-  name = "la_program_application"
+
+
+module "deploy" {
+  source = "./modules/deploy"
+
+  domain          = "laprogramucla.com"
 }
 
-locals {
-  # application tag to apply to all resources created
-  application_tag = aws_servicecatalogappregistry_application.application.application_tag
+module "prod" {
+  source = "./modules/prod"
 
-  # paths and names (stripped of .py) of lambda functions
-  lambda_paths = fileset("../backend", "*.py")
-  lambda_names = { for path in local.lambda_paths : path => trimsuffix(path, ".py") }
-
-  # domain names
-  api_domain = "api.laprogramucla.com"
-  domain     = "laprogramucla.com"
+  application_tag = module.deploy.application_tag
+  api_id          = module.deploy.api_id
+  api_stage       = module.deploy.api_stage
+  domain           = "laprogramucla.com"
+  api_subdomain = "api"
 }
