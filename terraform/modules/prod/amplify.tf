@@ -22,7 +22,7 @@ resource "aws_iam_role_policy_attachment" "amplify" {
   policy_arn = "arn:aws:iam::aws:policy/AdministratorAccess-Amplify"
 }
 
-# deploys frontend React SPA using Amplify Deploy
+# deploys frontend Next.js SPA using Amplify Deploy
 resource "aws_amplify_app" "frontend_app" {
   name                 = "la_program_frontend_app"
   repository           = "https://github.com/UCLA-LA-Program/site"

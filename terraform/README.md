@@ -66,3 +66,7 @@ Upon merge to `main`, we redeploy using the `release` workspace. This means we r
 ## Remote State
 
 Terraform state is stored remotely in AWS S3. Access is controlled through Github Secrets and is not version controlled. Refer to `main.tf` for more information.
+
+## Authentication to AWS
+
+AWS access keys are stored in Github Secrets. Please update these if needed.
