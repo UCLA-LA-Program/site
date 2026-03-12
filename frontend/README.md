@@ -11,6 +11,8 @@ We use a subset of Next.js features in order to ease development and reduce cost
 - minimize usage of Next.js Route Handlers
 - minimize usage of SSR (server-side rendering) as this app does not require SEO optimization and we wish to minimize requests to Vercel
 
+In addition, we use [shadcn](https://ui.shadcn.com/docs/components) as our component/styling library. We aim to minimize custom styling to ease development.
+
 ## Getting Started
 
 First, install dependencies.
@@ -38,3 +40,7 @@ Edit the `page.tsx` files in `/app` to change the site's contents. Please read t
 You can get a test API URL by making a PR on Github. More information is in [the root README.md](../README.md).
 
 You can set the environment variable by making a copy of `.env.example`, naming it `.env`, and setting the environment variable there. Next.js automatically loads this variable upon starting the development server.
+
+## Styling
+
+Use shadcn to add components. Use the `npx` command listed in the component documentation to add it to the project.
