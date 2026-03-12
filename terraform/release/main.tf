@@ -28,9 +28,7 @@ provider "aws" {
 module "deploy" {
   source = "../modules/deploy"
 
-  cors_domain = "https://www.laprogramucla.com"
-  branch_name = "main"
-  amplify_id  = module.prod.amplify_id
+  cors_domain = "https://laprogramucla.com"
 }
 
 module "prod" {
