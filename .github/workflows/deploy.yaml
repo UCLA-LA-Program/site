@@ -33,6 +33,7 @@ jobs:
 
       - name: Destroy Preview Terraform Deployment
         working-directory: ./terraform/dev
+        continue-on-error: true
         run: |
           terraform workspace select pr${{ github.event.number }}
           terraform destroy -auto-approve -no-color
@@ -88,6 +89,7 @@ jobs:
         run: npm i
 
       - name: Destroy Preview SST Deployment
+        continue-on-error: true
         run: npx sst remove --stage pr${{ github.event.number }}
 
       - name: SST Deploy
