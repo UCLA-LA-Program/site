@@ -71,7 +71,7 @@ jobs:
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
             const body = `${marker}
-            ## Terraform PR Preview Deployment for ${context.sha}
+            ## Terraform PR Preview Deployment
 
             **Deployment Status:** ${{ steps.apply.outcome == 'success' && '✅ Success' || '❌ Failure' }}
 
