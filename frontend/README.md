@@ -1,36 +1,40 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Frontend
+
+This is a [Next.js](https://nextjs.org/docs) project.
+
+## Technical Guide
+
+We use a subset of Next.js features in order to ease development and reduce cost. These include that we:
+
+- use the App Router
+- do not use Vercel for anything other than front-end deployment (all API routes are deployed through Lambdas)
+- minimize usage of Next.js Route Handlers
+- minimize usage of SSR (server-side rendering) as this app does not require SEO optimization and we wish to minimize requests to Vercel
 
 ## Getting Started
 
-First, run the development server:
+First, install dependencies.
+
+```bash
+cd frontend
+npm i
+```
+
+Run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Edit the `page.tsx` files in `/app` to change the site's contents. Please read the codebase and the [Next.js docs](https://nextjs.org/docs) for more information.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## API Access
 
-## Learn More
+> [!WARNING]
+> Do not hardcode API routes. Instead, set the `NEXT_PUBLIC_API_ROUTE` environment variable while developing. This ensures your API calls will work on the production deployment as this URL changes between test and production deployments.
 
-To learn more about Next.js, take a look at the following resources:
+You can get a test API URL by making a PR on Github. More information is in [the root README.md](../README.md).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+You can set the environment variable by making a copy of `.env.example`, naming it `.env`, and setting the environment variable there. Next.js automatically loads this variable upon starting the development server.

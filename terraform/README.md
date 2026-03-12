@@ -1,4 +1,4 @@
-# Deployment
+# Terraform Deployment
 
 The LA Program web-app uses Terraform to manage deployment of backend resources through AWS. This makes it easy to provision new resources in a programatic way and makes it less likely to make breaking changes to infrastructure that is critical to LA Program functioning but does create certain pain points.
 
