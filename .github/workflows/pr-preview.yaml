@@ -130,6 +130,7 @@ jobs:
             **Deployment Status:** ${{ needs.terraform.result == 'success' && needs.sst.result == 'success' && '✅ All deployments succeeded' || '❌ One or more deployments failed' }}
 
             Please view test deployment here: https://dev.pr${{ github.event.number }}.laprogramucla.com
+            To develop locally, set the NEXT_PUBLIC_API_URL environment variable to ${{ needs.terraform.outputs.api_url }}
 
             A full result of the deployment run is available in the workflow summary here: ${runUrl}
             `;
