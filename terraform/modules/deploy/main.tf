@@ -28,5 +28,5 @@ locals {
 
 # app registry application created in order to tag everything for ease-of-visibility
 resource "aws_servicecatalogappregistry_application" "application" {
-  name = "la_program_application"
+  name = "${local.resource_prefix}_application"
 }
