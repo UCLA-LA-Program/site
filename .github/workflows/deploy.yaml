@@ -14,9 +14,6 @@ jobs:
     name: "Terraform Production Deployment"
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.merged == true }}
-    defaults:
-      run:
-        working-directory: ./terraform/release
 
     permissions:
       contents: read
@@ -30,18 +27,27 @@ jobs:
         with:
           terraform_version: 1.14.0
 
-      - name: Terraform Init
+      - name: Terraform Init (Dev)
+        working-directory: ./terraform/dev
         run: terraform init
 
       - name: Destroy Preview Terraform Deployment
+        working-directory: ./terraform/dev
         run: |
-          terraform workspace select pr${{ github.event.number }} || true
-          terraform destroy -auto-approve -no-color || true
-          terraform workspace select default
-          terraform workspace delete pr${{ github.event.number }} || true
+          if terraform workspace show | grep -q "pr${{ github.event.number }}"; then
+            terraform workspace select pr${{ github.event.number }}
+            terraform destroy -auto-approve -no-color
+            terraform workspace select default
+            terraform workspace delete pr${{ github.event.number }}
+          fi
+
+      - name: Terraform Init (Release)
+        working-directory: ./terraform/release
+        run: terraform init
 
       - name: Terraform Apply
         id: apply
+        working-directory: ./terraform/release
         run: terraform apply -auto-approve -no-color
 
       - name: Publish Results to Step Summary
@@ -55,54 +61,6 @@ jobs:
 
           \`\`\`
           ${{ steps.apply.outputs.stdout }}
-          \`\`\`
-
-          </details>
-          EOF
-
-  sst:
-    name: "SST Production Deployment"
-    runs-on: ubuntu-latest
-    needs: [terraform]
-    defaults:
-      run:
-        working-directory: ./frontend
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 24
-
-      - name: Install NPM Packages
-        run: npm i
-
-      - name: Destroy Preview SST Deployment
-        run: npx sst remove --stage pr${{ github.event.number }}
-
-      - name: SST Deploy
-        id: sst-deploy
-        env:
-          NEXT_PUBLIC_API_URL: https://api.laprogramucla.com
-        run: npx sst deploy --stage production
-
-      - name: Publish Results to Step Summary
-        if: always()
-        run: |
-          cat <<EOF >> $GITHUB_STEP_SUMMARY
-          # SST Production Deployment
-
-          <details open>
-          <summary>SST Deploy: ${{ steps.sst-deploy.outcome == 'success' && '✅ Passed' || '❌ Failed' }}</summary>
-
-          \`\`\`
-          ${{ steps.sst-deploy.outputs.stdout }}
           \`\`\`
 
           </details>

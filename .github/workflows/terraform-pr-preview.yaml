@@ -1,4 +1,4 @@
-name: "PR Preview Deployment"
+name: "Terraform PR Preview Deployment"
 
 on:
   pull_request:
@@ -10,18 +10,19 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   TF_IN_AUTOMATION: true
 
+defaults:
+  run:
+    working-directory: ./terraform/dev
+
 jobs:
   terraform:
     name: "Terraform PR Preview Deployment"
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: ./terraform/dev
-    outputs:
-      api_url: ${{ steps.terraform-outputs.outputs.api_url }}
-
     permissions:
       contents: read
+      pull-requests: write
+    outputs:
+      api_url: ${{ steps.terraform-outputs.outputs.api_url }}
 
     steps:
       - name: Checkout
@@ -62,61 +63,6 @@ jobs:
           </details>
           EOF
 
-  sst:
-    name: "SST PR Preview Deployment"
-    runs-on: ubuntu-latest
-    needs: [terraform]
-    defaults:
-      run:
-        working-directory: ./frontend
-
-    permissions:
-      contents: read
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 24
-
-      - name: Install NPM Packages
-        run: npm i
-
-      - name: SST Deploy
-        id: sst-deploy
-        env:
-          NEXT_PUBLIC_API_URL: ${{ needs.terraform.outputs.api_url }}
-        run: npx sst deploy --stage pr${{ github.event.number }}
-
-      - name: Publish Results to Step Summary
-        if: always()
-        run: |
-          cat <<EOF >> $GITHUB_STEP_SUMMARY
-          # SST PR Preview Deployment
-
-          <details open>
-          <summary>SST Deploy: ${{ steps.sst-deploy.outcome == 'success' && '✅ Passed' || '❌ Failed' }}</summary>
-
-          \`\`\`
-          ${{ steps.sst-deploy.outputs.stdout }}
-          \`\`\`
-
-          </details>
-          EOF
-
-  publish:
-    name: "Publish PR Preview Results"
-    runs-on: ubuntu-latest
-    needs: [terraform, sst]
-    if: ${{ always() }}
-
-    permissions:
-      pull-requests: write
-
-    steps:
       - name: Add Comment to PR
         uses: actions/github-script@v8
         with:
@@ -125,11 +71,11 @@ jobs:
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
             const body = `${marker}
-            ## PR Preview Deployment for ${context.sha}
+            ## Terraform PR Preview Deployment
 
-            **Deployment Status:** ${{ needs.terraform.result == 'success' && needs.sst.result == 'success' && '✅ All deployments succeeded' || '❌ One or more deployments failed' }}
+            **Deployment Status:** ${{ steps.apply.outcome == 'success' && '✅ Success' || '❌ Failure' }}
 
-            Please view test deployment here: https://dev.pr${{ github.event.number }}.laprogramucla.com
+            To develop locally, set the \`NEXT_PUBLIC_API_URL\` environment variable to ${{ steps.terraform-outputs.outputs.api_url }}
 
             A full result of the deployment run is available in the workflow summary here: ${runUrl}
             `;

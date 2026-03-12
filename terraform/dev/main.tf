@@ -26,7 +26,9 @@ provider "aws" {
 }
 
 locals {
-  cors_domain = "https://dev.${terraform.workspace}.laprogramucla.com"
+  # cors_domain = "https://dev.${terraform.workspace}.laprogramucla.com"
+  # allow all origins for CORS for dev, since the frontend may be served from localhost
+  cors_domain = "*"
 }
 
 module "deploy" {

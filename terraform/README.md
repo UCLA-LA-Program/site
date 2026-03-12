@@ -1,6 +1,6 @@
 # Deployment
 
-The LA Program web-app uses Terraform to manage deployment exclusively through AWS. This makes it easy to provision new resources in a programatic way and makes it less likely to make breaking changes to infrastructure that is critical to LA Program functioning but does create certain pain points.
+The LA Program web-app uses Terraform to manage deployment of backend resources through AWS. This makes it easy to provision new resources in a programatic way and makes it less likely to make breaking changes to infrastructure that is critical to LA Program functioning but does create certain pain points.
 
 This file is used to provide an overview of the technical decisions behind the infrastructure chosen. Please update it when making changes to files in this directory.
 
@@ -24,7 +24,7 @@ To make changes:
 
 - Create a PR to the `main` branch of the respository with your code/Terraform changes
 - Check the comments, as Github Workflows will use Terraform to:
-  - provision a copy of any resources that can be duplicated (more on this below) and deploy a testing version of the site
+  - provision a copy of any resources that can be duplicated (more on this below) and deploy a testing version of the site using SST (code for this is located in the `frontend` directory; Terraform only manages backend deployment)
   - provide a plan of what Terraform changes would be made upon merge to `main`
 - Test and iterate
 - Deploy to production by merging the PR (**please examine the Terraform plan before doing so**)
@@ -34,7 +34,7 @@ To make changes:
 
 ## Modules
 
-The terraform configuration is split into two modules. We use workspaces to maintain seperate versions of relevant infrastructure for testing purposes.
+The terraform configuration is split into two modules.
 
 ### `deploy`
 
@@ -48,17 +48,18 @@ The `deploy` module contains resources that *can* be duplicated upon pull-reques
 
 The `prod` module contains resources meant to be updated only when the production web-app is re-deployed. Edits to this module should be done with extreme care as these files mainly deal with the production domain name.
 
-- `amplify.tf` provisions an Amplify app which is exclusively used to deploy the front-end; we don't use Amplify to deploy any back-end infrastructure
 - `api_gateway.tf` configures the production API Gateway to serve on the `api.` subdomain of the site
 - `domain.tf` provisions certificate information for the API route
 
-## Workspaces
+## Configurations
 
-We maintain multiple Terraform workspaces: `default` is used for the live deployment whereas short-lived workspaces named after the PR number are used for PR previews.
+There are two Terraform configurations used. The configuration in the `release` folder is the production configuration and only uses the `default` workspace. The configuration in the `dev` folder are shorter-lived PR preview deployments.
 
-Upon PR, a new workspace (named something like `pr-10`) is created and the `deploy` module is redeployed using this workspace for testing purposes.
+Upon PR, a new workspace (named something like `pr150` if we were dealing with PR number 150) of the `dev` configuration is created and deployed for testing purposes.
 
-Upon merge to `main`, we redeploy using the `default` workspace. This means we redeploy both `deploy` and `prod` under the `default` workspace.
+Upon merge to `main`, we redeploy the `release` configuration and delete the workspace of the `dev` configuration we just merged.
+
+Note that the `dev` configuration does not include the `prod` module.
 
 > [!CAUTION]
 > Note that PR previews do not redeploy `prod`. As such, all changes to `prod` are blind and should be done extremely carefully. This also indicates that generally speaking no resources related to data integrity should live in `prod`.
