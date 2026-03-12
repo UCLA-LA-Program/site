@@ -17,6 +17,8 @@ jobs:
     defaults:
       run:
         working-directory: ./terraform/dev
+    outputs:
+      api_url: ${{ steps.terraform-outputs.outputs.api_url }}
 
     permissions:
       contents: read
@@ -39,6 +41,10 @@ jobs:
       - name: Terraform Apply
         id: apply
         run: terraform apply -auto-approve -no-color
+
+      - name: Get Terraform Outputs
+        id: terraform-outputs
+        run: echo "api_url=$(terraform output -raw api_url)" >> $GITHUB_OUTPUT
 
       - name: Publish Results to Step Summary
         if: always()
@@ -81,6 +87,8 @@ jobs:
 
       - name: SST Deploy
         id: sst-deploy
+        env:
+          NEXT_PUBLIC_API_URL: ${{ needs.terraform.outputs.api_url }}
         run: npx sst deploy --stage pr${{ github.event.number }}
 
       - name: Publish Results to Step Summary

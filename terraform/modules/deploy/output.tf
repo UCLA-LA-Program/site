@@ -9,3 +9,7 @@ output "api_id" {
 output "api_stage" {
   value = aws_apigatewayv2_stage.api.id
 }
+
+output "api_url" {
+  value = aws_apigatewayv2_stage.api.invoke_url
+}

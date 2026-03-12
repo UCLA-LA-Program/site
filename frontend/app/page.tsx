@@ -6,7 +6,7 @@ export default function Home() {
   const [message, setMessage] = useState("");
 
   const fetchData = async () => {
-    const response = await fetch("https://api.laprogramucla.com/test");
+    const response = await fetch(process.env.NEXT_PUBLIC_API_URL + "/test");
     const text = await response.text();
     setMessage((message) => message + text);
   };
