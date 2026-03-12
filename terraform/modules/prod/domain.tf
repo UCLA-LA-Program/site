@@ -1,6 +1,6 @@
 # set up certificates for api. subdomain
 resource "aws_acm_certificate" "cert" {
-  domain_name       = local.api_domain
+  domain_name       = var.api_domain
   validation_method = "DNS"
 
   lifecycle {
