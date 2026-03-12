@@ -37,7 +37,7 @@ jobs:
         run: terraform init
 
       - name: Terraform Workspace
-        run: terraform workspace select -or-create pr-${{ github.event.number }}
+        run: terraform workspace select -or-create pr_${{ github.event.number }}
 
       - name: Terraform Apply
         id: apply
@@ -68,7 +68,7 @@ jobs:
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
             const body = `${marker}
-            ## PR Preview Deployment for ${context.sha} on workspace \`pr-${{ github.event.number }}\`
+            ## PR Preview Deployment for ${context.sha} on workspace \`pr_${{ github.event.number }}\`
 
             Please view test deployment here: 
 
