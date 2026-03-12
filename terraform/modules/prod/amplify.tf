@@ -28,6 +28,7 @@ resource "aws_amplify_app" "frontend_app" {
   repository           = "https://github.com/UCLA-LA-Program/site"
   tags                 = var.application_tag
   iam_service_role_arn = aws_iam_role.amplify.arn
+  platform = "WEB_COMPUTE"
 
 
   # access_token = ""
@@ -51,7 +52,7 @@ resource "aws_amplify_app" "frontend_app" {
 resource "aws_amplify_branch" "main" {
   app_id                 = aws_amplify_app.frontend_app.id
   branch_name            = "main"
-  framework              = "Next.js"
+  framework              = "Next.js - SSR"
   stage                  = "PRODUCTION"
   enable_skew_protection = true
   enable_auto_build      = true
