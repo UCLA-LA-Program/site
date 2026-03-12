@@ -41,7 +41,10 @@ jobs:
 
       - name: Terraform Plan
         id: plan
-        run: terraform plan -no-color
+        continue-on-error: true
+        run: |
+          terraform plan -no-color -detailed-exitcode
+          echo "plan_exit_code=$?" >> $GITHUB_OUTPUT
 
       - name: Publish Results to Step Summary
         if: always()
@@ -59,7 +62,7 @@ jobs:
           </details>
 
           <details open>
-          <summary>Terraform Plan: ${{ steps.plan.outcome == 'success' && '✅ Passed' || '❌ Failed' }}</summary>
+          <summary>Terraform Plan: ${{ steps.plan.outputs.exitcode == '0' && '✅ No Changes' || steps.plan.outputs.exitcode == '2' && '🟡 Changes Detected' || '❌ Failed' }}</summary>
 
           \`\`\`
           ${{ steps.plan.outputs.stdout }}
@@ -77,9 +80,13 @@ jobs:
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
             const body = `${marker}
-            ## Terraform Plan for ${context.sha} 
+            ## Terraform Plan
+
+            **Terraform Plan Status:** ${{ steps.plan.outputs.exitcode == '0' && '✅ No Changes' || steps.plan.outputs.exitcode == '2' && '🟡 Changes Detected' || '❌ Failed' }}
 
             A full result of the Terraform plan that will be executed upon merge to \`main\` is available in the workflow summary here: ${runUrl}
+
+            Please review the plan and ensure that any changes are expected before merging this PR.
             `;
 
             const { owner, repo } = context.repo;
@@ -110,5 +117,5 @@ jobs:
             }
 
       - name: Ensure Success
-        if: steps.format.outcome == 'failure' || steps.plan.outcome == 'failure'
+        if: steps.format.outcome == 'failure' || steps.plan.outputs.exitcode == '1'
         run: exit 1
