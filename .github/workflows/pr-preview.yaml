@@ -81,7 +81,7 @@ jobs:
 
       - name: SST Deploy
         id: sst-deploy
-        run: sst deploy --stage pr${{ github.event.number }} --no-confirm
+        run: sst deploy --stage pr${{ github.event.number }}
 
       - name: Publish Results to Step Summary
         if: always()
@@ -116,13 +116,12 @@ jobs:
             const marker = "<!-- pr-preview -->";
             const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
 
-
             const body = `${marker}
             ## PR Preview Deployment for ${context.sha}
 
             **Deployment Status:** ${{ needs.terraform.result == 'success' && needs.sst.result == 'success' && '✅ All deployments succeeded' || '❌ One or more deployments failed' }}
 
-            Please view test deployment here: https://dev.pr${{ github.event.number }}.laprogramucla.com`
+            Please view test deployment here: https://dev.pr${{ github.event.number }}.laprogramucla.com
 
             A full result of the deployment run is available in the workflow summary here: ${runUrl}
             `;
