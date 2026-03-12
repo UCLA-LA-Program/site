@@ -1,0 +1,115 @@
+name: "Terraform Plan"
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+
+env:
+  AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+  TF_IN_AUTOMATION: true
+
+defaults:
+  run:
+    working-directory: ./terraform/release
+
+jobs:
+  terraform:
+    name: "Terraform Plan"
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: read
+      pull-requests: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up Terraform
+        uses: hashicorp/setup-terraform@v4
+        with:
+          terraform_version: 1.14.0
+
+      - name: Terraform Format
+        id: format
+        continue-on-error: true
+        run: terraform fmt -check -recursive -no-color
+
+      - name: Terraform Init
+        run: terraform init
+
+      - name: Terraform Plan
+        id: plan
+        run: terraform plan -no-color
+
+      - name: Publish Results to Step Summary
+        if: always()
+        run: |
+          cat <<EOF >> $GITHUB_STEP_SUMMARY
+          # Terraform Plan
+
+          <details>
+          <summary>Terraform Format: ${{ steps.format.outcome == 'success' && '✅ Passed' || '❌ Failed' }}</summary>
+
+          \`\`\`
+          ${{ steps.format.outputs.stdout }}
+          \`\`\`
+
+          </details>
+
+          <details open>
+          <summary>Terraform Plan: ${{ steps.plan.outcome == 'success' && '✅ Passed' || '❌ Failed' }}</summary>
+
+          \`\`\`
+          ${{ steps.plan.outputs.stdout }}
+          \`\`\`
+
+          </details>
+          EOF
+
+      - name: Add Comment to PR
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const marker = "<!-- terraform-plan -->";
+            const runUrl = `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            const body = `${marker}
+            ## Terraform Plan for ${context.sha} 
+
+            A full result of the Terraform plan that will be executed upon merge to \`main\` is available in the workflow summary here: ${runUrl}
+            `;
+
+            const { owner, repo } = context.repo;
+            const issue_number = context.issue.number;
+
+            const comments = await github.rest.issues.listComments({
+              owner,
+              repo,
+              issue_number,
+            });
+
+            const existing = comments.data.find(c => c.body.includes(marker));
+
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner,
+                repo,
+                comment_id: existing.id,
+                body
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number,
+                body
+              });
+            }
+
+      - name: Ensure Success
+        if: steps.format.outcome == 'failure' || steps.plan.outcome == 'failure'
+        run: exit 1
