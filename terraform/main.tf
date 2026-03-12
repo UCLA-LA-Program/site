@@ -41,7 +41,7 @@ data "terraform_remote_state" "prod_lookup" {
 }
 
 locals {
-  amplify_id = terraform.workspace == "default" ? data.terraform_remote_state.prod_lookup.outputs.amplify_id : module.prod[0].amplify_id
+  amplify_id = terraform.workspace == "default" ? module.prod[0].amplify_id : data.terraform_remote_state.prod_lookup.outputs.amplify_id 
 }
 
 module "deploy" {
