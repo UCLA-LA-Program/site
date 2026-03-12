@@ -89,7 +89,11 @@ jobs:
         id: sst-deploy
         env:
           NEXT_PUBLIC_API_URL: ${{ needs.terraform.outputs.api_url }}
-        run: npx sst deploy --stage pr${{ github.event.number }}
+        run: |
+          npm i sst
+          npx sst remove --stage pr3
+          npx sst remove --stage production
+          npx sst remove --stage production --region us-east-1
 
       - name: Publish Results to Step Summary
         if: always()
