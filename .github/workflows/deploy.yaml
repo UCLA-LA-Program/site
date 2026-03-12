@@ -14,9 +14,6 @@ jobs:
     name: "Terraform Production Deployment"
     runs-on: ubuntu-latest
     if: ${{ github.event.pull_request.merged == true }}
-    defaults:
-      run:
-        working-directory: ./terraform/release
 
     permissions:
       contents: read
@@ -30,18 +27,25 @@ jobs:
         with:
           terraform_version: 1.14.0
 
-      - name: Terraform Init
+      - name: Terraform Init (Dev)
+        working-directory: ./terraform/dev
         run: terraform init
 
       - name: Destroy Preview Terraform Deployment
+        working-directory: ./terraform/dev
         run: |
-          terraform workspace select pr${{ github.event.number }} || true
-          terraform destroy -auto-approve -no-color || true
+          terraform workspace select pr${{ github.event.number }}
+          terraform destroy -auto-approve -no-color
           terraform workspace select default
-          terraform workspace delete pr${{ github.event.number }} || true
+          terraform workspace delete pr${{ github.event.number }}
+
+      - name: Terraform Init (Release)
+        working-directory: ./terraform/release
+        run: terraform init
 
       - name: Terraform Apply
         id: apply
+        working-directory: ./terraform/release
         run: terraform apply -auto-approve -no-color
 
       - name: Publish Results to Step Summary
