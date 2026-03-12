@@ -42,7 +42,7 @@ jobs:
         run: terraform init
 
       - name: Terraform Workspace
-        run: terraform workspace select pr-${{ github.event.number }} -or-create
+        run: terraform workspace select -or-create pr-${{ github.event.number }}
 
       - name: Terraform Apply
         id: apply
