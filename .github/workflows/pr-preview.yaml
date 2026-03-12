@@ -90,7 +90,7 @@ jobs:
         env:
           NEXT_PUBLIC_API_URL: ${{ needs.terraform.outputs.api_url }}
         run: |
-          npm i sst
+          npx sst unlock
           npx sst remove --stage pr3
           npx sst remove --stage production
           npx sst remove --stage production --region us-east-1
