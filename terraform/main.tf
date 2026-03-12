@@ -33,7 +33,7 @@ data "terraform_remote_state" "prod_lookup" {
   backend = "s3"
   workspace = "default"
 
-  config {
+  config = {
     bucket = "laprogram-terraform-state"
     key    = "state"
     region = "us-west-2"
@@ -47,7 +47,7 @@ locals {
 module "deploy" {
   source = "./modules/deploy"
 
-  cors_domain = var.cors_domain
+  cors_domain = terraform.workspace == "default" ? var.cors_domain : replace(var.cors_domain_amplify, "main", var.branch_name)
   amplify_id = local.amplify_id
   branch_name = var.branch_name
 }

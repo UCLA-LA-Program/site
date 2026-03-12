@@ -86,7 +86,7 @@ jobs:
             const body = `${marker}
             ## Terraform Plan for ${context.sha} 
 
-            A full result of the Terraform plan that will be executed upon merge to `main` is available in the workflow summary here: ${runUrl}
+            A full result of the Terraform plan that will be executed upon merge to \`main\` is available in the workflow summary here: ${runUrl}
             `;
 
             const { owner, repo } = context.repo;
