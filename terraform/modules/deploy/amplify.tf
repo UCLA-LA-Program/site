@@ -15,6 +15,6 @@ resource "aws_amplify_branch" "branch" {
 
   # trigger initial build when creating for the first time
   provisioner "local-exec" {
-    command = "aws amplify start-job --app-id ${var.amplify_id} --branch-name ${var.branch_name} --job-type RELEASE"
+    command = "aws amplify start-job --region us-west-2 --app-id ${var.amplify_id} --branch-name ${var.branch_name} --job-type RELEASE"
   }
 }
