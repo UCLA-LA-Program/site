@@ -46,7 +46,7 @@ locals {
 }
 
 module "deploy" {
-  source = "./modules/deploy"
+  source = "../modules/deploy"
 
   cors_domain = local.cors_domain
   amplify_id = local.amplify_id
