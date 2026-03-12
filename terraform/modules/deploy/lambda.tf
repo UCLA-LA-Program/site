@@ -27,8 +27,8 @@ resource "aws_iam_role_policy_attachment" "lambda_log" {
 data "archive_file" "lambda_zips" {
   for_each    = local.lambda_names
   type        = "zip"
-  source_file = "../backend/${each.key}"
-  output_path = "../backend/${each.key}.zip"
+  source_file = "../../backend/${each.key}"
+  output_path = "../../backend/${each.key}.zip"
 }
 
 # define all lambda functions

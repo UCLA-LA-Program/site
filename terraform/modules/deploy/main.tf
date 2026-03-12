@@ -16,7 +16,7 @@ terraform {
 
 locals {
   # paths and names (stripped of .py) of lambda functions
-  lambda_paths = fileset("../backend", "*.py")
+  lambda_paths = fileset("../../backend", "*.py")
   lambda_names = { for path in local.lambda_paths : path => trimsuffix(path, ".py") }
 
   # shorter name for application tag applied to everything
