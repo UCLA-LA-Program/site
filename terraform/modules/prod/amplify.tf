@@ -54,7 +54,7 @@ resource "aws_amplify_branch" "main" {
   framework              = "Next.js"
   stage                  = "PRODUCTION"
   enable_skew_protection = true
-  enable_auto_build = true
+  enable_auto_build      = true
 
   environment_variables = {
     API_URL = var.api_domain

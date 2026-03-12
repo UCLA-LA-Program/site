@@ -3,12 +3,12 @@ variable "cors_domain" {
   nullable = false
 }
 
-variable amplify_id {
+variable "amplify_id" {
   type     = string
   nullable = false
 }
 
-variable branch_name {
+variable "branch_name" {
   type     = string
   nullable = false
 }

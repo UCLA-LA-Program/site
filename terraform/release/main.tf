@@ -12,9 +12,9 @@ terraform {
   }
 
   backend "s3" {
-    bucket = "laprogram-terraform-state"
-    key    = "release"
-    region = "us-west-2"
+    bucket       = "laprogram-terraform-state"
+    key          = "release"
+    region       = "us-west-2"
     use_lockfile = true
   }
 
@@ -29,8 +29,8 @@ module "deploy" {
   source = "../modules/deploy"
 
   cors_domain = "https://www.laprogramucla.com"
-  branch_name = "main" 
-  amplify_id = module.prod.amplify_id
+  branch_name = "main"
+  amplify_id  = module.prod.amplify_id
 }
 
 module "prod" {
@@ -39,6 +39,6 @@ module "prod" {
   application_tag = module.deploy.application_tag
   api_id          = module.deploy.api_id
   api_stage       = module.deploy.api_stage
-  domain           = "laprogramucla.com"
-  api_domain = "api.laprogramucla.com"
+  domain          = "laprogramucla.com"
+  api_domain      = "api.laprogramucla.com"
 }

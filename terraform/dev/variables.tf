@@ -1,4 +1,4 @@
 variable "branch_name" {
-    type     = string
-    nullable = false
+  type     = string
+  nullable = false
 }
