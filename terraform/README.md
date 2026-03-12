@@ -24,10 +24,10 @@ To make changes:
 
 - Create a PR to the `main` branch of the respository with your code/Terraform changes
 - Check the comments, as Github Workflows will use Terraform to:
-  - provision a copy of any resources that can be duplicated (more on this below) and deploy a testing version of the site using SST (code for this is located in the `frontend` directory; Terraform only manages backend deployment)
+  - provision a copy of any resources that can be duplicated (more on this below) and deploy a testing version of the site using Vercel (this is managed through the Vercel dashboard; Terraform only manages backend deployment)
   - provide a plan of what Terraform changes would be made upon merge to `main`
 - Test and iterate
-- Deploy to production by merging the PR (**please examine the Terraform plan before doing so**)
+- Deploy to production by merging the PR (**please examine the Terraform plan before doing so if any changes will be made**)
 
 > [!WARNING]
 > Note that the behavior of test deployments will change depending on what module you are making edits to. Please read the below section for more information.
