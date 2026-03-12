@@ -76,12 +76,12 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install SST CLI
-        run: npm install -g sst
+      - name: Install NPM Packages
+        run: npm i
 
       - name: SST Deploy
         id: sst-deploy
-        run: sst deploy --stage pr${{ github.event.number }}
+        run: npx sst deploy --stage pr${{ github.event.number }}
 
       - name: Publish Results to Step Summary
         if: always()
