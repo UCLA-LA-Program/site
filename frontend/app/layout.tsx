@@ -1,7 +1,9 @@
 import { Geist_Mono, Geist } from "next/font/google";
+import Link from "next/link";
 
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
 
 const fontSans = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
@@ -25,7 +27,19 @@ export default function RootLayout({
         "antialiased",
       )}
     >
-      <body>{children}</body>
+      <body className="flex min-h-svh flex-col">
+        <header className="sticky top-0 z-50 border-b border-border bg-background/80 px-8 py-5 backdrop-blur-sm">
+          <div className="mx-auto flex max-w-5xl items-center justify-between">
+            <Link href="/" className="text-base font-semibold tracking-tight">
+              UCLA LA Program
+            </Link>
+            <Button render={<Link href="/login" />} variant="outline">
+              Sign In
+            </Button>
+          </div>
+        </header>
+        {children}
+      </body>
     </html>
   );
 }
