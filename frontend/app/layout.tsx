@@ -1,11 +1,9 @@
-import { Inter, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Geist } from "next/font/google";
 
 import "./globals.css";
+import { cn } from "@/lib/utils";
 
-const fontSans = Inter({
-  subsets: ["latin"],
-  variable: "--font-sans",
-});
+const fontSans = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -20,7 +18,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${fontSans.variable} ${fontMono.variable} antialiased`}
+      className={cn(
+        fontMono.variable,
+        fontSans.variable,
+        "font-sans",
+        "antialiased",
+      )}
     >
       <body>{children}</body>
     </html>
