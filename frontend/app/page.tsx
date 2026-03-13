@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Home",
+};
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageBackground } from "@/components/page-background";

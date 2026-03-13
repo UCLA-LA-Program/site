@@ -67,7 +67,7 @@ export function MidQuarterSection({ likertAnswers, setLikert }: Props) {
           <ToggleGroup
             variant="outline"
 
-            className="w-full"
+            className="w-full items-stretch"
             value={likertAnswers[id] ? [likertAnswers[id]] : []}
             onValueChange={(values) => setLikert(id, values[0] ?? "")}
           >

@@ -17,18 +17,18 @@ export const LAS = ["AAAA", "BBBB", "CCCC", "No LA"];
 
 export const IMPROVEMENT_OPTIONS = [
   "N/A",
-  "No change",
-  "A little improvement",
-  "Some improvement",
-  "A lot of improvement",
+  "No change, but still room to improve",
+  "Little improvement",
+  "Big improvement",
+  "No room to improve (because of how well they were already doing)",
 ];
 
 export const AGREEMENT_OPTIONS = [
-  "Strongly disagree",
+  "N/A",
+  "Strongly Disagree",
   "Disagree",
-  "Neutral",
   "Agree",
-  "Strongly agree",
+  "Strongly Agree",
 ];
 
 export const ACTIVITIES = [

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { Geist_Mono, Geist, Inter } from "next/font/google";
 import Link from "next/link";
 
@@ -5,7 +6,14 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const inter = Inter({subsets:['latin'],variable:'--font-sans'});
+export const metadata: Metadata = {
+  title: {
+    default: "UCLA LA Program",
+    template: "%s | LA Program",
+  },
+};
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -34,7 +42,7 @@ export default function RootLayout({
               UCLA LA Program
             </Link>
             <Button render={<Link href="/login" />} variant="outline">
-              Sign In
+              Login
             </Button>
           </div>
         </header>

@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { Button } from "@/components/ui/button";
+
+export const metadata: Metadata = {
+  title: "Login",
+};
 import { Input } from "@/components/ui/input";
 import {
   Card,
@@ -25,7 +30,7 @@ export default function LoginPage() {
       <main className="relative z-10 flex flex-1 flex-col items-center justify-center px-8">
         <Card className="animate-fade-up w-full max-w-sm shadow-lg">
           <CardHeader>
-            <CardTitle className="text-2xl">Sign in</CardTitle>
+            <CardTitle className="text-2xl">Login</CardTitle>
             <CardDescription>
               Enter your email and we&apos;ll send you a one-time code.
             </CardDescription>
