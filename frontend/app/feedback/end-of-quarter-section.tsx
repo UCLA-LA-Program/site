@@ -66,7 +66,7 @@ export function EndOfQuarterSection({ likertAnswers, setLikert }: Props) {
           </Label>
           <ToggleGroup
             variant="outline"
-            toggleMultiple={false}
+
             className="w-full"
             value={likertAnswers[id] ? [likertAnswers[id]] : []}
             onValueChange={(values) => setLikert(id, values[0] ?? "")}

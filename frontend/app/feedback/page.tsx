@@ -119,7 +119,7 @@ export default function FeedbackPage() {
                 name="course"
                 required
                 onValueChange={(v) => {
-                  setSelectedCourse(v);
+                  setSelectedCourse(v as string);
                   setSelectedLA("");
                 }}
               >
@@ -145,7 +145,7 @@ export default function FeedbackPage() {
                   are providing feedback to{" "}
                   <span className="text-destructive">*</span>
                 </Label>
-                <Select name="la" required onValueChange={setSelectedLA}>
+                <Select name="la" required onValueChange={(v) => setSelectedLA(v as string)}>
                   <SelectTrigger id="la">
                     <SelectValue placeholder="Select an LA" />
                   </SelectTrigger>
@@ -176,7 +176,7 @@ export default function FeedbackPage() {
                   <RadioGroup
                     name="feedback-type"
                     required
-                    onValueChange={setFeedbackType}
+                    onValueChange={(v) => setFeedbackType(v as string)}
                   >
                     {FEEDBACK_TYPE_OPTIONS.map(({ value, label }) => (
                       <div key={value} className="flex items-center gap-2">
