@@ -39,6 +39,13 @@ export default function RootLayout({
           </div>
         </header>
         {children}
+        <footer className="relative z-10 px-8 py-6">
+          <div className="mx-auto max-w-5xl">
+            <p className="text-center text-xs text-muted-foreground/50">
+              Made with &lt;3 by the LA Program PDT
+            </p>
+          </div>
+        </footer>
       </body>
     </html>
   );
