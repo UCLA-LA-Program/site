@@ -1,11 +1,11 @@
-import { Geist_Mono, Geist } from "next/font/google";
+import { Geist_Mono, Geist, Inter } from "next/font/google";
 import Link from "next/link";
 
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
-const fontSans = Geist({ subsets: ["latin"], variable: "--font-sans" });
+const inter = Inter({subsets:['latin'],variable:'--font-sans'});
 
 const fontMono = Geist_Mono({
   subsets: ["latin"],
@@ -22,7 +22,7 @@ export default function RootLayout({
       lang="en"
       className={cn(
         fontMono.variable,
-        fontSans.variable,
+        inter.variable,
         "font-sans",
         "antialiased",
       )}
