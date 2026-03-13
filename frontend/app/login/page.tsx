@@ -27,7 +27,7 @@ export default function LoginPage() {
           <CardHeader>
             <CardTitle className="text-2xl">Sign in</CardTitle>
             <CardDescription>
-              Enter your UCLA email and we&apos;ll send you a one-time code.
+              Enter your email and we&apos;ll send you a one-time code.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -35,7 +35,7 @@ export default function LoginPage() {
               <Input
                 type="email"
                 name="email"
-                placeholder="you@ucla.edu"
+                placeholder="openquestion@g.ucla.edu"
                 required
                 autoFocus
               />
