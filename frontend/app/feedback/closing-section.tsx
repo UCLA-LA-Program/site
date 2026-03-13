@@ -2,21 +2,27 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { BECOME_LA_OPTIONS, GENDER_OPTIONS, GROUP_OPTIONS } from "./constants";
 import {
-  BECOME_LA_OPTIONS,
-  GENDER_OPTIONS,
-  GROUP_OPTIONS,
-} from "./constants";
+  ComboboxChip,
+  ComboboxChips,
+  ComboboxChipsInput,
+  ComboboxContent,
+  ComboboxValue,
+  useComboboxAnchor,
+} from "@/components/ui/combobox";
+import {
+  Combobox,
+  ComboboxInput,
+  ComboboxEmpty,
+  ComboboxList,
+  ComboboxItem,
+} from "@/components/ui/combobox";
 
 export function ClosingSection() {
+  const anchor = useComboboxAnchor();
+
   return (
     <>
       <div className="flex flex-col gap-2">
@@ -93,18 +99,19 @@ export function ClosingSection() {
 
       <div className="flex flex-col gap-2">
         <Label htmlFor="gender">What gender do you identify with?</Label>
-        <Select name="gender">
-          <SelectTrigger id="gender">
-            <SelectValue placeholder="Select an option" />
-          </SelectTrigger>
-          <SelectContent className="w-[var(--radix-select-trigger-width)]">
-            {GENDER_OPTIONS.map((opt) => (
-              <SelectItem key={opt} value={opt}>
-                {opt}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        <Combobox autoHighlight name="gender" items={GENDER_OPTIONS}>
+          <ComboboxInput id="gender" placeholder="Select an option" />
+          <ComboboxContent>
+            <ComboboxEmpty>No option found.</ComboboxEmpty>
+            <ComboboxList>
+              {(opt) => (
+                <ComboboxItem key={opt} value={opt}>
+                  {opt}
+                </ComboboxItem>
+              )}
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -116,18 +123,34 @@ export function ClosingSection() {
       </div>
 
       <div className="flex flex-col gap-3">
-        <Label>What group(s) do you identify with?</Label>
-        <p className="text-sm text-muted-foreground">Select any that apply.</p>
-        <div className="flex flex-col gap-2.5">
-          {GROUP_OPTIONS.map(({ id, label }) => (
-            <div key={id} className="flex items-center gap-2">
-              <Checkbox id={id} name={id} />
-              <Label htmlFor={id} className="cursor-pointer font-normal">
-                {label}
-              </Label>
-            </div>
-          ))}
-        </div>
+        <Label htmlFor="group">What group(s) do you identify with?</Label>
+        <Combobox multiple autoHighlight name="group" items={GROUP_OPTIONS}>
+          <ComboboxChips ref={anchor}>
+            <ComboboxValue>
+              {(values) => (
+                <>
+                  {values.map((value: string) => (
+                    <ComboboxChip key={value}>{value}</ComboboxChip>
+                  ))}
+                  <ComboboxChipsInput
+                    id="group"
+                    placeholder={values.length ? "" : "Select any that apply"}
+                  />
+                </>
+              )}
+            </ComboboxValue>
+          </ComboboxChips>
+          <ComboboxContent anchor={anchor}>
+            <ComboboxEmpty>No option found.</ComboboxEmpty>
+            <ComboboxList>
+              {(opt) => (
+                <ComboboxItem key={opt.id} value={opt.label}>
+                  {opt.label}
+                </ComboboxItem>
+              )}
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
       </div>
 
       <div className="flex flex-col gap-2">
@@ -142,7 +165,11 @@ export function ClosingSection() {
         <Label htmlFor="la-program-comments">
           Any additional comments for the LA Program?
         </Label>
-        <Textarea id="la-program-comments" name="la-program-comments" rows={3} />
+        <Textarea
+          id="la-program-comments"
+          name="la-program-comments"
+          rows={3}
+        />
       </div>
     </>
   );

@@ -16,6 +16,14 @@ import { EndOfQuarterSection } from "./end-of-quarter-section";
 import { MidQuarterSection } from "./mid-quarter-section";
 import { COURSES, FEEDBACK_TYPE_OPTIONS, LAS, ROLE_OPTIONS } from "./constants";
 import { Input } from "@/components/ui/input";
+import {
+  Combobox,
+  ComboboxContent,
+  ComboboxItem,
+  ComboboxInput,
+  ComboboxEmpty,
+  ComboboxList,
+} from "@/components/ui/combobox";
 
 export function FeedbackForm() {
   const [selectedCourse, setSelectedCourse] = useState("");
@@ -115,25 +123,28 @@ export function FeedbackForm() {
                 Course of LA being given feedback{" "}
                 <span className="text-destructive">*</span>
               </Label>
-              <Select
+              <Combobox
                 name="course"
                 required
+                autoHighlight
                 onValueChange={(v) => {
                   setSelectedCourse(v as string);
                   setSelectedLA("");
                 }}
+                items={COURSES}
               >
-                <SelectTrigger id="course">
-                  <SelectValue placeholder="Select a course" />
-                </SelectTrigger>
-                <SelectContent className="w-[var(--radix-select-trigger-width)]">
-                  {COURSES.map((course) => (
-                    <SelectItem key={course} value={course}>
-                      {course}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                <ComboboxInput id="course" placeholder="Select a course" />
+                <ComboboxContent>
+                  <ComboboxEmpty>No items found.</ComboboxEmpty>
+                  <ComboboxList>
+                    {(course) => (
+                      <ComboboxItem key={course} value={course}>
+                        {course}
+                      </ComboboxItem>
+                    )}
+                  </ComboboxList>
+                </ComboboxContent>
+              </Combobox>
             </div>
 
             {/* LA selection */}
@@ -143,22 +154,27 @@ export function FeedbackForm() {
                   Please select the name of the LA you are providing feedback to{" "}
                   <span className="text-destructive">*</span>
                 </Label>
-                <Select
+                <Combobox
                   name="la"
                   required
-                  onValueChange={(v) => setSelectedLA(v as string)}
+                  autoHighlight
+                  onValueChange={(v) => {
+                    setSelectedLA(v as string);
+                  }}
+                  items={LAS}
                 >
-                  <SelectTrigger id="la">
-                    <SelectValue placeholder="Select an LA" />
-                  </SelectTrigger>
-                  <SelectContent className="w-[var(--radix-select-trigger-width)]">
-                    {LAS.map((la) => (
-                      <SelectItem key={la} value={la}>
-                        {la}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  <ComboboxInput id="la" placeholder="Select an LA" />
+                  <ComboboxContent>
+                    <ComboboxEmpty>No LA found.</ComboboxEmpty>
+                    <ComboboxList>
+                      {(la) => (
+                        <ComboboxItem key={la} value={la}>
+                          {la}
+                        </ComboboxItem>
+                      )}
+                    </ComboboxList>
+                  </ComboboxContent>
+                </Combobox>
               </div>
             )}
 
