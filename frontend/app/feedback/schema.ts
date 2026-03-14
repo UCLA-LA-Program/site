@@ -14,11 +14,11 @@ export const feedbackFormSchema = z.object({
   la: z.string().min(1, "Please select an LA"),
   feedbackType: z.string().min(1, "Please select a feedback type"),
 
+  // Shared fields
+  activities: z.array(z.string()).min(1, "Please select at least one activity"),
+  hours: z.string().min(1, "Please enter hours"),
+
   // Mid-quarter fields
-  mqActivities: z
-    .array(z.string())
-    .min(1, "Please select at least one activity"),
-  mqHours: z.string().min(1, "Please enter hours"),
   mqApproachable: z.string().min(1, "Please select a response"),
   mqHelpful: z.string().min(1, "Please select a response"),
   mqFamiliar: z.string().min(1, "Please select a response"),
@@ -35,10 +35,6 @@ export const feedbackFormSchema = z.object({
   mqStudyHabits: z.string().optional(),
 
   // End-of-quarter fields
-  eqActivities: z
-    .array(z.string())
-    .min(1, "Please select at least one activity"),
-  eqHours: z.string().min(1, "Please enter hours"),
   eqApproachability: z.string().min(1, "Please select a response"),
   eqHelpfulness: z.string().min(1, "Please select a response"),
   eqFamiliarity: z.string().min(1, "Please select a response"),
@@ -49,7 +45,7 @@ export const feedbackFormSchema = z.object({
   eqBelongingStem: z.string().min(1, "Please select a response"),
   eqGroupBelonging: z.string().min(1, "Please select a response"),
   eqGroupReliance: z.string().min(1, "Please select a response"),
-  eqComments: z.string().min(1, "Please share your final comments"),
+  eqComments: z.string().min(1, "Please share any final comments"),
 
   // Closing fields (shared)
   coursesWithoutLAs: z.string().optional(),
@@ -81,9 +77,9 @@ export const defaultValues: FeedbackFormValues = {
   course: "",
   la: "",
   feedbackType: "",
+  activities: [],
+  hours: "",
 
-  mqActivities: [],
-  mqHours: "",
   mqApproachable: "",
   mqHelpful: "",
   mqFamiliar: "",
@@ -99,8 +95,6 @@ export const defaultValues: FeedbackFormValues = {
   mqCourseChange: "",
   mqStudyHabits: "",
 
-  eqActivities: [],
-  eqHours: "",
   eqApproachability: "",
   eqHelpfulness: "",
   eqFamiliarity: "",

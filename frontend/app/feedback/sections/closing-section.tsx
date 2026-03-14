@@ -4,11 +4,11 @@ import type { FeedbackFormInstance } from "../schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Textarea } from "@/components/ui/textarea";
 import {
   Field,
   FieldDescription,
   FieldError,
+  FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
 import { BECOME_LA_OPTIONS, GENDER_OPTIONS, GROUP_OPTIONS } from "../constants";
@@ -25,6 +25,7 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
+import { TextareaFormField } from "../fields/textarea-form-field";
 
 type Props = {
   form: FeedbackFormInstance;
@@ -34,24 +35,13 @@ export function ClosingSection({ form }: Props) {
   const anchor = useComboboxAnchor();
 
   return (
-    <>
-      <form.Field name="coursesWithoutLAs">
-        {(field) => (
-          <Field>
-            <FieldLabel htmlFor={field.name}>
-              Which courses without LAs would you like the LA Program to
-              support?
-            </FieldLabel>
-            <Textarea
-              id={field.name}
-              rows={3}
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-              onBlur={field.handleBlur}
-            />
-          </Field>
-        )}
-      </form.Field>
+    <FieldGroup>
+      <TextareaFormField
+        form={form}
+        fieldName="coursesWithoutLAs"
+        label="Which courses without LAs would you like the LA Program to support?"
+        rows={3}
+      />
 
       <form.Field name="becomeLA">
         {(field) => {
@@ -244,22 +234,11 @@ export function ClosingSection({ form }: Props) {
         )}
       </form.Field>
 
-      <form.Field name="laProgramComments">
-        {(field) => (
-          <Field>
-            <FieldLabel htmlFor={field.name}>
-              Any additional comments for the LA Program?
-            </FieldLabel>
-            <Textarea
-              id={field.name}
-              rows={3}
-              value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
-              onBlur={field.handleBlur}
-            />
-          </Field>
-        )}
-      </form.Field>
-    </>
+      <TextareaFormField
+        form={form}
+        fieldName="laProgramComments"
+        label="Any additional comments for the LA Program?"
+      />
+    </FieldGroup>
   );
 }
