@@ -1,6 +1,6 @@
 "use client";
 
-import type { FeedbackFormInstance, FeedbackFormValues } from "./schema";
+import type { FeedbackFormInstance, FeedbackFormValues } from "../schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,7 +16,7 @@ import {
   ACTIVITIES,
   AGREEMENT_OPTIONS,
   MID_QUARTER_QUESTIONS,
-} from "./constants";
+} from "../constants";
 type Props = {
   form: FeedbackFormInstance;
 };

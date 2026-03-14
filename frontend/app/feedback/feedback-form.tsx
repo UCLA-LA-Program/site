@@ -11,9 +11,9 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
-import { ClosingSection } from "./closing-section";
-import { EndOfQuarterSection } from "./end-of-quarter-section";
-import { MidQuarterSection } from "./mid-quarter-section";
+import { ClosingSection } from "./sections/closing-section";
+import { EndOfQuarterSection } from "./sections/end-of-quarter-section";
+import { MidQuarterSection } from "./sections/mid-quarter-section";
 import { COURSES, FEEDBACK_TYPE_OPTIONS, LAS, ROLE_OPTIONS } from "./constants";
 import { defaultValues, feedbackFormSchema } from "./schema";
 import {

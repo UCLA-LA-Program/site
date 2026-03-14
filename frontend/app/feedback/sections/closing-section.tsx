@@ -1,6 +1,6 @@
 "use client";
 
-import type { FeedbackFormInstance } from "./schema";
+import type { FeedbackFormInstance } from "../schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -11,7 +11,7 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
-import { BECOME_LA_OPTIONS, GENDER_OPTIONS, GROUP_OPTIONS } from "./constants";
+import { BECOME_LA_OPTIONS, GENDER_OPTIONS, GROUP_OPTIONS } from "../constants";
 import {
   Combobox,
   ComboboxChip,

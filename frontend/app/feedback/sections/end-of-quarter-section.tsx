@@ -1,6 +1,6 @@
 "use client";
 
-import type { FeedbackFormInstance, FeedbackFormValues } from "./schema";
+import type { FeedbackFormInstance, FeedbackFormValues } from "../schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -12,7 +12,7 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
-import { ACTIVITIES, END_OF_QUARTER_QUESTIONS } from "./constants";
+import { ACTIVITIES, END_OF_QUARTER_QUESTIONS } from "../constants";
 type Props = {
   form: FeedbackFormInstance;
 };
@@ -36,7 +36,8 @@ export function EndOfQuarterSection({ form }: Props) {
       {/* Activities attended */}
       <form.Field name="eqActivities">
         {(field) => {
-          const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+          const isInvalid =
+            field.state.meta.isTouched && !field.state.meta.isValid;
           return (
             <Field data-invalid={isInvalid}>
               <FieldLabel>
@@ -59,7 +60,10 @@ export function EndOfQuarterSection({ form }: Props) {
                       }}
                       aria-invalid={isInvalid}
                     />
-                    <Label htmlFor={`eq-${id}`} className="cursor-pointer font-normal">
+                    <Label
+                      htmlFor={`eq-${id}`}
+                      className="cursor-pointer font-normal"
+                    >
                       {label}
                     </Label>
                   </div>
@@ -74,18 +78,20 @@ export function EndOfQuarterSection({ form }: Props) {
       {/* Hours */}
       <form.Field name="eqHours">
         {(field) => {
-          const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+          const isInvalid =
+            field.state.meta.isTouched && !field.state.meta.isValid;
           return (
             <Field data-invalid={isInvalid}>
               <FieldLabel htmlFor={field.name}>
-                Approximately how many hours per week do you spend in LA-supported
-                activities for this course?{" "}
+                Approximately how many hours per week do you spend in
+                LA-supported activities for this course?{" "}
                 <span className="text-destructive">*</span>
               </FieldLabel>
               <FieldDescription>
-                If you attend a 2-hour discussion section each week, put 2. If you don&apos;t
-                attend an LA-supported section, put 0. If you attend a 1-hour discussion section
-                AND an LA-supported office hour every 2–3 weeks, put 1.5.
+                If you attend a 2-hour discussion section each week, put 2. If
+                you don&apos;t attend an LA-supported section, put 0. If you
+                attend a 1-hour discussion section AND an LA-supported office
+                hour every 2–3 weeks, put 1.5.
               </FieldDescription>
               <Input
                 id={field.name}
@@ -109,7 +115,8 @@ export function EndOfQuarterSection({ form }: Props) {
         return (
           <form.Field key={id} name={fieldName}>
             {(field) => {
-              const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+              const isInvalid =
+                field.state.meta.isTouched && !field.state.meta.isValid;
               return (
                 <Field data-invalid={isInvalid}>
                   <FieldLabel>
@@ -118,7 +125,9 @@ export function EndOfQuarterSection({ form }: Props) {
                   <ToggleGroup
                     variant="outline"
                     className="w-full items-stretch"
-                    value={field.state.value ? [field.state.value as string] : []}
+                    value={
+                      field.state.value ? [field.state.value as string] : []
+                    }
                     onValueChange={(values) => {
                       field.handleChange(values[0] ?? "");
                       field.handleBlur();
@@ -145,12 +154,13 @@ export function EndOfQuarterSection({ form }: Props) {
       {/* Final comments */}
       <form.Field name="eqComments">
         {(field) => {
-          const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid;
+          const isInvalid =
+            field.state.meta.isTouched && !field.state.meta.isValid;
           return (
             <Field data-invalid={isInvalid}>
               <FieldLabel htmlFor={field.name}>
-                Are there any final comments you&apos;d like to share with your LA now that the
-                quarter is coming to an end?{" "}
+                Are there any final comments you&apos;d like to share with your
+                LA now that the quarter is coming to an end?{" "}
                 <span className="text-destructive">*</span>
               </FieldLabel>
               <Textarea
