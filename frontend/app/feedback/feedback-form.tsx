@@ -16,7 +16,14 @@ import { ClosingSection } from "./sections/closing-section";
 import { EndOfQuarterSection } from "./sections/end-of-quarter-section";
 import { MidQuarterSection } from "./sections/mid-quarter-section";
 import { TASection } from "./sections/ta-section";
-import { COURSES, FEEDBACK_TYPE_OPTIONS, LAS, ROLE_OPTIONS } from "./constants";
+import { LAHeadLASection } from "./sections/la-head-la-section";
+import {
+  COURSES,
+  FEEDBACK_TYPE_OPTIONS,
+  LA_FEEDBACK_TYPE_OPTIONS,
+  LAS,
+  ROLE_OPTIONS,
+} from "./constants";
 import { useAppForm, defaultValues, feedbackFormSchema } from "./form";
 import {
   Combobox,
@@ -283,6 +290,77 @@ export function FeedbackForm() {
                   );
                 }}
               </form.Field>
+            )
+          }
+        </form.Subscribe>
+
+        {/* Feedback Type — LA only */}
+        <form.Subscribe
+          selector={(state) => ({
+            la: state.values.la,
+            role: state.values.role,
+          })}
+        >
+          {({ la, role }) =>
+            la &&
+            role === "la" && (
+              <form.Field name="feedback_type">
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel>
+                        LAs: What kind of feedback are you providing?{" "}
+                        <span className="text-destructive">*</span>
+                      </FieldLabel>
+                      <RadioGroup
+                        value={field.state.value}
+                        onValueChange={(v) => field.handleChange(v)}
+                        onBlur={field.handleBlur}
+                      >
+                        {LA_FEEDBACK_TYPE_OPTIONS.map(({ value, label }) => (
+                          <div key={value} className="flex items-center gap-2">
+                            <RadioGroupItem
+                              id={`type-${value}`}
+                              value={value}
+                              aria-invalid={isInvalid}
+                              type="button"
+                            />
+                            <Label
+                              htmlFor={`type-${value}`}
+                              className="cursor-pointer font-normal"
+                            >
+                              {label}
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                      {isInvalid && (
+                        <FieldError errors={field.state.meta.errors} />
+                      )}
+                    </Field>
+                  );
+                }}
+              </form.Field>
+            )
+          }
+        </form.Subscribe>
+
+        {/* LA sections */}
+        <form.Subscribe
+          selector={(state) => ({
+            role: state.values.role,
+            feedbackType: state.values.feedback_type,
+          })}
+        >
+          {({ role, feedbackType }) =>
+            role === "la" &&
+            feedbackType === "la_head_la" && (
+              <>
+                <FieldSeparator />
+                <LAHeadLASection form={form} />
+              </>
             )
           }
         </form.Subscribe>

@@ -48,6 +48,21 @@ const baseSchema = z.object({
   eq_group_reliance: z.string(),
   eq_comments: z.string(),
 
+  // LA Head LA fields
+  la_head_type: z.array(z.string()),
+  la_ped_seminars: z.string(),
+  la_ped_applies: z.string(),
+  la_ped_discusses: z.string(),
+  la_ped_feedback: z.string(),
+  la_ped_content_meeting: z.string(),
+  la_lcc_emails: z.string(),
+  la_lcc_comfortable: z.string(),
+  la_lcc_answers: z.string(),
+  la_lcc_announcements: z.string(),
+  la_lcc_expectations: z.string(),
+  la_strengths: z.string(),
+  la_improve: z.string(),
+
   // TA fields
   ta_comfortable: z.string(),
   ta_circulates: z.string(),
@@ -138,6 +153,32 @@ export const feedbackFormSchema = baseSchema.superRefine((data, ctx) => {
     req(ctx, data.become_la, "become_la", "Please select an option");
   }
 
+  if (data.role === "la" && data.feedback_type === "la_head_la") {
+    if (!data.la_head_type.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["la_head_type"],
+        message: "Please select at least one option",
+      });
+    }
+    if (data.la_head_type.includes("ped_head")) {
+      req(ctx, data.la_ped_seminars, "la_ped_seminars", "Please select a response");
+      req(ctx, data.la_ped_applies, "la_ped_applies", "Please select a response");
+      req(ctx, data.la_ped_discusses, "la_ped_discusses", "Please select a response");
+      req(ctx, data.la_ped_feedback, "la_ped_feedback", "Please select a response");
+      req(ctx, data.la_ped_content_meeting, "la_ped_content_meeting", "Please select a response");
+    }
+    if (data.la_head_type.includes("lcc")) {
+      req(ctx, data.la_lcc_emails, "la_lcc_emails", "Please select a response");
+      req(ctx, data.la_lcc_comfortable, "la_lcc_comfortable", "Please select a response");
+      req(ctx, data.la_lcc_answers, "la_lcc_answers", "Please select a response");
+      req(ctx, data.la_lcc_announcements, "la_lcc_announcements", "Please select a response");
+      req(ctx, data.la_lcc_expectations, "la_lcc_expectations", "Please select a response");
+    }
+    req(ctx, data.la_strengths, "la_strengths", "Please share your Head LA's strengths");
+    req(ctx, data.la_improve, "la_improve", "Please share how your Head LA can improve");
+  }
+
   if (data.role === "ta") {
     req(ctx, data.ta_comfortable, "ta_comfortable", "Please select a response");
     req(ctx, data.ta_circulates, "ta_circulates", "Please select a response");
@@ -192,6 +233,20 @@ const defaultValues: FeedbackFormValues = {
   eq_group_belonging: "",
   eq_group_reliance: "",
   eq_comments: "",
+
+  la_head_type: [],
+  la_ped_seminars: "",
+  la_ped_applies: "",
+  la_ped_discusses: "",
+  la_ped_feedback: "",
+  la_ped_content_meeting: "",
+  la_lcc_emails: "",
+  la_lcc_comfortable: "",
+  la_lcc_answers: "",
+  la_lcc_announcements: "",
+  la_lcc_expectations: "",
+  la_strengths: "",
+  la_improve: "",
 
   ta_comfortable: "",
   ta_circulates: "",

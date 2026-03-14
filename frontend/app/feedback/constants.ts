@@ -107,6 +107,69 @@ export const FEEDBACK_TYPE_OPTIONS = [
   { value: "end_of_quarter", label: "Student to LA End-of-Quarter Feedback" },
 ];
 
+export const LA_FEEDBACK_TYPE_OPTIONS = [
+  { value: "la_observation", label: "LA Observation Feedback" },
+  { value: "la_head_la", label: "LA to Head LA Feedback" },
+];
+
+export const LA_HEAD_TYPE_OPTIONS = [
+  { value: "ped_head", label: "Pedagogy Head LA" },
+  { value: "lcc", label: "LA Course Coordinator (LCC)" },
+];
+
+export const LA_PED_QUESTIONS = [
+  {
+    value: "la_ped_seminars",
+    label:
+      "My Head LA tries to engage all New LAs during Pedagogy Seminar discussions.",
+  },
+  {
+    value: "la_ped_applies",
+    label: "My Head LA helps me apply pedagogy techniques to my content course.",
+  },
+  {
+    value: "la_ped_discusses",
+    label:
+      "My Head LA is happy to discuss any questions I have about pedagogy techniques.",
+  },
+  {
+    value: "la_ped_feedback",
+    label:
+      "My Head LA gives me feedback to improve my LA skills if/when I ask for it.",
+  },
+  {
+    value: "la_ped_content_meeting",
+    label: "The content meeting for my course is well-run and organized.",
+  },
+];
+
+export const LA_LCC_QUESTIONS = [
+  {
+    value: "la_lcc_emails",
+    label: "My Head LA responds to emails in a timely manner.",
+  },
+  {
+    value: "la_lcc_comfortable",
+    label:
+      "I feel comfortable reaching out to my Head LA for logistical questions.",
+  },
+  {
+    value: "la_lcc_answers",
+    label:
+      "My Head LA is able to answer questions about the LA Program, or they direct me to the right person.",
+  },
+  {
+    value: "la_lcc_announcements",
+    label:
+      "My Head LA provides useful announcements and reminders during content meetings.",
+  },
+  {
+    value: "la_lcc_expectations",
+    label:
+      "Expectations for my assigned sections and content meetings are made clear to me.",
+  },
+];
+
 export const BECOME_LA_OPTIONS = [
   { value: "yes_this", label: "Yes, for this course." },
   { value: "yes_other", label: "Yes, for another course." },

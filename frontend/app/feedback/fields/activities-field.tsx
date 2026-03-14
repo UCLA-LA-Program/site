@@ -1,11 +1,11 @@
 "use client";
 
 import { Checkbox } from "@/components/ui/checkbox";
-import { Label } from "@/components/ui/label";
 import {
   Field,
   FieldDescription,
   FieldError,
+  FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
 import { ACTIVITIES } from "../constants";
@@ -26,9 +26,9 @@ export const ActivitiesField = withForm({
               <span className="text-destructive">*</span>
             </FieldLabel>
             <FieldDescription>Check all that apply.</FieldDescription>
-            <div className="flex flex-col gap-2.5">
+            <FieldGroup className="gap-2.5">
               {ACTIVITIES.map(({ value, label }) => (
-                <div key={value} className="flex items-center gap-2">
+                <Field key={value} orientation="horizontal">
                   <Checkbox
                     id={value}
                     checked={field.state.value.includes(value)}
@@ -42,12 +42,10 @@ export const ActivitiesField = withForm({
                     }}
                     aria-invalid={isInvalid}
                   />
-                  <Label htmlFor={value} className="cursor-pointer font-normal">
-                    {label}
-                  </Label>
-                </div>
+                  <FieldLabel htmlFor={value}>{label}</FieldLabel>
+                </Field>
               ))}
-            </div>
+            </FieldGroup>
             {isInvalid && <FieldError errors={field.state.meta.errors} />}
           </Field>
         );
