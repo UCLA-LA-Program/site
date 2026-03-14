@@ -4,13 +4,6 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { ClosingSection } from "./closing-section";
 import { EndOfQuarterSection } from "./end-of-quarter-section";
 import { MidQuarterSection } from "./mid-quarter-section";
@@ -60,9 +53,7 @@ export function FeedbackForm() {
               If you do not have an LA (or if your LA is a volunteer), but you
               still want to receive credit from your instructor for filling out
               this form, you can select &quot;No LA&quot; as the LA you are
-              providing feedback to. Then indicate &quot;N/A&quot; for any
-              questions asking about your LA and input your UID at the bottom of
-              the form.
+              providing feedback to.
             </p>
           </div>
 

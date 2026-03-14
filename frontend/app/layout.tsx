@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Geist, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import Link from "next/link";
 
 import "./globals.css";
@@ -8,17 +8,12 @@ import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: {
-    default: "UCLA LA Program",
+    default: "LA Program",
     template: "%s | LA Program",
   },
 };
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
-
-const fontMono = Geist_Mono({
-  subsets: ["latin"],
-  variable: "--font-mono",
-});
 
 export default function RootLayout({
   children,
@@ -26,15 +21,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={cn(
-        fontMono.variable,
-        inter.variable,
-        "font-sans",
-        "antialiased",
-      )}
-    >
+    <html lang="en" className={cn(inter.variable, "font-sans", "antialiased")}>
       <body className="flex min-h-svh flex-col">
         <header className="sticky top-0 z-50 border-b border-border bg-background/80 px-8 py-5 backdrop-blur-sm">
           <div className="mx-auto flex max-w-5xl items-center justify-between">

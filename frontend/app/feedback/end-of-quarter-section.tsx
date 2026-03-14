@@ -40,8 +40,13 @@ export function EndOfQuarterSection({ likertAnswers, setLikert }: Props) {
           <span className="text-destructive">*</span>
         </Label>
         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
-          <li>If you attend a 2-hour discussion section each week, you would put 2.</li>
-          <li>If you don&apos;t attend an LA-supported section, you would put 0.</li>
+          <li>
+            If you attend a 2-hour discussion section each week, you would put
+            2.
+          </li>
+          <li>
+            If you don&apos;t attend an LA-supported section, you would put 0.
+          </li>
           <li>
             If you attend a 1-hour discussion section each week AND an
             LA-supported office hour or review session every 2–3 weeks, you
@@ -66,7 +71,6 @@ export function EndOfQuarterSection({ likertAnswers, setLikert }: Props) {
           </Label>
           <ToggleGroup
             variant="outline"
-
             className="w-full items-stretch"
             value={likertAnswers[id] ? [likertAnswers[id]] : []}
             onValueChange={(values) => setLikert(id, values[0] ?? "")}

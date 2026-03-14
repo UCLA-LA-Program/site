@@ -1,9 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = {
-  title: "Home",
-};
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageBackground } from "@/components/page-background";
@@ -58,8 +55,6 @@ export default function Page() {
           </div>
         </section>
       </main>
-
-
     </div>
   );
 }

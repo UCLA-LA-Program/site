@@ -1,4 +1,3 @@
-import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -81,11 +80,6 @@ export function ClosingSection() {
         <p className="text-sm text-muted-foreground">
           When results are shared with LAs or instructors, they will be
           independent of UIDs.
-        </p>
-        <p className="text-sm text-muted-foreground italic">
-          If you would like a second way to confirm your submission of this
-          form, you may print your submission (Ctrl + P on Windows/Linux or
-          Command + P on Macs) and save it as a PDF.
         </p>
         <Input
           id="uid"
