@@ -9,25 +9,19 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
-import { useFormContext } from "../form";
+import { withForm, defaultValues, feedbackFormSchema } from "../form";
 
-type Props = {
-  fieldName: keyof FeedbackFormValues;
-  label: ReactNode;
-  required?: boolean;
-  description?: ReactNode;
-  rows?: number;
-};
-
-export function TextareaFormField({
-  fieldName,
-  label,
-  required,
-  description,
-  rows = 3,
-}: Props) {
-  const form = useFormContext();
-  return (
+export const TextareaFormField = withForm({
+  defaultValues,
+  validators: { onSubmit: feedbackFormSchema },
+  props: {} as {
+    fieldName: keyof FeedbackFormValues;
+    label: ReactNode;
+    required?: boolean;
+    description?: ReactNode;
+    rows?: number;
+  },
+  render: ({ form, fieldName, label, required, description, rows = 3 }) => (
     <form.Field name={fieldName}>
       {(field) => {
         const isInvalid =
@@ -47,7 +41,7 @@ export function TextareaFormField({
             <Textarea
               id={field.name}
               rows={rows}
-              value={field.state.value}
+              value={field.state.value as string}
               onChange={(e) => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
               aria-invalid={isInvalid || undefined}
@@ -57,5 +51,5 @@ export function TextareaFormField({
         );
       }}
     </form.Field>
-  );
-}
+  ),
+});

@@ -9,11 +9,12 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { ACTIVITIES } from "../constants";
-import { useFormContext } from "../form";
+import { withForm, defaultValues, feedbackFormSchema } from "../form";
 
-export function ActivitiesField() {
-  const form = useFormContext();
-  return (
+export const ActivitiesField = withForm({
+  defaultValues,
+  validators: { onSubmit: feedbackFormSchema },
+  render: ({ form }) => (
     <form.Field name="activities">
       {(field) => {
         const isInvalid =
@@ -52,5 +53,5 @@ export function ActivitiesField() {
         );
       }}
     </form.Field>
-  );
-}
+  ),
+});

@@ -3,17 +3,17 @@
 import type { FeedbackFormValues } from "../schema";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { useFormContext } from "../form";
+import { withForm, defaultValues, feedbackFormSchema } from "../form";
 
-type Props = {
-  fieldName: keyof FeedbackFormValues;
-  label: string;
-  options: string[];
-};
-
-export function LikertField({ fieldName, label, options }: Props) {
-  const form = useFormContext();
-  return (
+export const LikertField = withForm({
+  defaultValues,
+  validators: { onSubmit: feedbackFormSchema },
+  props: {} as {
+    fieldName: keyof FeedbackFormValues;
+    label: string;
+    options: string[];
+  },
+  render: ({ form, fieldName, label, options }) => (
     <form.Field name={fieldName}>
       {(field) => {
         const isInvalid =
@@ -27,11 +27,7 @@ export function LikertField({ fieldName, label, options }: Props) {
               type="single"
               variant="outline"
               className="w-full items-stretch"
-              value={
-                typeof field.state.value === "object"
-                  ? (field.state.value as string[])[0]
-                  : (field.state.value as string)
-              }
+              value={field.state.value as string}
               onValueChange={(value) => {
                 field.handleChange(value ?? "");
                 field.handleBlur();
@@ -52,5 +48,5 @@ export function LikertField({ fieldName, label, options }: Props) {
         );
       }}
     </form.Field>
-  );
-}
+  ),
+});

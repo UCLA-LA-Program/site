@@ -7,11 +7,12 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
-import { useFormContext } from "../form";
+import { withForm, defaultValues, feedbackFormSchema } from "../form";
 
-export function HoursField() {
-  const form = useFormContext();
-  return (
+export const HoursField = withForm({
+  defaultValues,
+  validators: { onSubmit: feedbackFormSchema },
+  render: ({ form }) => (
     <form.Field name="hours">
       {(field) => {
         const isInvalid =
@@ -44,5 +45,5 @@ export function HoursField() {
         );
       }}
     </form.Field>
-  );
-}
+  ),
+});

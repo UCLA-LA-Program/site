@@ -7,7 +7,7 @@ import { HoursField } from "../fields/hours-field";
 import { LikertField } from "../fields/likert-field";
 import { TextareaFormField } from "../fields/textarea-form-field";
 import { FieldGroup } from "@/components/ui/field";
-
+import { withForm, defaultValues, feedbackFormSchema } from "../form";
 
 const EQ_FIELD_MAP: Record<string, keyof FeedbackFormValues> = {
   approachability: "eqApproachability",
@@ -22,24 +22,28 @@ const EQ_FIELD_MAP: Record<string, keyof FeedbackFormValues> = {
   "group-reliance": "eqGroupReliance",
 };
 
-export function EndOfQuarterSection() {
-  return (
+export const EndOfQuarterSection = withForm({
+  defaultValues,
+  validators: { onSubmit: feedbackFormSchema },
+  render: ({ form }) => (
     <FieldGroup>
-      <ActivitiesField />
-      <HoursField />
+      <ActivitiesField form={form} />
+      <HoursField form={form} />
       {END_OF_QUARTER_QUESTIONS.map(({ id, label, options }) => (
         <LikertField
           key={id}
+          form={form}
           fieldName={EQ_FIELD_MAP[id]}
           label={label}
           options={options}
         />
       ))}
       <TextareaFormField
+        form={form}
         fieldName="eqComments"
         label="Are there any final comments you'd like to share with your LA now that the quarter is coming to an end?"
         required
       />
     </FieldGroup>
-  );
-}
+  ),
+});
