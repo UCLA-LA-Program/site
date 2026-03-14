@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { useForm } from "@tanstack/react-form";
 import { isValid as luhnIsValid } from "luhn-js";
 
 export const feedbackFormSchema = z.object({
@@ -70,7 +69,7 @@ export const feedbackFormSchema = z.object({
 
 export type FeedbackFormValues = z.infer<typeof feedbackFormSchema>;
 
-export const defaultValues: FeedbackFormValues = {
+const defaultValues: FeedbackFormValues = {
   name: "",
   email: "",
   role: "",
@@ -117,12 +116,4 @@ export const defaultValues: FeedbackFormValues = {
   laProgramComments: "",
 };
 
-// Never called — exists only to infer the form instance type
-function _feedbackFormFactory() {
-  return useForm({
-    defaultValues,
-    validators: { onSubmit: feedbackFormSchema },
-    onSubmit: async () => {},
-  });
-}
-export type FeedbackFormInstance = ReturnType<typeof _feedbackFormFactory>;
+export { defaultValues };

@@ -1,6 +1,5 @@
 "use client";
 
-import type { FeedbackFormInstance } from "../schema";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import {
@@ -10,12 +9,10 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { ACTIVITIES } from "../constants";
+import { useFormContext } from "../form";
 
-type Props = {
-  form: FeedbackFormInstance;
-};
-
-export function ActivitiesField({ form }: Props) {
+export function ActivitiesField() {
+  const form = useFormContext();
   return (
     <form.Field name="activities">
       {(field) => {
@@ -33,9 +30,9 @@ export function ActivitiesField({ form }: Props) {
                 <div key={id} className="flex items-center gap-2">
                   <Checkbox
                     id={id}
-                    checked={(field.state.value as string[]).includes(id)}
+                    checked={field.state.value.includes(id)}
                     onCheckedChange={(checked) => {
-                      const current = field.state.value as string[];
+                      const current = field.state.value;
                       field.handleChange(
                         checked
                           ? [...current, id]

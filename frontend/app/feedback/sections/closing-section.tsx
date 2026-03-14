@@ -1,6 +1,5 @@
 "use client";
 
-import type { FeedbackFormInstance } from "../schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -26,18 +25,15 @@ import {
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { TextareaFormField } from "../fields/textarea-form-field";
+import { useFormContext } from "../form";
 
-type Props = {
-  form: FeedbackFormInstance;
-};
-
-export function ClosingSection({ form }: Props) {
+export function ClosingSection() {
+  const form = useFormContext();
   const anchor = useComboboxAnchor();
 
   return (
     <FieldGroup>
       <TextareaFormField
-        form={form}
         fieldName="coursesWithoutLAs"
         label="Which courses without LAs would you like the LA Program to support?"
         rows={3}
@@ -235,7 +231,6 @@ export function ClosingSection({ form }: Props) {
       </form.Field>
 
       <TextareaFormField
-        form={form}
         fieldName="laProgramComments"
         label="Any additional comments for the LA Program?"
       />

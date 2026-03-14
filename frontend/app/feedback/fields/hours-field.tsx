@@ -1,6 +1,5 @@
 "use client";
 
-import type { FeedbackFormInstance } from "../schema";
 import { Input } from "@/components/ui/input";
 import {
   Field,
@@ -8,12 +7,10 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
+import { useFormContext } from "../form";
 
-type Props = {
-  form: FeedbackFormInstance;
-};
-
-export function HoursField({ form }: Props) {
+export function HoursField() {
+  const form = useFormContext();
   return (
     <form.Field name="hours">
       {(field) => {
@@ -37,9 +34,8 @@ export function HoursField({ form }: Props) {
               type="number"
               min="0"
               step="0.5"
-              value={field.state.value as string}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onChange={(e) => field.handleChange(e.target.value as any)}
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
               aria-invalid={isInvalid}
             />

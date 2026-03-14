@@ -1,17 +1,18 @@
 "use client";
 
-import type { FeedbackFormInstance, FeedbackFormValues } from "../schema";
+import type { FeedbackFormValues } from "../schema";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { useFormContext } from "../form";
 
 type Props = {
-  form: FeedbackFormInstance;
   fieldName: keyof FeedbackFormValues;
   label: string;
   options: string[];
 };
 
-export function LikertField({ form, fieldName, label, options }: Props) {
+export function LikertField({ fieldName, label, options }: Props) {
+  const form = useFormContext();
   return (
     <form.Field name={fieldName}>
       {(field) => {
@@ -28,8 +29,8 @@ export function LikertField({ form, fieldName, label, options }: Props) {
               className="w-full items-stretch"
               value={
                 typeof field.state.value === "object"
-                  ? field.state.value[0]
-                  : field.state.value
+                  ? (field.state.value as string[])[0]
+                  : (field.state.value as string)
               }
               onValueChange={(value) => {
                 field.handleChange(value ?? "");

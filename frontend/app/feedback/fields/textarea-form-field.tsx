@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { FeedbackFormInstance, FeedbackFormValues } from "../schema";
+import type { FeedbackFormValues } from "../schema";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Field,
@@ -9,9 +9,9 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
+import { useFormContext } from "../form";
 
 type Props = {
-  form: FeedbackFormInstance;
   fieldName: keyof FeedbackFormValues;
   label: ReactNode;
   required?: boolean;
@@ -20,13 +20,13 @@ type Props = {
 };
 
 export function TextareaFormField({
-  form,
   fieldName,
   label,
   required,
   description,
   rows = 3,
 }: Props) {
+  const form = useFormContext();
   return (
     <form.Field name={fieldName}>
       {(field) => {
@@ -47,9 +47,8 @@ export function TextareaFormField({
             <Textarea
               id={field.name}
               rows={rows}
-              value={field.state.value as string}
-              // eslint-disable-next-line @typescript-eslint/no-explicit-any
-              onChange={(e) => field.handleChange(e.target.value as any)}
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
               aria-invalid={isInvalid || undefined}
             />
