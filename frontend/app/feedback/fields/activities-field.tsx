@@ -27,22 +27,22 @@ export const ActivitiesField = withForm({
             </FieldLabel>
             <FieldDescription>Check all that apply.</FieldDescription>
             <div className="flex flex-col gap-2.5">
-              {ACTIVITIES.map(({ id, label }) => (
-                <div key={id} className="flex items-center gap-2">
+              {ACTIVITIES.map(({ value, label }) => (
+                <div key={value} className="flex items-center gap-2">
                   <Checkbox
-                    id={id}
-                    checked={field.state.value.includes(id)}
+                    id={value}
+                    checked={field.state.value.includes(value)}
                     onCheckedChange={(checked) => {
                       const current = field.state.value;
                       field.handleChange(
                         checked
-                          ? [...current, id]
-                          : current.filter((v) => v !== id),
+                          ? [...current, value]
+                          : current.filter((v) => v !== value),
                       );
                     }}
                     aria-invalid={isInvalid}
                   />
-                  <Label htmlFor={id} className="cursor-pointer font-normal">
+                  <Label htmlFor={value} className="cursor-pointer font-normal">
                     {label}
                   </Label>
                 </div>

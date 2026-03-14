@@ -41,7 +41,7 @@ export const TextareaFormField = withForm({
             <Textarea
               id={field.name}
               rows={rows}
-              value={field.state.value as string}
+              value={field.state.value}
               onChange={(e) => field.handleChange(e.target.value)}
               onBlur={field.handleBlur}
               aria-invalid={isInvalid || undefined}

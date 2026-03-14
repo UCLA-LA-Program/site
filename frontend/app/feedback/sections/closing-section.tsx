@@ -18,7 +18,6 @@ import {
   ComboboxChipsInput,
   ComboboxContent,
   ComboboxEmpty,
-  ComboboxInput,
   ComboboxItem,
   ComboboxList,
   ComboboxValue,
@@ -26,6 +25,14 @@ import {
 } from "@/components/ui/combobox";
 import { TextareaFormField } from "../fields/textarea-form-field";
 import { withForm, defaultValues, feedbackFormSchema } from "../form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+  SelectGroup,
+} from "@/components/ui/select";
 
 export const ClosingSection = withForm({
   defaultValues,
@@ -132,23 +139,23 @@ export const ClosingSection = withForm({
               <FieldLabel htmlFor={field.name}>
                 What gender do you identify with?
               </FieldLabel>
-              <Combobox
-                autoHighlight
-                items={GENDER_OPTIONS}
-                onValueChange={(v) => field.handleChange(v as string)}
+              <Select
+                value={field.state.value}
+                onValueChange={(v) => field.handleChange(v)}
               >
-                <ComboboxInput id={field.name} placeholder="Select an option" />
-                <ComboboxContent>
-                  <ComboboxEmpty>No option found.</ComboboxEmpty>
-                  <ComboboxList>
-                    {(opt) => (
-                      <ComboboxItem key={opt} value={opt}>
-                        {opt}
-                      </ComboboxItem>
-                    )}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select an option" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {GENDER_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
             </Field>
           )}
         </form.Field>
@@ -188,7 +195,10 @@ export const ClosingSection = withForm({
                     {(values) => (
                       <>
                         {values.map((value: string) => (
-                          <ComboboxChip key={value}>{value}</ComboboxChip>
+                          <ComboboxChip key={value}>
+                            {GROUP_OPTIONS.find((v) => v.value == value)
+                              ?.label ?? ""}
+                          </ComboboxChip>
                         ))}
                         <ComboboxChipsInput
                           id="groups"
@@ -204,7 +214,7 @@ export const ClosingSection = withForm({
                   <ComboboxEmpty>No option found.</ComboboxEmpty>
                   <ComboboxList>
                     {(opt) => (
-                      <ComboboxItem key={opt.id} value={opt.label}>
+                      <ComboboxItem key={opt.value} value={opt.value}>
                         {opt.label}
                       </ComboboxItem>
                     )}

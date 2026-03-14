@@ -16,29 +16,32 @@ export const COURSES = [
 export const LAS = ["AAAA", "BBBB", "CCCC", "No LA"];
 
 export const IMPROVEMENT_OPTIONS = [
-  "N/A",
-  "No change, but still room to improve",
-  "Little improvement",
-  "Big improvement",
-  "No room to improve (because of how well they were already doing)",
+  { value: "na", label: "N/A" },
+  { value: "no-change", label: "No change, but still room to improve" },
+  { value: "little-improvement", label: "Little improvement" },
+  { value: "big-improvement", label: "Big improvement" },
+  {
+    value: "no-room-for-improvement",
+    label: "No room to improve (because of how well they were already doing)",
+  },
 ];
 
 export const AGREEMENT_OPTIONS = [
-  "N/A",
-  "Strongly Disagree",
-  "Disagree",
-  "Agree",
-  "Strongly Agree",
+  { value: "na", label: "N/A" },
+  { value: "strongly-disagree", label: "Strongly Disagree" },
+  { value: "disagree", label: "Disagree" },
+  { value: "agree", label: "Agree" },
+  { value: "strongly-agree", label: "Strongly Agree" },
 ];
 
 export const ACTIVITIES = [
-  { id: "discussion", label: "Discussion or lab section" },
+  { value: "discussion", label: "Discussion or lab section" },
   {
-    id: "lecture",
+    value: "lecture",
     label: "Lecture (if you have interacted with LAs during lecture)",
   },
-  { id: "office-hours", label: "Office hours" },
-  { id: "study-session", label: "Review / study session" },
+  { value: "office-hours", label: "Office hours" },
+  { value: "study-session", label: "Review / study session" },
 ];
 
 export const ROLE_OPTIONS = [
@@ -62,88 +65,88 @@ export const BECOME_LA_OPTIONS = [
 ];
 
 export const GENDER_OPTIONS = [
-  "Man",
-  "Woman",
-  "Nonbinary",
-  "Prefer to self-describe",
-  "Prefer not to say",
+  { value: "man", label: "Man" },
+  { value: "woman", label: "Woman" },
+  { value: "nonbinary", label: "Nonbinary" },
+  { value: "self-describe", label: "Prefer to self-describe" },
+  { value: "prefer-not-to-say", label: "Prefer not to say" },
 ];
 
 export const GROUP_OPTIONS = [
-  { id: "grp-african", label: "African" },
-  { id: "grp-african-american-black", label: "African American / Black" },
-  { id: "grp-other-black", label: "Other Black" },
-  { id: "grp-caribbean", label: "Caribbean" },
-  { id: "grp-mexican", label: "Mexican / Mexican American" },
-  { id: "grp-central-american", label: "Central American" },
-  { id: "grp-south-american", label: "South American" },
-  { id: "grp-puerto-rican", label: "Puerto Rican" },
-  { id: "grp-other-hispanic", label: "Other Hispanic or Latine/o/a" },
-  { id: "grp-chicane", label: "Chicane/o/a" },
+  { value: "african", label: "African" },
+  { value: "african-american-black", label: "African American / Black" },
+  { value: "other-black", label: "Other Black" },
+  { value: "caribbean", label: "Caribbean" },
+  { value: "mexican", label: "Mexican / Mexican American" },
+  { value: "central-american", label: "Central American" },
+  { value: "south-american", label: "South American" },
+  { value: "puerto-rican", label: "Puerto Rican" },
+  { value: "other-hispanic", label: "Other Hispanic or Latine/o/a" },
+  { value: "chicane", label: "Chicane/o/a" },
   {
-    id: "grp-native-american",
+    value: "native-american",
     label: "Native American: American Indian or Alaskan Native",
   },
   {
-    id: "grp-pacific-islander",
+    value: "pacific-islander",
     label: "Native Hawaiian or Other Pacific Islander",
   },
   {
-    id: "grp-east-asian",
+    value: "east-asian",
     label: "East Asian (e.g., Chinese, Japanese, Korean, Taiwanese)",
   },
-  { id: "grp-mena-central-asian", label: "MENA / Central Asian" },
+  { value: "mena-central-asian", label: "MENA / Central Asian" },
   {
-    id: "grp-south-asian",
+    value: "south-asian",
     label: "South Asian (e.g., Pakistani, Indian, Nepalese, Sri Lankan)",
   },
   {
-    id: "grp-southeast-asian",
+    value: "southeast-asian",
     label: "Southeast Asian (e.g., Filipino, Indonesian, Vietnamese)",
   },
-  { id: "grp-european", label: "European / European American" },
-  { id: "grp-other-white", label: "Other White" },
-  { id: "grp-other", label: "Other (specify below)" },
-  { id: "grp-prefer-not-to-say", label: "Prefer not to say" },
+  { value: "european", label: "European / European American" },
+  { value: "other-white", label: "Other White" },
+  { value: "other", label: "Other (specify below)" },
+  { value: "prefer-not-to-say", label: "Prefer not to say" },
 ];
 
 export const MID_QUARTER_QUESTIONS = [
-  { id: "mq-approachable", label: "My LA is approachable." },
+  { value: "mq-approachable", label: "My LA is approachable." },
   {
-    id: "mq-helpful",
+    value: "mq-helpful",
     label: "My LA is helpful to my learning in this course.",
   },
   {
-    id: "mq-familiar",
+    value: "mq-familiar",
     label:
       "My LA is familiar with the course material (and/or asks the TA when needed).",
   },
   {
-    id: "mq-engagement",
+    value: "mq-engagement",
     label:
       "My LA helps create an environment in which every student in my group engages.",
   },
   {
-    id: "mq-questioning",
+    value: "mq-questioning",
     label:
       "My LA asks me why something is true more often than they explain to me why.",
   },
   {
-    id: "mq-supportive",
+    value: "mq-supportive",
     label: "My LA supports me if I am struggling and/or frustrated.",
   },
-  { id: "mq-name", label: "My LA uses my name when interacting with me." },
+  { value: "mq-name", label: "My LA uses my name when interacting with me." },
   {
-    id: "mq-belonging",
+    value: "mq-belonging",
     label: "My LA helps me feel more like I belong in STEM.",
   },
   {
-    id: "mq-checkin",
+    value: "mq-checkin",
     label:
       "An LA checks in on my understanding in every section, especially if I am struggling.",
   },
   {
-    id: "mq-small-groups",
+    value: "mq-small-groups",
     label:
       "This course allows LAs to facilitate learning by having students work in small groups.",
   },
@@ -151,60 +154,60 @@ export const MID_QUARTER_QUESTIONS = [
 
 export const END_OF_QUARTER_QUESTIONS = [
   {
-    id: "approachability",
+    value: "approachability",
     label: "How much improvement have you seen in your LA's approachability?",
     options: IMPROVEMENT_OPTIONS,
   },
   {
-    id: "helpfulness",
+    value: "helpfulness",
     label:
       "How much improvement have you seen in your LA's helpfulness to your learning in this course?",
     options: IMPROVEMENT_OPTIONS,
   },
   {
-    id: "familiarity",
+    value: "familiarity",
     label:
       "How much improvement have you seen in your LA's familiarity with the course material?",
     options: IMPROVEMENT_OPTIONS,
   },
   {
-    id: "engagement",
+    value: "engagement",
     label:
       "How much improvement have you seen in your LA's ability to engage everyone in your group?",
     options: IMPROVEMENT_OPTIONS,
   },
   {
-    id: "questioning",
+    value: "questioning",
     label:
       "How much improvement have you seen in your LA's focus on asking questions before explaining?",
     options: IMPROVEMENT_OPTIONS,
   },
   {
-    id: "supportiveness",
+    value: "supportiveness",
     label:
       "How much improvement have you seen in your LA's supportiveness when you are struggling and/or frustrated?",
     options: IMPROVEMENT_OPTIONS,
   },
   {
-    id: "name-use",
+    value: "name-use",
     label:
       "How much improvement have you seen in your LA's use of your name when interacting with you?",
     options: IMPROVEMENT_OPTIONS,
   },
   {
-    id: "belonging-stem",
+    value: "belonging-stem",
     label:
       "How much improvement have you seen in your LA's support of you feeling more like you belong in STEM?",
     options: IMPROVEMENT_OPTIONS,
   },
   {
-    id: "group-belonging",
+    value: "group-belonging",
     label:
       "My group in discussion section helped me feel more like I belong in this class.",
     options: AGREEMENT_OPTIONS,
   },
   {
-    id: "group-reliance",
+    value: "group-reliance",
     label:
       "My group in discussion section helped me feel more like I can rely on other students for academic support.",
     options: AGREEMENT_OPTIONS,

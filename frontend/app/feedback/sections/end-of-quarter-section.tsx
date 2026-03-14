@@ -29,11 +29,11 @@ export const EndOfQuarterSection = withForm({
     <FieldGroup>
       <ActivitiesField form={form} />
       <HoursField form={form} />
-      {END_OF_QUARTER_QUESTIONS.map(({ id, label, options }) => (
+      {END_OF_QUARTER_QUESTIONS.map(({ value, label, options }) => (
         <LikertField
-          key={id}
+          key={value}
           form={form}
-          fieldName={EQ_FIELD_MAP[id]}
+          fieldName={EQ_FIELD_MAP[value]}
           label={label}
           options={options}
         />

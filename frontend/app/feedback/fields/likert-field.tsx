@@ -11,7 +11,7 @@ export const LikertField = withForm({
   props: {} as {
     fieldName: keyof FeedbackFormValues;
     label: string;
-    options: string[];
+    options: { value: string; label: string }[];
   },
   render: ({ form, fieldName, label, options }) => (
     <form.Field name={fieldName}>
@@ -27,7 +27,7 @@ export const LikertField = withForm({
               type="single"
               variant="outline"
               className="w-full items-stretch"
-              value={field.state.value as string}
+              value={field.state.value}
               onValueChange={(value) => {
                 field.handleChange(value ?? "");
                 field.handleBlur();
@@ -35,11 +35,11 @@ export const LikertField = withForm({
             >
               {options.map((opt) => (
                 <ToggleGroupItem
-                  key={opt}
-                  value={opt}
+                  key={opt.value}
+                  value={opt.value}
                   className="h-auto flex-1 whitespace-normal py-2 text-xs"
                 >
-                  {opt}
+                  {opt.label}
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>

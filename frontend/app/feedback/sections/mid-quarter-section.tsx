@@ -29,11 +29,11 @@ export const MidQuarterSection = withForm({
     <FieldGroup>
       <ActivitiesField form={form} />
       <HoursField form={form} />
-      {MID_QUARTER_QUESTIONS.map(({ id, label }) => (
+      {MID_QUARTER_QUESTIONS.map(({ value, label }) => (
         <LikertField
-          key={id}
+          key={value}
           form={form}
-          fieldName={MQ_FIELD_MAP[id]}
+          fieldName={MQ_FIELD_MAP[value]}
           label={label}
           options={AGREEMENT_OPTIONS}
         />
