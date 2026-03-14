@@ -4,7 +4,7 @@ import Link from "next/link";
 
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: {
@@ -28,8 +28,12 @@ export default function RootLayout({
             <Link href="/" className="text-base font-semibold tracking-tight">
               UCLA LA Program
             </Link>
-            <Button render={<Link href="/login" />} variant="outline">
-              Login
+            <Link
+              href="/login"
+              className={buttonVariants({ variant: "outline" })}
+            />
+            <Button asChild variant="outline">
+              <Link href="/login">Login</Link>
             </Button>
           </div>
         </header>

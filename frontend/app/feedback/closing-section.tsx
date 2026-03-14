@@ -1,170 +1,265 @@
+"use client";
+
+import type { FeedbackFormInstance } from "./schema";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { BECOME_LA_OPTIONS, GENDER_OPTIONS, GROUP_OPTIONS } from "./constants";
 import {
+  Combobox,
   ComboboxChip,
   ComboboxChips,
   ComboboxChipsInput,
   ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
-import {
-  Combobox,
-  ComboboxInput,
-  ComboboxEmpty,
-  ComboboxList,
-  ComboboxItem,
-} from "@/components/ui/combobox";
 
-export function ClosingSection() {
+type Props = {
+  form: FeedbackFormInstance;
+};
+
+export function ClosingSection({ form }: Props) {
   const anchor = useComboboxAnchor();
 
   return (
     <>
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="courses-without-las">
-          Which courses without LAs would you like the LA Program to support?
-        </Label>
-        <Textarea
-          id="courses-without-las"
-          name="courses-without-las"
-          rows={3}
-        />
-      </div>
+      <form.Field name="coursesWithoutLAs">
+        {(field) => (
+          <Field>
+            <FieldLabel htmlFor={field.name}>
+              Which courses without LAs would you like the LA Program to
+              support?
+            </FieldLabel>
+            <Textarea
+              id={field.name}
+              rows={3}
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+            />
+          </Field>
+        )}
+      </form.Field>
 
-      <div className="flex flex-col gap-3">
-        <Label>
-          Are you interested in becoming an LA in the future?{" "}
-          <span className="text-destructive">*</span>
-        </Label>
-        <p className="text-sm text-muted-foreground">
-          You can sign up for our mailing list{" "}
-          <a
-            href="https://www.laprogramucla.com"
-            className="text-primary underline-offset-4 hover:underline"
-          >
-            here
-          </a>
-          . And you can learn more about the LA Program{" "}
-          <a
-            href="https://www.laprogramucla.com"
-            className="text-primary underline-offset-4 hover:underline"
-          >
-            here
-          </a>
-          !
-        </p>
-        <RadioGroup name="become-la" required>
-          {BECOME_LA_OPTIONS.map(({ value, label }) => (
-            <div key={value} className="flex items-center gap-2">
-              <RadioGroupItem id={`become-la-${value}`} value={value} />
-              <Label
-                htmlFor={`become-la-${value}`}
-                className="cursor-pointer font-normal"
+      <form.Field name="becomeLA">
+        {(field) => {
+          const isInvalid =
+            field.state.meta.isTouched && !field.state.meta.isValid;
+          return (
+            <Field data-invalid={isInvalid}>
+              <FieldLabel>
+                Are you interested in becoming an LA in the future?{" "}
+                <span className="text-destructive">*</span>
+              </FieldLabel>
+              <FieldDescription>
+                You can sign up for our mailing list{" "}
+                <a
+                  href="https://www.laprogramucla.com"
+                  className="underline-offset-4 hover:underline"
+                >
+                  here
+                </a>
+                . And you can learn more about the LA Program{" "}
+                <a
+                  href="https://www.laprogramucla.com"
+                  className="underline-offset-4 hover:underline"
+                >
+                  here
+                </a>
+                !
+              </FieldDescription>
+              <RadioGroup
+                value={field.state.value}
+                onValueChange={(v) => field.handleChange(v)}
+                onBlur={field.handleBlur}
               >
-                {label}
-              </Label>
-            </div>
-          ))}
-        </RadioGroup>
-      </div>
+                {BECOME_LA_OPTIONS.map(({ value, label }) => (
+                  <div key={value} className="flex items-center gap-2">
+                    <RadioGroupItem
+                      id={`become-la-${value}`}
+                      value={value}
+                      aria-invalid={isInvalid}
+                    />
+                    <Label
+                      htmlFor={`become-la-${value}`}
+                      className="cursor-pointer font-normal"
+                    >
+                      {label}
+                    </Label>
+                  </div>
+                ))}
+              </RadioGroup>
+              {isInvalid && <FieldError errors={field.state.meta.errors} />}
+            </Field>
+          );
+        }}
+      </form.Field>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="uid">
-          If your instructor is offering credit for this, please enter your
-          9-digit UID (without dashes or spaces):
-        </Label>
-        <p className="text-sm text-muted-foreground">
-          When results are shared with LAs or instructors, they will be
-          independent of UIDs.
-        </p>
-        <Input
-          id="uid"
-          name="uid"
-          type="text"
-          maxLength={9}
-          pattern="\d{9}"
-          placeholder="123456789"
-        />
-      </div>
+      <form.Field name="uid">
+        {(field) => {
+          const isInvalid =
+            field.state.meta.isTouched && !field.state.meta.isValid;
+          return (
+            <Field data-invalid={isInvalid}>
+              <FieldLabel htmlFor={field.name}>
+                If your instructor is offering credit for this, please enter
+                your 9-digit UID (without dashes or spaces):
+              </FieldLabel>
+              <FieldDescription>
+                When results are shared with LAs or instructors, they will be
+                independent of UIDs.
+              </FieldDescription>
+              <Input
+                id={field.name}
+                type="text"
+                maxLength={9}
+                placeholder="123456789"
+                value={field.state.value}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onBlur={field.handleBlur}
+                aria-invalid={isInvalid}
+              />
+              {isInvalid && <FieldError errors={field.state.meta.errors} />}
+            </Field>
+          );
+        }}
+      </form.Field>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="gender">What gender do you identify with?</Label>
-        <Combobox autoHighlight name="gender" items={GENDER_OPTIONS}>
-          <ComboboxInput id="gender" placeholder="Select an option" />
-          <ComboboxContent>
-            <ComboboxEmpty>No option found.</ComboboxEmpty>
-            <ComboboxList>
-              {(opt) => (
-                <ComboboxItem key={opt} value={opt}>
-                  {opt}
-                </ComboboxItem>
-              )}
-            </ComboboxList>
-          </ComboboxContent>
-        </Combobox>
-      </div>
+      <form.Field name="gender">
+        {(field) => (
+          <Field>
+            <FieldLabel htmlFor={field.name}>
+              What gender do you identify with?
+            </FieldLabel>
+            <Combobox
+              autoHighlight
+              items={GENDER_OPTIONS}
+              onValueChange={(v) => field.handleChange(v as string)}
+            >
+              <ComboboxInput id={field.name} placeholder="Select an option" />
+              <ComboboxContent>
+                <ComboboxEmpty>No option found.</ComboboxEmpty>
+                <ComboboxList>
+                  {(opt) => (
+                    <ComboboxItem key={opt} value={opt}>
+                      {opt}
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
+          </Field>
+        )}
+      </form.Field>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="gender-other">
-          If the gender you identify with was not listed above, please use the
-          space below to specify.
-        </Label>
-        <Input id="gender-other" name="gender-other" type="text" />
-      </div>
+      <form.Field name="genderOther">
+        {(field) => (
+          <Field>
+            <FieldLabel htmlFor={field.name}>
+              If the gender you identify with was not listed above, please use
+              the space below to specify.
+            </FieldLabel>
+            <Input
+              id={field.name}
+              type="text"
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+            />
+          </Field>
+        )}
+      </form.Field>
 
-      <div className="flex flex-col gap-3">
-        <Label htmlFor="group">What group(s) do you identify with?</Label>
-        <Combobox multiple autoHighlight name="group" items={GROUP_OPTIONS}>
-          <ComboboxChips ref={anchor}>
-            <ComboboxValue>
-              {(values) => (
-                <>
-                  {values.map((value: string) => (
-                    <ComboboxChip key={value}>{value}</ComboboxChip>
-                  ))}
-                  <ComboboxChipsInput
-                    id="group"
-                    placeholder={values.length ? "" : "Select any that apply"}
-                  />
-                </>
-              )}
-            </ComboboxValue>
-          </ComboboxChips>
-          <ComboboxContent anchor={anchor}>
-            <ComboboxEmpty>No option found.</ComboboxEmpty>
-            <ComboboxList>
-              {(opt) => (
-                <ComboboxItem key={opt.id} value={opt.label}>
-                  {opt.label}
-                </ComboboxItem>
-              )}
-            </ComboboxList>
-          </ComboboxContent>
-        </Combobox>
-      </div>
+      <form.Field name="groups">
+        {(field) => (
+          <Field>
+            <FieldLabel htmlFor="groups">
+              What group(s) do you identify with?
+            </FieldLabel>
+            <Combobox
+              multiple
+              autoHighlight
+              items={GROUP_OPTIONS}
+              onValueChange={(v) => field.handleChange(v as string[])}
+            >
+              <ComboboxChips ref={anchor}>
+                <ComboboxValue>
+                  {(values) => (
+                    <>
+                      {values.map((value: string) => (
+                        <ComboboxChip key={value}>{value}</ComboboxChip>
+                      ))}
+                      <ComboboxChipsInput
+                        id="groups"
+                        placeholder={
+                          values.length ? "" : "Select any that apply"
+                        }
+                      />
+                    </>
+                  )}
+                </ComboboxValue>
+              </ComboboxChips>
+              <ComboboxContent anchor={anchor}>
+                <ComboboxEmpty>No option found.</ComboboxEmpty>
+                <ComboboxList>
+                  {(opt) => (
+                    <ComboboxItem key={opt.id} value={opt.label}>
+                      {opt.label}
+                    </ComboboxItem>
+                  )}
+                </ComboboxList>
+              </ComboboxContent>
+            </Combobox>
+          </Field>
+        )}
+      </form.Field>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="group-other">
-          If the group(s) you identify with were not listed above, please use
-          the space below to specify.
-        </Label>
-        <Input id="group-other" name="group-other" type="text" />
-      </div>
+      <form.Field name="groupOther">
+        {(field) => (
+          <Field>
+            <FieldLabel htmlFor={field.name}>
+              If the group(s) you identify with were not listed above, please
+              use the space below to specify.
+            </FieldLabel>
+            <Input
+              id={field.name}
+              type="text"
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+            />
+          </Field>
+        )}
+      </form.Field>
 
-      <div className="flex flex-col gap-2">
-        <Label htmlFor="la-program-comments">
-          Any additional comments for the LA Program?
-        </Label>
-        <Textarea
-          id="la-program-comments"
-          name="la-program-comments"
-          rows={3}
-        />
-      </div>
+      <form.Field name="laProgramComments">
+        {(field) => (
+          <Field>
+            <FieldLabel htmlFor={field.name}>
+              Any additional comments for the LA Program?
+            </FieldLabel>
+            <Textarea
+              id={field.name}
+              rows={3}
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onBlur={field.handleBlur}
+            />
+          </Field>
+        )}
+      </form.Field>
     </>
   );
 }

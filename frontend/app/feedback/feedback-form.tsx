@@ -1,14 +1,21 @@
 "use client";
 
-import { useState } from "react";
+import { useForm } from "@tanstack/react-form";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import {
+  Field,
+  FieldDescription,
+  FieldError,
+  FieldLabel,
+} from "@/components/ui/field";
 import { ClosingSection } from "./closing-section";
 import { EndOfQuarterSection } from "./end-of-quarter-section";
 import { MidQuarterSection } from "./mid-quarter-section";
 import { COURSES, FEEDBACK_TYPE_OPTIONS, LAS, ROLE_OPTIONS } from "./constants";
-import { Input } from "@/components/ui/input";
+import { defaultValues, feedbackFormSchema } from "./schema";
 import {
   Combobox,
   ComboboxContent,
@@ -19,16 +26,18 @@ import {
 } from "@/components/ui/combobox";
 
 export function FeedbackForm() {
-  const [selectedCourse, setSelectedCourse] = useState("");
-  const [selectedLA, setSelectedLA] = useState("");
-  const [feedbackType, setFeedbackType] = useState("");
-  const [likertAnswers, setLikertAnswers] = useState<Record<string, string>>(
-    {},
-  );
-
-  function setLikert(id: string, value: string) {
-    setLikertAnswers((prev) => ({ ...prev, [id]: value }));
-  }
+  const form = useForm({
+    defaultValues,
+    validators: {
+      onSubmit: feedbackFormSchema,
+    },
+    onSubmit: async ({ value }) => {
+      console.log("Form submitted:", value);
+    },
+    onSubmitInvalid({ value }) {
+      console.log("Form submitted:", value);
+    },
+  });
 
   return (
     <div className="flex flex-1 flex-col">
@@ -58,174 +67,291 @@ export function FeedbackForm() {
           </div>
 
           <form
+            id="feedback-form"
             className="flex flex-col gap-6"
+            onSubmit={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              form.handleSubmit();
+            }}
             onReset={() => {
-              setSelectedCourse("");
-              setSelectedLA("");
-              setFeedbackType("");
-              setLikertAnswers({});
+              form.reset();
             }}
           >
             {/* Name */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="name">
-                Name <span className="text-destructive">*</span>
-              </Label>
-              <Input id="name" name="name" type="text" required />
-            </div>
+            <form.Field name="name">
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      Name <span className="text-destructive">*</span>
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      type="text"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      aria-invalid={isInvalid}
+                    />
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                );
+              }}
+            </form.Field>
 
             {/* Email */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="email">
-                Email <span className="text-destructive">*</span>
-              </Label>
-              <Input
-                id="email"
-                name="email"
-                type="email"
-                placeholder="you@ucla.edu"
-                required
-              />
-            </div>
+            <form.Field name="email">
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      Email <span className="text-destructive">*</span>
+                    </FieldLabel>
+                    <Input
+                      id={field.name}
+                      type="email"
+                      placeholder="openquestion@g.ucla.edu"
+                      value={field.state.value}
+                      onChange={(e) => field.handleChange(e.target.value)}
+                      onBlur={field.handleBlur}
+                      aria-invalid={isInvalid}
+                    />
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                );
+              }}
+            </form.Field>
 
-            {/* I am... */}
-            <div className="flex flex-col gap-3">
-              <Label>
-                I am&hellip; <span className="text-destructive">*</span>
-              </Label>
-              <RadioGroup name="role" required>
-                {ROLE_OPTIONS.map(({ value, label }) => (
-                  <div key={value} className="flex items-center gap-2">
-                    <RadioGroupItem id={`role-${value}`} value={value} />
-                    <Label
-                      htmlFor={`role-${value}`}
-                      className="cursor-pointer font-normal"
+            {/* Role */}
+            <form.Field name="role">
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel>
+                      I am&hellip; <span className="text-destructive">*</span>
+                    </FieldLabel>
+                    <RadioGroup
+                      value={field.state.value}
+                      onValueChange={(v) => field.handleChange(v)}
+                      onBlur={field.handleBlur}
                     >
-                      {label}
-                    </Label>
-                  </div>
-                ))}
-              </RadioGroup>
-            </div>
+                      {ROLE_OPTIONS.map(({ value, label }) => (
+                        <div key={value} className="flex items-center gap-2">
+                          <RadioGroupItem
+                            id={`role-${value}`}
+                            value={value}
+                            aria-invalid={isInvalid}
+                          />
+                          <Label
+                            htmlFor={`role-${value}`}
+                            className="cursor-pointer font-normal"
+                          >
+                            {label}
+                          </Label>
+                        </div>
+                      ))}
+                    </RadioGroup>
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
+                    )}
+                  </Field>
+                );
+              }}
+            </form.Field>
 
             {/* Course */}
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="course">
-                Course of LA being given feedback{" "}
-                <span className="text-destructive">*</span>
-              </Label>
-              <Combobox
-                name="course"
-                required
-                autoHighlight
-                onValueChange={(v) => {
-                  setSelectedCourse(v as string);
-                  setSelectedLA("");
-                }}
-                items={COURSES}
-              >
-                <ComboboxInput id="course" placeholder="Select a course" />
-                <ComboboxContent>
-                  <ComboboxEmpty>No items found.</ComboboxEmpty>
-                  <ComboboxList>
-                    {(course) => (
-                      <ComboboxItem key={course} value={course}>
-                        {course}
-                      </ComboboxItem>
+            <form.Field name="course">
+              {(field) => {
+                const isInvalid =
+                  field.state.meta.isTouched && !field.state.meta.isValid;
+                return (
+                  <Field data-invalid={isInvalid}>
+                    <FieldLabel htmlFor={field.name}>
+                      Course of LA being given feedback{" "}
+                      <span className="text-destructive">*</span>
+                    </FieldLabel>
+                    <Combobox
+                      autoHighlight
+                      onValueChange={(v) => field.handleChange(v as string)}
+                      value={field.state.value}
+                      items={COURSES}
+                    >
+                      <ComboboxInput
+                        id={field.name}
+                        placeholder="Select a course"
+                        aria-invalid={isInvalid}
+                      />
+                      <ComboboxContent>
+                        <ComboboxEmpty>No items found.</ComboboxEmpty>
+                        <ComboboxList>
+                          {(c) => (
+                            <ComboboxItem key={c} value={c}>
+                              {c}
+                            </ComboboxItem>
+                          )}
+                        </ComboboxList>
+                      </ComboboxContent>
+                    </Combobox>
+                    {isInvalid && (
+                      <FieldError errors={field.state.meta.errors} />
                     )}
-                  </ComboboxList>
-                </ComboboxContent>
-              </Combobox>
-            </div>
+                  </Field>
+                );
+              }}
+            </form.Field>
 
             {/* LA selection */}
-            {selectedCourse && (
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="la">
-                  Please select the name of the LA you are providing feedback to{" "}
-                  <span className="text-destructive">*</span>
-                </Label>
-                <Combobox
-                  name="la"
-                  required
-                  autoHighlight
-                  onValueChange={(v) => {
-                    setSelectedLA(v as string);
-                  }}
-                  items={LAS}
-                >
-                  <ComboboxInput id="la" placeholder="Select an LA" />
-                  <ComboboxContent>
-                    <ComboboxEmpty>No LA found.</ComboboxEmpty>
-                    <ComboboxList>
-                      {(la) => (
-                        <ComboboxItem key={la} value={la}>
-                          {la}
-                        </ComboboxItem>
-                      )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-              </div>
-            )}
+            <form.Subscribe selector={(state) => state.values.course}>
+              {(course) =>
+                course && (
+                  <form.Field name="la">
+                    {(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched && !field.state.meta.isValid;
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel htmlFor={field.name}>
+                            Please select the name of the LA you are providing
+                            feedback to{" "}
+                            <span className="text-destructive">*</span>
+                          </FieldLabel>
+                          <Combobox
+                            autoHighlight
+                            onValueChange={(v) =>
+                              field.handleChange(v as string)
+                            }
+                            value={field.state.value}
+                            items={LAS}
+                          >
+                            <ComboboxInput
+                              id={field.name}
+                              placeholder="Select an LA"
+                              aria-invalid={isInvalid}
+                            />
+                            <ComboboxContent>
+                              <ComboboxEmpty>No LA found.</ComboboxEmpty>
+                              <ComboboxList>
+                                {(laName) => (
+                                  <ComboboxItem key={laName} value={laName}>
+                                    {laName}
+                                  </ComboboxItem>
+                                )}
+                              </ComboboxList>
+                            </ComboboxContent>
+                          </Combobox>
+                          {isInvalid && (
+                            <FieldError errors={field.state.meta.errors} />
+                          )}
+                        </Field>
+                      );
+                    }}
+                  </form.Field>
+                )
+              }
+            </form.Subscribe>
 
-            {selectedLA && (
-              <>
-                {/* Feedback type */}
-                <div className="flex flex-col gap-3">
-                  <Label>
-                    What kind of feedback are you providing?{" "}
-                    <span className="text-destructive">*</span>
-                  </Label>
-                  <p className="text-sm text-muted-foreground">
-                    Students provide LAs with feedback in the{" "}
-                    <strong>middle</strong> of the quarter (Weeks 5–6) and at
-                    the <strong>end</strong> of the quarter (Weeks 9–10).
-                  </p>
-                  <RadioGroup
-                    name="feedback-type"
-                    required
-                    onValueChange={(v) => setFeedbackType(v as string)}
-                  >
-                    {FEEDBACK_TYPE_OPTIONS.map(({ value, label }) => (
-                      <div key={value} className="flex items-center gap-2">
-                        <RadioGroupItem id={`type-${value}`} value={value} />
-                        <Label
-                          htmlFor={`type-${value}`}
-                          className="cursor-pointer font-normal"
-                        >
-                          {label}
-                        </Label>
-                      </div>
-                    ))}
-                  </RadioGroup>
-                </div>
+            {/* Feedback Type selection */}
+            <form.Subscribe selector={(state) => state.values.la}>
+              {(la) =>
+                la && (
+                  <form.Field name="feedbackType">
+                    {(field) => {
+                      const isInvalid =
+                        field.state.meta.isTouched && !field.state.meta.isValid;
+                      return (
+                        <Field data-invalid={isInvalid}>
+                          <FieldLabel>
+                            What kind of feedback are you providing?{" "}
+                            <span className="text-destructive">*</span>
+                          </FieldLabel>
+                          <FieldDescription>
+                            Students provide LAs with feedback in the middle of
+                            the quarter (Weeks 5–6) and at theend of the quarter
+                            (Weeks 9–10).
+                          </FieldDescription>
+                          <RadioGroup
+                            value={field.state.value}
+                            onValueChange={(v) => {
+                              field.handleChange(v);
+                            }}
+                            onBlur={field.handleBlur}
+                          >
+                            {FEEDBACK_TYPE_OPTIONS.map(({ value, label }) => (
+                              <div
+                                key={value}
+                                className="flex items-center gap-2"
+                              >
+                                <RadioGroupItem
+                                  id={`type-${value}`}
+                                  value={value}
+                                  aria-invalid={isInvalid}
+                                  type="button"
+                                />
+                                <Label
+                                  htmlFor={`type-${value}`}
+                                  className="cursor-pointer font-normal"
+                                >
+                                  {label}
+                                </Label>
+                              </div>
+                            ))}
+                          </RadioGroup>
+                          {isInvalid && (
+                            <FieldError errors={field.state.meta.errors} />
+                          )}
+                        </Field>
+                      );
+                    }}
+                  </form.Field>
+                )
+              }
+            </form.Subscribe>
 
-                {feedbackType === "mid-quarter" && (
-                  <MidQuarterSection
-                    likertAnswers={likertAnswers}
-                    setLikert={setLikert}
-                  />
-                )}
-
-                {feedbackType === "end-of-quarter" && (
-                  <EndOfQuarterSection
-                    likertAnswers={likertAnswers}
-                    setLikert={setLikert}
-                  />
-                )}
-
-                {/* Shared closing questions */}
-                {feedbackType && <ClosingSection />}
-              </>
-            )}
+            <form.Subscribe selector={(state) => state.values.feedbackType}>
+              {(feedbackType) => (
+                <>
+                  {feedbackType === "mid-quarter" && (
+                    <MidQuarterSection form={form} />
+                  )}
+                  {feedbackType === "end-of-quarter" && (
+                    <EndOfQuarterSection form={form} />
+                  )}
+                  {feedbackType && <ClosingSection form={form} />}
+                </>
+              )}
+            </form.Subscribe>
 
             {/* Actions */}
             <div className="flex items-center justify-between border-t border-border pt-4">
-              <Button type="reset" variant="ghost" size="sm">
-                Clear form
+              <Button
+                type="reset"
+                variant="ghost"
+                size="sm"
+                onClick={(event) => {
+                  event.preventDefault();
+                  form.reset();
+                }}
+              >
+                Clear Form
               </Button>
-              <Button type="submit">Submit</Button>
+              <form.Subscribe selector={(s) => s.isSubmitting}>
+                {(isSubmitting) => (
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Submitting…" : "Submit"}
+                  </Button>
+                )}
+              </form.Subscribe>
             </div>
           </form>
         </div>

@@ -24,10 +24,9 @@ No local dev server. Deploy and test backend routes by opening a PR — GitHub A
 
 ### Frontend (`frontend/`)
 
-- **Next.js 16** (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui (`base-nova` style)
+- **Next.js 16** (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Form, Zod
 - `app/` — file-based routing.
-- `components/ui/` — shadcn components live here. Freely search for and add new ones with `npx shadcn add <component>`. Do not copy paste components.
-- `lib/utils.ts` — exports `cn()` (clsx + tailwind-merge).
+- `components/ui/` — shadcn components live here. Freely search for and add new ones with `npx shadcn add <component>`. Do not copy paste components. Use Radix UI versions.
 - Styling uses CSS variables defined in `app/globals.css`. Theme uses oklch colors; primary is UCLA blue.
 
 ### Backend (`backend/`)

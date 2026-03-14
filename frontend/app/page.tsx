@@ -1,4 +1,3 @@
-import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ArrowRight } from "lucide-react";
@@ -36,21 +35,14 @@ export default function Page() {
             className="animate-fade-up flex flex-wrap items-center gap-3"
             style={{ animationDelay: "140ms" }}
           >
-            <Button
-              render={<Link href="/feedback" />}
-              size="lg"
-              className="gap-2 px-7"
-            >
-              Give Feedback
-              <ArrowRight className="h-4 w-4" />
+            <Button asChild size="lg" className="px-7">
+              <Link href="/feedback">
+                Give Feedback
+                <ArrowRight />{" "}
+              </Link>
             </Button>
-            <Button
-              render={<Link href="/login" />}
-              variant="outline"
-              size="lg"
-              className="px-7"
-            >
-              LA Portal
+            <Button asChild variant="outline" size="lg" className="px-7">
+              <Link href="/login">LA Portal</Link>
             </Button>
           </div>
         </section>
