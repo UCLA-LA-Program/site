@@ -45,11 +45,11 @@ export const ClosingSection = withForm({
       <FieldGroup>
         <TextareaFormField
           form={form}
-          fieldName="coursesWithoutLAs"
+          fieldName="courses_without_las"
           label="Which courses without LAs would you like the LA Program to support?"
         />
 
-        <form.Field name="becomeLA">
+        <form.Field name="become_la">
           {(field) => {
             const isInvalid =
               field.state.meta.isTouched && !field.state.meta.isValid;
@@ -160,7 +160,7 @@ export const ClosingSection = withForm({
           )}
         </form.Field>
 
-        <form.Field name="genderOther">
+        <form.Field name="gender_other">
           {(field) => (
             <Field>
               <FieldLabel htmlFor={field.name}>
@@ -225,7 +225,7 @@ export const ClosingSection = withForm({
           )}
         </form.Field>
 
-        <form.Field name="groupOther">
+        <form.Field name="group_other">
           {(field) => (
             <Field>
               <FieldLabel htmlFor={field.name}>
@@ -245,7 +245,7 @@ export const ClosingSection = withForm({
 
         <TextareaFormField
           form={form}
-          fieldName="laProgramComments"
+          fieldName="la_program_comments"
           label="Any additional comments for the LA Program?"
         />
       </FieldGroup>

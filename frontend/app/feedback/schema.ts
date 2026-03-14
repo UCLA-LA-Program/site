@@ -1,73 +1,160 @@
 import { z } from "zod";
 import { isValid as luhnIsValid } from "luhn-js";
 
-export const feedbackFormSchema = z.object({
+const required = (msg: string) => z.string().min(1, msg);
+
+const baseSchema = z.object({
   // Header fields
-  name: z.string().min(1, "Name is required"),
+  name: required("Name is required"),
   email: z
     .string()
     .min(1, "Email is required")
     .email("Please enter a valid email"),
-  role: z.string().min(1, "Please select a role"),
-  course: z.string().min(1, "Please select a course"),
-  la: z.string().min(1, "Please select an LA"),
-  feedbackType: z.string().min(1, "Please select a feedback type"),
+  role: required("Please select a role"),
+  course: required("Please select a course"),
+  la: required("Please select an LA"),
 
-  // Shared fields
-  activities: z.array(z.string()).min(1, "Please select at least one activity"),
-  hours: z.string().min(1, "Please enter hours"),
+  // Conditionally required — student only
+  feedback_type: z.string(),
+  activities: z.array(z.string()),
+  hours: z.string(),
 
   // Mid-quarter fields
-  mqApproachable: z.string().min(1, "Please select a response"),
-  mqHelpful: z.string().min(1, "Please select a response"),
-  mqFamiliar: z.string().min(1, "Please select a response"),
-  mqEngagement: z.string().min(1, "Please select a response"),
-  mqQuestioning: z.string().min(1, "Please select a response"),
-  mqSupportive: z.string().min(1, "Please select a response"),
-  mqName: z.string().min(1, "Please select a response"),
-  mqBelonging: z.string().min(1, "Please select a response"),
-  mqCheckin: z.string().min(1, "Please select a response"),
-  mqSmallGroups: z.string().min(1, "Please select a response"),
-  mqStrengths: z.string().min(1, "Please share your LA's strengths"),
-  mqImprove: z.string().min(1, "Please share how your LA can improve"),
-  mqCourseChange: z.string().min(1, "Please share what you would change"),
-  mqStudyHabits: z.string().optional(),
+  mq_approachable: z.string(),
+  mq_helpful: z.string(),
+  mq_familiar: z.string(),
+  mq_engagement: z.string(),
+  mq_questioning: z.string(),
+  mq_supportive: z.string(),
+  mq_name: z.string(),
+  mq_belonging: z.string(),
+  mq_checkin: z.string(),
+  mq_small_groups: z.string(),
+  mq_strengths: z.string(),
+  mq_improve: z.string(),
+  mq_course_change: z.string(),
+  mq_study_habits: z.string().optional(),
 
   // End-of-quarter fields
-  eqApproachability: z.string().min(1, "Please select a response"),
-  eqHelpfulness: z.string().min(1, "Please select a response"),
-  eqFamiliarity: z.string().min(1, "Please select a response"),
-  eqEngagement: z.string().min(1, "Please select a response"),
-  eqQuestioning: z.string().min(1, "Please select a response"),
-  eqSupportiveness: z.string().min(1, "Please select a response"),
-  eqNameUse: z.string().min(1, "Please select a response"),
-  eqBelongingStem: z.string().min(1, "Please select a response"),
-  eqGroupBelonging: z.string().min(1, "Please select a response"),
-  eqGroupReliance: z.string().min(1, "Please select a response"),
-  eqComments: z.string().min(1, "Please share any final comments"),
+  eq_approachability: z.string(),
+  eq_helpfulness: z.string(),
+  eq_familiarity: z.string(),
+  eq_engagement: z.string(),
+  eq_questioning: z.string(),
+  eq_supportiveness: z.string(),
+  eq_name_use: z.string(),
+  eq_belonging_stem: z.string(),
+  eq_group_belonging: z.string(),
+  eq_group_reliance: z.string(),
+  eq_comments: z.string(),
 
-  // Closing fields (shared)
-  coursesWithoutLAs: z.string().optional(),
-  becomeLA: z.string().min(1, "Please select an option"),
+  // TA fields
+  ta_comfortable: z.string(),
+  ta_circulates: z.string(),
+  ta_peer_names: z.string(),
+  ta_devotes: z.string(),
+  ta_empathizes: z.string(),
+  ta_redirects: z.string(),
+  ta_waits: z.string(),
+  ta_checks: z.string(),
+  ta_encourages: z.string(),
+  ta_creates: z.string(),
+  ta_strengths: z.string(),
+  ta_improve: z.string(),
+  ta_comments: z.string().optional(),
+
+  // Closing fields — student only
+  courses_without_las: z.string().optional(),
+  become_la: z.string(),
   uid: z
     .string()
     .refine(
       (val) =>
         val === "" ||
         (val.length === 9 && /^\d{9}$/.test(val) && luhnIsValid(val)),
-      {
-        message: "Please enter a valid 9-digit UID",
-      },
+      { message: "Please enter a valid 9-digit UID" },
     )
     .optional(),
   gender: z.string().optional(),
-  genderOther: z.string().optional(),
+  gender_other: z.string().optional(),
   groups: z.array(z.string()).optional(),
-  groupOther: z.string().optional(),
-  laProgramComments: z.string().optional(),
+  group_other: z.string().optional(),
+  la_program_comments: z.string().optional(),
 });
 
-export type FeedbackFormValues = z.infer<typeof feedbackFormSchema>;
+function req(
+  ctx: z.RefinementCtx,
+  val: string | undefined,
+  path: string,
+  message: string,
+) {
+  if (!val || val.length === 0) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
+  }
+}
+
+export const feedbackFormSchema = baseSchema.superRefine((data, ctx) => {
+  if (data.role === "student") {
+    req(ctx, data.feedback_type, "feedback_type", "Please select a feedback type");
+    if (!data.activities.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["activities"],
+        message: "Please select at least one activity",
+      });
+    }
+    req(ctx, data.hours, "hours", "Please enter hours");
+
+    if (data.feedback_type === "mid_quarter") {
+      req(ctx, data.mq_approachable, "mq_approachable", "Please select a response");
+      req(ctx, data.mq_helpful, "mq_helpful", "Please select a response");
+      req(ctx, data.mq_familiar, "mq_familiar", "Please select a response");
+      req(ctx, data.mq_engagement, "mq_engagement", "Please select a response");
+      req(ctx, data.mq_questioning, "mq_questioning", "Please select a response");
+      req(ctx, data.mq_supportive, "mq_supportive", "Please select a response");
+      req(ctx, data.mq_name, "mq_name", "Please select a response");
+      req(ctx, data.mq_belonging, "mq_belonging", "Please select a response");
+      req(ctx, data.mq_checkin, "mq_checkin", "Please select a response");
+      req(ctx, data.mq_small_groups, "mq_small_groups", "Please select a response");
+      req(ctx, data.mq_strengths, "mq_strengths", "Please share your LA's strengths");
+      req(ctx, data.mq_improve, "mq_improve", "Please share how your LA can improve");
+      req(ctx, data.mq_course_change, "mq_course_change", "Please share what you would change");
+    }
+
+    if (data.feedback_type === "end_of_quarter") {
+      req(ctx, data.eq_approachability, "eq_approachability", "Please select a response");
+      req(ctx, data.eq_helpfulness, "eq_helpfulness", "Please select a response");
+      req(ctx, data.eq_familiarity, "eq_familiarity", "Please select a response");
+      req(ctx, data.eq_engagement, "eq_engagement", "Please select a response");
+      req(ctx, data.eq_questioning, "eq_questioning", "Please select a response");
+      req(ctx, data.eq_supportiveness, "eq_supportiveness", "Please select a response");
+      req(ctx, data.eq_name_use, "eq_name_use", "Please select a response");
+      req(ctx, data.eq_belonging_stem, "eq_belonging_stem", "Please select a response");
+      req(ctx, data.eq_group_belonging, "eq_group_belonging", "Please select a response");
+      req(ctx, data.eq_group_reliance, "eq_group_reliance", "Please select a response");
+      req(ctx, data.eq_comments, "eq_comments", "Please share any final comments");
+    }
+
+    req(ctx, data.become_la, "become_la", "Please select an option");
+  }
+
+  if (data.role === "ta") {
+    req(ctx, data.ta_comfortable, "ta_comfortable", "Please select a response");
+    req(ctx, data.ta_circulates, "ta_circulates", "Please select a response");
+    req(ctx, data.ta_peer_names, "ta_peer_names", "Please select a response");
+    req(ctx, data.ta_devotes, "ta_devotes", "Please select a response");
+    req(ctx, data.ta_empathizes, "ta_empathizes", "Please select a response");
+    req(ctx, data.ta_redirects, "ta_redirects", "Please select a response");
+    req(ctx, data.ta_waits, "ta_waits", "Please select a response");
+    req(ctx, data.ta_checks, "ta_checks", "Please select a response");
+    req(ctx, data.ta_encourages, "ta_encourages", "Please select a response");
+    req(ctx, data.ta_creates, "ta_creates", "Please select a response");
+    req(ctx, data.ta_strengths, "ta_strengths", "Please share the LA's strengths");
+    req(ctx, data.ta_improve, "ta_improve", "Please share how the LA can improve");
+  }
+});
+
+export type FeedbackFormValues = z.infer<typeof baseSchema>;
 
 const defaultValues: FeedbackFormValues = {
   name: "",
@@ -75,45 +162,59 @@ const defaultValues: FeedbackFormValues = {
   role: "",
   course: "",
   la: "",
-  feedbackType: "",
+  feedback_type: "",
   activities: [],
   hours: "",
 
-  mqApproachable: "",
-  mqHelpful: "",
-  mqFamiliar: "",
-  mqEngagement: "",
-  mqQuestioning: "",
-  mqSupportive: "",
-  mqName: "",
-  mqBelonging: "",
-  mqCheckin: "",
-  mqSmallGroups: "",
-  mqStrengths: "",
-  mqImprove: "",
-  mqCourseChange: "",
-  mqStudyHabits: "",
+  mq_approachable: "",
+  mq_helpful: "",
+  mq_familiar: "",
+  mq_engagement: "",
+  mq_questioning: "",
+  mq_supportive: "",
+  mq_name: "",
+  mq_belonging: "",
+  mq_checkin: "",
+  mq_small_groups: "",
+  mq_strengths: "",
+  mq_improve: "",
+  mq_course_change: "",
+  mq_study_habits: "",
 
-  eqApproachability: "",
-  eqHelpfulness: "",
-  eqFamiliarity: "",
-  eqEngagement: "",
-  eqQuestioning: "",
-  eqSupportiveness: "",
-  eqNameUse: "",
-  eqBelongingStem: "",
-  eqGroupBelonging: "",
-  eqGroupReliance: "",
-  eqComments: "",
+  eq_approachability: "",
+  eq_helpfulness: "",
+  eq_familiarity: "",
+  eq_engagement: "",
+  eq_questioning: "",
+  eq_supportiveness: "",
+  eq_name_use: "",
+  eq_belonging_stem: "",
+  eq_group_belonging: "",
+  eq_group_reliance: "",
+  eq_comments: "",
 
-  coursesWithoutLAs: "",
-  becomeLA: "",
+  ta_comfortable: "",
+  ta_circulates: "",
+  ta_peer_names: "",
+  ta_devotes: "",
+  ta_empathizes: "",
+  ta_redirects: "",
+  ta_waits: "",
+  ta_checks: "",
+  ta_encourages: "",
+  ta_creates: "",
+  ta_strengths: "",
+  ta_improve: "",
+  ta_comments: "",
+
+  courses_without_las: "",
+  become_la: "",
   uid: "",
   gender: "",
-  genderOther: "",
+  gender_other: "",
   groups: [],
-  groupOther: "",
-  laProgramComments: "",
+  group_other: "",
+  la_program_comments: "",
 };
 
 export { defaultValues };

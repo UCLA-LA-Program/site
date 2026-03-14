@@ -15,6 +15,7 @@ import {
 import { ClosingSection } from "./sections/closing-section";
 import { EndOfQuarterSection } from "./sections/end-of-quarter-section";
 import { MidQuarterSection } from "./sections/mid-quarter-section";
+import { TASection } from "./sections/ta-section";
 import { COURSES, FEEDBACK_TYPE_OPTIONS, LAS, ROLE_OPTIONS } from "./constants";
 import { useAppForm, defaultValues, feedbackFormSchema } from "./form";
 import {
@@ -226,11 +227,17 @@ export function FeedbackForm() {
           }
         </form.Subscribe>
 
-        {/* Feedback Type */}
-        <form.Subscribe selector={(state) => state.values.la}>
-          {(la) =>
-            la && (
-              <form.Field name="feedbackType">
+        {/* Feedback Type — student only */}
+        <form.Subscribe
+          selector={(state) => ({
+            la: state.values.la,
+            role: state.values.role,
+          })}
+        >
+          {({ la, role }) =>
+            la &&
+            role === "student" && (
+              <form.Field name="feedback_type">
                 {(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid;
@@ -242,7 +249,7 @@ export function FeedbackForm() {
                       </FieldLabel>
                       <FieldDescription>
                         Students provide LAs with feedback in the middle of the
-                        quarter (Weeks 5–6) and at theend of the quarter (Weeks
+                        quarter (Weeks 5–6) and at the end of the quarter (Weeks
                         9–10).
                       </FieldDescription>
                       <RadioGroup
@@ -280,19 +287,44 @@ export function FeedbackForm() {
           }
         </form.Subscribe>
 
-        <form.Subscribe selector={(state) => state.values.feedbackType}>
-          {(feedbackType) =>
+        {/* Student sections */}
+        <form.Subscribe
+          selector={(state) => ({
+            role: state.values.role,
+            feedbackType: state.values.feedback_type,
+          })}
+        >
+          {({ role, feedbackType }) =>
+            role === "student" &&
             feedbackType && (
               <>
                 <FieldSeparator />
-                {feedbackType === "mid-quarter" && (
+                {feedbackType === "mid_quarter" && (
                   <MidQuarterSection form={form} />
                 )}
-                {feedbackType === "end-of-quarter" && (
+                {feedbackType === "end_of_quarter" && (
                   <EndOfQuarterSection form={form} />
                 )}
                 <FieldSeparator />
                 <ClosingSection form={form} />
+              </>
+            )
+          }
+        </form.Subscribe>
+
+        {/* TA section */}
+        <form.Subscribe
+          selector={(state) => ({
+            la: state.values.la,
+            role: state.values.role,
+          })}
+        >
+          {({ la, role }) =>
+            la &&
+            role === "ta" && (
+              <>
+                <FieldSeparator />
+                <TASection form={form} />
               </>
             )
           }
