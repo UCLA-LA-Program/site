@@ -24,10 +24,16 @@ No local dev server. Deploy and test backend routes by opening a PR — GitHub A
 
 ### Frontend (`frontend/`)
 
-- **Next.js 16** (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Form, Zod
+- **Next.js 16** (App Router), React 19, TypeScript, Tailwind CSS v4, shadcn/ui, TanStack Form, Zod 4
 - `app/` — file-based routing.
-- `components/ui/` — shadcn components live here. Freely search for and add new ones with `npx shadcn add <component>`. Do not copy paste components. Use Radix UI versions.
-- Styling uses CSS variables defined in `app/globals.css`. Theme uses oklch colors; primary is UCLA blue.
+- `components/ui/` — shadcn components live here. Add new ones with `npx shadcn add <component>`. Never copy-paste component source manually. Use Radix UI versions.
+
+#### Form validation pattern (`app/feedback/`)
+
+- **Schema** (`schema.ts`): validation uses `z.discriminatedUnion` to select the right variant by role/feedback_type. Shared field groups (`headerFields`, `closingFields`, `mqFields`, etc.) are defined once and spread into both variant schemas and `baseSchema`. `baseSchema` exists only for type inference (`FeedbackFormValues`) and generating `defaultValues` — it is built from the field groups, not maintained manually. When adding a new field, add it to the relevant field group; it will flow into `baseSchema`, `defaultValues`, and the variant schema automatically.
+- **Form** (`form.ts`): re-exports `withForm`, `defaultValues`, `feedbackFormSchema` for use by field/section components.
+- **Sections/fields**: each section and reusable field component uses `withForm` from TanStack Form and receives `feedbackFormSchema` as `validators.onSubmit`.
+- The exported `feedbackFormSchema` is cast to `z.ZodType<FeedbackFormValues, FeedbackFormValues>` because the discriminated union's inferred type is narrower than the flat `FeedbackFormValues` that TanStack Form expects. This cast is safe — runtime validation is correct.
 
 ### Backend (`backend/`)
 
