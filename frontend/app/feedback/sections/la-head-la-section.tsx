@@ -7,10 +7,9 @@ import {
   LA_LCC_QUESTIONS,
   LA_PED_QUESTIONS,
 } from "../constants";
-import { Checkbox } from "@/components/ui/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -34,30 +33,22 @@ export const LAHeadLASection = withForm({
                 The Head LA I am providing feedback to is a(n)&hellip;{" "}
                 <span className="text-destructive">*</span>
               </FieldLabel>
-              <FieldDescription>
-                Please select both options if the Head LA serves as both an LCC
-                and a Ped Head for your course.
-              </FieldDescription>
-              <FieldGroup className="gap-2.5">
-                {LA_HEAD_TYPE_OPTIONS.map(({ value, label }) => (
-                  <Field key={value} orientation="horizontal">
-                    <Checkbox
-                      id={value}
-                      checked={field.state.value.includes(value)}
-                      onCheckedChange={(checked) => {
-                        const current = field.state.value;
-                        field.handleChange(
-                          checked
-                            ? [...current, value]
-                            : current.filter((v) => v !== value),
-                        );
-                      }}
-                      aria-invalid={isInvalid}
-                    />
-                    <FieldLabel htmlFor={value}>{label}</FieldLabel>
-                  </Field>
-                ))}
-              </FieldGroup>
+              <RadioGroup
+                value={field.state.value}
+                onValueChange={(value) => {
+                  field.handleChange(value);
+                  field.handleBlur();
+                }}
+              >
+                <FieldGroup className="gap-2.5">
+                  {LA_HEAD_TYPE_OPTIONS.map(({ value, label }) => (
+                    <Field key={value} orientation="horizontal">
+                      <RadioGroupItem value={value} id={value} />
+                      <FieldLabel htmlFor={value}>{label}</FieldLabel>
+                    </Field>
+                  ))}
+                </FieldGroup>
+              </RadioGroup>
               {isInvalid && <FieldError errors={field.state.meta.errors} />}
             </Field>
           );
@@ -67,7 +58,7 @@ export const LAHeadLASection = withForm({
       <form.Subscribe selector={(state) => state.values.la_head_type}>
         {(la_head_type) => (
           <>
-            {la_head_type.includes("ped_head") &&
+            {(la_head_type === "ped_head" || la_head_type === "ped_lcc") &&
               LA_PED_QUESTIONS.map(({ value, label }) => (
                 <LikertField
                   key={value}
@@ -77,7 +68,7 @@ export const LAHeadLASection = withForm({
                   options={AGREEMENT_OPTIONS}
                 />
               ))}
-            {la_head_type.includes("lcc") &&
+            {(la_head_type === "lcc" || la_head_type === "ped_lcc") &&
               LA_LCC_QUESTIONS.map(({ value, label }) => (
                 <LikertField
                   key={value}

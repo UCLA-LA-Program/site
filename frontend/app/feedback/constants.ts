@@ -115,6 +115,7 @@ export const LA_FEEDBACK_TYPE_OPTIONS = [
 export const LA_HEAD_TYPE_OPTIONS = [
   { value: "ped_head", label: "Pedagogy Head LA" },
   { value: "lcc", label: "LA Course Coordinator (LCC)" },
+  { value: "ped_lcc", label: "Both Ped Head and LCC" },
 ];
 
 export const LA_PED_QUESTIONS = [

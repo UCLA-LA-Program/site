@@ -69,20 +69,32 @@ const eqFields = {
   eq_comments: required("Please share any final comments"),
 };
 
+const laPedFields = {
+  la_ped_seminars: required("Please select a response"),
+  la_ped_applies: required("Please select a response"),
+  la_ped_discusses: required("Please select a response"),
+  la_ped_feedback: required("Please select a response"),
+  la_ped_content_meeting: required("Please select a response"),
+};
+
+const laLccFields = {
+  la_lcc_emails: required("Please select a response"),
+  la_lcc_comfortable: required("Please select a response"),
+  la_lcc_answers: required("Please select a response"),
+  la_lcc_announcements: required("Please select a response"),
+  la_lcc_expectations: required("Please select a response"),
+};
+
+const laSharedFields = {
+  la_strengths: required("Please share your Head LA's strengths"),
+  la_improve: required("Please share how your Head LA can improve"),
+};
+
 const laFields = {
-  la_head_type: z.array(z.string()),
-  la_ped_seminars: z.string(),
-  la_ped_applies: z.string(),
-  la_ped_discusses: z.string(),
-  la_ped_feedback: z.string(),
-  la_ped_content_meeting: z.string(),
-  la_lcc_emails: z.string(),
-  la_lcc_comfortable: z.string(),
-  la_lcc_answers: z.string(),
-  la_lcc_announcements: z.string(),
-  la_lcc_expectations: z.string(),
-  la_strengths: z.string(),
-  la_improve: z.string(),
+  la_head_type: z.string(),
+  ...laPedFields,
+  ...laLccFields,
+  ...laSharedFields,
 };
 
 const taFields = {
@@ -117,6 +129,21 @@ export const baseSchema = z.object({
 export type FeedbackFormValues = z.infer<typeof baseSchema>;
 
 // ---------------------------------------------------------------------------
+// Default values
+// ---------------------------------------------------------------------------
+
+const ARRAY_FIELDS: (keyof FeedbackFormValues)[] = ["activities", "groups"];
+
+const defaultValues = Object.fromEntries(
+  Object.keys(baseSchema.shape).map((key) => [
+    key,
+    ARRAY_FIELDS.includes(key as keyof FeedbackFormValues) ? [] : "",
+  ]),
+) as unknown as FeedbackFormValues;
+
+export { defaultValues };
+
+// ---------------------------------------------------------------------------
 // Variant schemas
 // ---------------------------------------------------------------------------
 
@@ -144,63 +171,37 @@ const taSchema = z.object({
   ...taFields,
 });
 
-const laHeadLASchema = z
-  .object({
-    ...headerFields,
-    role: z.literal("la"),
-    feedback_type: z.literal("la_head_la"),
-    la_head_type: z
-      .array(z.string())
-      .min(1, "Please select at least one option"),
-    la_ped_seminars: z.string().optional(),
-    la_ped_applies: z.string().optional(),
-    la_ped_discusses: z.string().optional(),
-    la_ped_feedback: z.string().optional(),
-    la_ped_content_meeting: z.string().optional(),
-    la_lcc_emails: z.string().optional(),
-    la_lcc_comfortable: z.string().optional(),
-    la_lcc_answers: z.string().optional(),
-    la_lcc_announcements: z.string().optional(),
-    la_lcc_expectations: z.string().optional(),
-    la_strengths: required("Please share your Head LA's strengths"),
-    la_improve: required("Please share how your Head LA can improve"),
-  })
-  .superRefine((data, ctx) => {
-    if (data.la_head_type.includes("ped_head")) {
-      for (const [field, msg] of [
-        ["la_ped_seminars", "Please select a response"],
-        ["la_ped_applies", "Please select a response"],
-        ["la_ped_discusses", "Please select a response"],
-        ["la_ped_feedback", "Please select a response"],
-        ["la_ped_content_meeting", "Please select a response"],
-      ] as const) {
-        if (!data[field]) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: [field],
-            message: msg,
-          });
-        }
-      }
-    }
-    if (data.la_head_type.includes("lcc")) {
-      for (const [field, msg] of [
-        ["la_lcc_emails", "Please select a response"],
-        ["la_lcc_comfortable", "Please select a response"],
-        ["la_lcc_answers", "Please select a response"],
-        ["la_lcc_announcements", "Please select a response"],
-        ["la_lcc_expectations", "Please select a response"],
-      ] as const) {
-        if (!data[field]) {
-          ctx.addIssue({
-            code: z.ZodIssueCode.custom,
-            path: [field],
-            message: msg,
-          });
-        }
-      }
-    }
-  });
+const laCommon = {
+  ...headerFields,
+  role: z.literal("la") as z.ZodLiteral<"la">,
+  feedback_type: z.literal("la_head_la"),
+  ...laSharedFields,
+};
+
+const laPedHeadSchema = z.object({
+  ...laCommon,
+  la_head_type: z.literal("ped_head"),
+  ...laPedFields,
+});
+
+const laLccSchema = z.object({
+  ...laCommon,
+  la_head_type: z.literal("lcc"),
+  ...laLccFields,
+});
+
+const laPedLccSchema = z.object({
+  ...laCommon,
+  la_head_type: z.literal("ped_lcc"),
+  ...laPedFields,
+  ...laLccFields,
+});
+
+const laHeadLASchema = z.discriminatedUnion("la_head_type", [
+  laPedHeadSchema,
+  laLccSchema,
+  laPedLccSchema,
+]);
 
 const studentSchema = z.discriminatedUnion("feedback_type", [
   studentMidQuarterSchema,
@@ -212,22 +213,3 @@ export const feedbackFormSchema = z.discriminatedUnion("role", [
   taSchema,
   laHeadLASchema,
 ]) as unknown as z.ZodType<FeedbackFormValues, FeedbackFormValues>;
-
-// ---------------------------------------------------------------------------
-// Default values
-// ---------------------------------------------------------------------------
-
-const ARRAY_FIELDS: (keyof FeedbackFormValues)[] = [
-  "activities",
-  "la_head_type",
-  "groups",
-];
-
-const defaultValues = Object.fromEntries(
-  Object.keys(baseSchema.shape).map((key) => [
-    key,
-    ARRAY_FIELDS.includes(key as keyof FeedbackFormValues) ? [] : "",
-  ]),
-) as unknown as FeedbackFormValues;
-
-export { defaultValues };
