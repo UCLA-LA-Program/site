@@ -17,6 +17,7 @@ import { EndOfQuarterSection } from "./sections/end-of-quarter-section";
 import { MidQuarterSection } from "./sections/mid-quarter-section";
 import { TASection } from "./sections/ta-section";
 import { LAHeadLASection } from "./sections/la-head-la-section";
+import { ObservationSection } from "./sections/observation-section";
 import {
   COURSES,
   FEEDBACK_TYPE_OPTIONS,
@@ -356,10 +357,15 @@ export function FeedbackForm() {
         >
           {({ role, feedbackType }) =>
             role === "la" &&
-            feedbackType === "la_head_la" && (
+            feedbackType && (
               <>
                 <FieldSeparator />
-                <LAHeadLASection form={form} />
+                {feedbackType === "la_observation" && (
+                  <ObservationSection form={form} />
+                )}
+                {feedbackType === "la_head_la" && (
+                  <LAHeadLASection form={form} />
+                )}
               </>
             )
           }

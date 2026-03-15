@@ -97,6 +97,27 @@ const laFields = {
   ...laSharedFields,
 };
 
+const obsFields = {
+  obs_round: required("Please select a round"),
+  obs_section: required("Please describe the observed section"),
+  obs_la_position: required("Please select an LA position"),
+  obs_empathized: required("Please select a response"),
+  obs_redirected: required("Please select a response"),
+  obs_wait_time: required("Please select a response"),
+  obs_open_closed: required("Please select a response"),
+  obs_closed_check: required("Please select a response"),
+  obs_peer_names: required("Please select a response"),
+  obs_growth_mindset: required("Please select a response"),
+  obs_circulated: required("Please select a response"),
+  obs_environment: required("Please select a response"),
+  obs_familiarity: required("Please select a response"),
+  obs_devoted: required("Please select a response"),
+  obs_strengths: required("Please share the LA's strengths"),
+  obs_improve: required("Please share how the LA can improve"),
+  obs_pedagogy_techniques: z.string().optional(),
+  obs_comments: z.string().optional(),
+};
+
 const taFields = {
   ta_comfortable: required("Please select a response"),
   ta_circulates: required("Please select a response"),
@@ -122,6 +143,7 @@ export const baseSchema = z.object({
   ...mqFields,
   ...eqFields,
   ...laFields,
+  ...obsFields,
   ...taFields,
   ...closingFields,
 });
@@ -203,6 +225,18 @@ const laHeadLASchema = z.discriminatedUnion("la_head_type", [
   laPedLccSchema,
 ]);
 
+const laObservationSchema = z.object({
+  ...headerFields,
+  role: z.literal("la"),
+  feedback_type: z.literal("la_observation"),
+  ...obsFields,
+});
+
+const laSchema = z.discriminatedUnion("feedback_type", [
+  laObservationSchema,
+  laHeadLASchema,
+]);
+
 const studentSchema = z.discriminatedUnion("feedback_type", [
   studentMidQuarterSchema,
   studentEndOfQuarterSchema,
@@ -211,5 +245,5 @@ const studentSchema = z.discriminatedUnion("feedback_type", [
 export const feedbackFormSchema = z.discriminatedUnion("role", [
   studentSchema,
   taSchema,
-  laHeadLASchema,
+  laSchema,
 ]) as unknown as z.ZodType<FeedbackFormValues, FeedbackFormValues>;

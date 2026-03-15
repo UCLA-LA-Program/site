@@ -34,6 +34,23 @@ export const AGREEMENT_OPTIONS = [
   { value: "strongly_agree", label: "Strongly Agree" },
 ];
 
+export const OBSERVATION_OPTIONS = [
+  { value: "na", label: "N/A (no opportunities to do so)" },
+  { value: "not_yet", label: "Not yet" },
+  { value: "almost_never", label: "Almost never" },
+  { value: "sometimes", label: "Sometimes" },
+  {
+    value: "most_missed",
+    label: "Most of the time (because the LA missed opportunities)",
+  },
+  {
+    value: "most_instructor",
+    label:
+      "Most of the time (because the instructor was talking >50% of the time)",
+  },
+  { value: "always", label: "Always" },
+];
+
 export const ACTIVITIES = [
   { value: "discussion", label: "Discussion or lab section" },
   {
@@ -86,8 +103,7 @@ export const TA_QUESTIONS = [
   },
   {
     value: "ta_encourages",
-    label:
-      "The LA encourages participation and effort over correct answers...",
+    label: "The LA encourages participation and effort over correct answers...",
   },
   {
     value: "ta_creates",
@@ -126,7 +142,8 @@ export const LA_PED_QUESTIONS = [
   },
   {
     value: "la_ped_applies",
-    label: "My Head LA helps me apply pedagogy techniques to my content course.",
+    label:
+      "My Head LA helps me apply pedagogy techniques to my content course.",
   },
   {
     value: "la_ped_discusses",
@@ -224,6 +241,71 @@ export const GROUP_OPTIONS = [
   { value: "other_white", label: "Other White" },
   { value: "other", label: "Other (specify below)" },
   { value: "prefer_not_to_say", label: "Prefer not to say" },
+];
+
+export const OBSERVATION_ROUND_OPTIONS = [
+  { value: "round_1", label: "Observations Round 1 (Weeks 3-4)" },
+  { value: "round_2", label: "Observations Round 2 (Weeks 7-8)" },
+];
+
+export const LA_POSITION_OPTIONS = [
+  { value: "new_la", label: "New LA" },
+  { value: "returning_la", label: "Returning LA" },
+  { value: "ped_head", label: "Pedagogy Head LA" },
+  { value: "lcc", label: "LA Course Coordinator (LCC)" },
+  { value: "lcc_ped_head", label: "LCC + Pedagogy Head LA" },
+];
+
+export const OBSERVATION_QUESTIONS = [
+  {
+    value: "obs_empathized",
+    label: "The LA empathized with struggling peers...",
+  },
+  {
+    value: "obs_redirected",
+    label: "The LA redirected questions to foster collaboration...",
+  },
+  { value: "obs_wait_time", label: "The LA used wait time..." },
+  {
+    value: "obs_open_closed",
+    label:
+      "The LA asked a mix of open and closed questions to encourage engagement...",
+  },
+  {
+    value: "obs_closed_check",
+    label:
+      "The LA asked closed questions to check for understanding before moving on...",
+  },
+  {
+    value: "obs_peer_names",
+    label:
+      "The LA used peer names (even those that are harder to pronounce)...",
+  },
+  {
+    value: "obs_growth_mindset",
+    label:
+      "The LA used growth mindset feedback (e.g., encouraging participation and effort over correct answers)...",
+  },
+  {
+    value: "obs_circulated",
+    label:
+      "The LA circulated so that every group got to interact with an LA during the section...",
+  },
+  {
+    value: "obs_environment",
+    label:
+      "The LA created an environment within each group where every group member was engaged...",
+  },
+  {
+    value: "obs_familiarity",
+    label:
+      "The LA demonstrated familiarity with the material (and/or asked the TA when needed)...",
+  },
+  {
+    value: "obs_devoted",
+    label:
+      "The LA devoted their attention to their peers and did not become distracted...",
+  },
 ];
 
 export const MID_QUARTER_QUESTIONS = [
