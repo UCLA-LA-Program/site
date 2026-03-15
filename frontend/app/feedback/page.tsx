@@ -8,7 +8,7 @@ export const metadata: Metadata = {
 export default function FeedbackPage() {
   return (
     <main className="flex flex-1 flex-col items-center justify-start px-8 py-12">
-      <div className="animate-fade-up w-full max-w-2xl">
+      <div className="animate-fade-up w-full max-w-3xl">
         <div className="mb-8">
           <h1 className="mb-2 text-2xl font-bold tracking-tight">
             General LA Feedback Form
