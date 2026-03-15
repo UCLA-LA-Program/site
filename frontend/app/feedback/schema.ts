@@ -3,84 +3,20 @@ import { isValid as luhnIsValid } from "luhn-js";
 
 const required = (msg: string) => z.string().min(1, msg);
 
-const baseSchema = z.object({
-  // Header fields
+// ---------------------------------------------------------------------------
+// Shared field groups
+// ---------------------------------------------------------------------------
+
+const headerFields = {
   name: required("Name is required"),
-  email: z
-    .string()
-    .min(1, "Email is required")
-    .email("Please enter a valid email"),
-  role: required("Please select a role"),
+  email: z.email("Please enter a valid email"),
   course: required("Please select a course"),
   la: required("Please select an LA"),
+};
 
-  // Conditionally required — student only
-  feedback_type: z.string(),
-  activities: z.array(z.string()),
-  hours: z.string(),
-
-  // Mid-quarter fields
-  mq_approachable: z.string(),
-  mq_helpful: z.string(),
-  mq_familiar: z.string(),
-  mq_engagement: z.string(),
-  mq_questioning: z.string(),
-  mq_supportive: z.string(),
-  mq_name: z.string(),
-  mq_belonging: z.string(),
-  mq_checkin: z.string(),
-  mq_small_groups: z.string(),
-  mq_strengths: z.string(),
-  mq_improve: z.string(),
-  mq_course_change: z.string(),
-  mq_study_habits: z.string().optional(),
-
-  // End-of-quarter fields
-  eq_approachability: z.string(),
-  eq_helpfulness: z.string(),
-  eq_familiarity: z.string(),
-  eq_engagement: z.string(),
-  eq_questioning: z.string(),
-  eq_supportiveness: z.string(),
-  eq_name_use: z.string(),
-  eq_belonging_stem: z.string(),
-  eq_group_belonging: z.string(),
-  eq_group_reliance: z.string(),
-  eq_comments: z.string(),
-
-  // LA Head LA fields
-  la_head_type: z.array(z.string()),
-  la_ped_seminars: z.string(),
-  la_ped_applies: z.string(),
-  la_ped_discusses: z.string(),
-  la_ped_feedback: z.string(),
-  la_ped_content_meeting: z.string(),
-  la_lcc_emails: z.string(),
-  la_lcc_comfortable: z.string(),
-  la_lcc_answers: z.string(),
-  la_lcc_announcements: z.string(),
-  la_lcc_expectations: z.string(),
-  la_strengths: z.string(),
-  la_improve: z.string(),
-
-  // TA fields
-  ta_comfortable: z.string(),
-  ta_circulates: z.string(),
-  ta_peer_names: z.string(),
-  ta_devotes: z.string(),
-  ta_empathizes: z.string(),
-  ta_redirects: z.string(),
-  ta_waits: z.string(),
-  ta_checks: z.string(),
-  ta_encourages: z.string(),
-  ta_creates: z.string(),
-  ta_strengths: z.string(),
-  ta_improve: z.string(),
-  ta_comments: z.string().optional(),
-
-  // Closing fields — student only
+const closingFields = {
+  become_la: required("Please select an option"),
   courses_without_las: z.string().optional(),
-  become_la: z.string(),
   uid: z
     .string()
     .refine(
@@ -95,181 +31,203 @@ const baseSchema = z.object({
   groups: z.array(z.string()).optional(),
   group_other: z.string().optional(),
   la_program_comments: z.string().optional(),
-});
+};
 
-function req(
-  ctx: z.RefinementCtx,
-  val: string | undefined,
-  path: string,
-  message: string,
-) {
-  if (!val || val.length === 0) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: [path], message });
-  }
-}
+const studentSharedFields = {
+  activities: z.array(z.string()).min(1, "Please select at least one activity"),
+  hours: required("Please enter hours"),
+};
 
-export const feedbackFormSchema = baseSchema.superRefine((data, ctx) => {
-  if (data.role === "student") {
-    req(ctx, data.feedback_type, "feedback_type", "Please select a feedback type");
-    if (!data.activities.length) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["activities"],
-        message: "Please select at least one activity",
-      });
-    }
-    req(ctx, data.hours, "hours", "Please enter hours");
+const mqFields = {
+  mq_approachable: required("Please select a response"),
+  mq_helpful: required("Please select a response"),
+  mq_familiar: required("Please select a response"),
+  mq_engagement: required("Please select a response"),
+  mq_questioning: required("Please select a response"),
+  mq_supportive: required("Please select a response"),
+  mq_name: required("Please select a response"),
+  mq_belonging: required("Please select a response"),
+  mq_checkin: required("Please select a response"),
+  mq_small_groups: required("Please select a response"),
+  mq_strengths: required("Please share your LA's strengths"),
+  mq_improve: required("Please share how your LA can improve"),
+  mq_course_change: required("Please share what you would change"),
+  mq_study_habits: z.string().optional(),
+};
 
-    if (data.feedback_type === "mid_quarter") {
-      req(ctx, data.mq_approachable, "mq_approachable", "Please select a response");
-      req(ctx, data.mq_helpful, "mq_helpful", "Please select a response");
-      req(ctx, data.mq_familiar, "mq_familiar", "Please select a response");
-      req(ctx, data.mq_engagement, "mq_engagement", "Please select a response");
-      req(ctx, data.mq_questioning, "mq_questioning", "Please select a response");
-      req(ctx, data.mq_supportive, "mq_supportive", "Please select a response");
-      req(ctx, data.mq_name, "mq_name", "Please select a response");
-      req(ctx, data.mq_belonging, "mq_belonging", "Please select a response");
-      req(ctx, data.mq_checkin, "mq_checkin", "Please select a response");
-      req(ctx, data.mq_small_groups, "mq_small_groups", "Please select a response");
-      req(ctx, data.mq_strengths, "mq_strengths", "Please share your LA's strengths");
-      req(ctx, data.mq_improve, "mq_improve", "Please share how your LA can improve");
-      req(ctx, data.mq_course_change, "mq_course_change", "Please share what you would change");
-    }
+const eqFields = {
+  eq_approachability: required("Please select a response"),
+  eq_helpfulness: required("Please select a response"),
+  eq_familiarity: required("Please select a response"),
+  eq_engagement: required("Please select a response"),
+  eq_questioning: required("Please select a response"),
+  eq_supportiveness: required("Please select a response"),
+  eq_name_use: required("Please select a response"),
+  eq_belonging_stem: required("Please select a response"),
+  eq_group_belonging: required("Please select a response"),
+  eq_group_reliance: required("Please select a response"),
+  eq_comments: required("Please share any final comments"),
+};
 
-    if (data.feedback_type === "end_of_quarter") {
-      req(ctx, data.eq_approachability, "eq_approachability", "Please select a response");
-      req(ctx, data.eq_helpfulness, "eq_helpfulness", "Please select a response");
-      req(ctx, data.eq_familiarity, "eq_familiarity", "Please select a response");
-      req(ctx, data.eq_engagement, "eq_engagement", "Please select a response");
-      req(ctx, data.eq_questioning, "eq_questioning", "Please select a response");
-      req(ctx, data.eq_supportiveness, "eq_supportiveness", "Please select a response");
-      req(ctx, data.eq_name_use, "eq_name_use", "Please select a response");
-      req(ctx, data.eq_belonging_stem, "eq_belonging_stem", "Please select a response");
-      req(ctx, data.eq_group_belonging, "eq_group_belonging", "Please select a response");
-      req(ctx, data.eq_group_reliance, "eq_group_reliance", "Please select a response");
-      req(ctx, data.eq_comments, "eq_comments", "Please share any final comments");
-    }
+const laFields = {
+  la_head_type: z.array(z.string()),
+  la_ped_seminars: z.string(),
+  la_ped_applies: z.string(),
+  la_ped_discusses: z.string(),
+  la_ped_feedback: z.string(),
+  la_ped_content_meeting: z.string(),
+  la_lcc_emails: z.string(),
+  la_lcc_comfortable: z.string(),
+  la_lcc_answers: z.string(),
+  la_lcc_announcements: z.string(),
+  la_lcc_expectations: z.string(),
+  la_strengths: z.string(),
+  la_improve: z.string(),
+};
 
-    req(ctx, data.become_la, "become_la", "Please select an option");
-  }
+const taFields = {
+  ta_comfortable: required("Please select a response"),
+  ta_circulates: required("Please select a response"),
+  ta_peer_names: required("Please select a response"),
+  ta_devotes: required("Please select a response"),
+  ta_empathizes: required("Please select a response"),
+  ta_redirects: required("Please select a response"),
+  ta_waits: required("Please select a response"),
+  ta_checks: required("Please select a response"),
+  ta_encourages: required("Please select a response"),
+  ta_creates: required("Please select a response"),
+  ta_strengths: required("Please share the LA's strengths"),
+  ta_improve: required("Please share how the LA can improve"),
+  ta_comments: z.string().optional(),
+};
 
-  if (data.role === "la" && data.feedback_type === "la_head_la") {
-    if (!data.la_head_type.length) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["la_head_type"],
-        message: "Please select at least one option",
-      });
-    }
-    if (data.la_head_type.includes("ped_head")) {
-      req(ctx, data.la_ped_seminars, "la_ped_seminars", "Please select a response");
-      req(ctx, data.la_ped_applies, "la_ped_applies", "Please select a response");
-      req(ctx, data.la_ped_discusses, "la_ped_discusses", "Please select a response");
-      req(ctx, data.la_ped_feedback, "la_ped_feedback", "Please select a response");
-      req(ctx, data.la_ped_content_meeting, "la_ped_content_meeting", "Please select a response");
-    }
-    if (data.la_head_type.includes("lcc")) {
-      req(ctx, data.la_lcc_emails, "la_lcc_emails", "Please select a response");
-      req(ctx, data.la_lcc_comfortable, "la_lcc_comfortable", "Please select a response");
-      req(ctx, data.la_lcc_answers, "la_lcc_answers", "Please select a response");
-      req(ctx, data.la_lcc_announcements, "la_lcc_announcements", "Please select a response");
-      req(ctx, data.la_lcc_expectations, "la_lcc_expectations", "Please select a response");
-    }
-    req(ctx, data.la_strengths, "la_strengths", "Please share your Head LA's strengths");
-    req(ctx, data.la_improve, "la_improve", "Please share how your Head LA can improve");
-  }
-
-  if (data.role === "ta") {
-    req(ctx, data.ta_comfortable, "ta_comfortable", "Please select a response");
-    req(ctx, data.ta_circulates, "ta_circulates", "Please select a response");
-    req(ctx, data.ta_peer_names, "ta_peer_names", "Please select a response");
-    req(ctx, data.ta_devotes, "ta_devotes", "Please select a response");
-    req(ctx, data.ta_empathizes, "ta_empathizes", "Please select a response");
-    req(ctx, data.ta_redirects, "ta_redirects", "Please select a response");
-    req(ctx, data.ta_waits, "ta_waits", "Please select a response");
-    req(ctx, data.ta_checks, "ta_checks", "Please select a response");
-    req(ctx, data.ta_encourages, "ta_encourages", "Please select a response");
-    req(ctx, data.ta_creates, "ta_creates", "Please select a response");
-    req(ctx, data.ta_strengths, "ta_strengths", "Please share the LA's strengths");
-    req(ctx, data.ta_improve, "ta_improve", "Please share how the LA can improve");
-  }
+// Built from field groups — single source of truth for FeedbackFormValues
+export const baseSchema = z.object({
+  ...headerFields,
+  role: z.string(),
+  feedback_type: z.string(),
+  ...studentSharedFields,
+  ...mqFields,
+  ...eqFields,
+  ...laFields,
+  ...taFields,
+  ...closingFields,
 });
 
 export type FeedbackFormValues = z.infer<typeof baseSchema>;
 
-const defaultValues: FeedbackFormValues = {
-  name: "",
-  email: "",
-  role: "",
-  course: "",
-  la: "",
-  feedback_type: "",
-  activities: [],
-  hours: "",
+// ---------------------------------------------------------------------------
+// Variant schemas
+// ---------------------------------------------------------------------------
 
-  mq_approachable: "",
-  mq_helpful: "",
-  mq_familiar: "",
-  mq_engagement: "",
-  mq_questioning: "",
-  mq_supportive: "",
-  mq_name: "",
-  mq_belonging: "",
-  mq_checkin: "",
-  mq_small_groups: "",
-  mq_strengths: "",
-  mq_improve: "",
-  mq_course_change: "",
-  mq_study_habits: "",
+const studentMidQuarterSchema = z.object({
+  ...headerFields,
+  role: z.literal("student"),
+  feedback_type: z.literal("mid_quarter"),
+  ...studentSharedFields,
+  ...mqFields,
+  ...closingFields,
+});
 
-  eq_approachability: "",
-  eq_helpfulness: "",
-  eq_familiarity: "",
-  eq_engagement: "",
-  eq_questioning: "",
-  eq_supportiveness: "",
-  eq_name_use: "",
-  eq_belonging_stem: "",
-  eq_group_belonging: "",
-  eq_group_reliance: "",
-  eq_comments: "",
+const studentEndOfQuarterSchema = z.object({
+  ...headerFields,
+  role: z.literal("student"),
+  feedback_type: z.literal("end_of_quarter"),
+  ...studentSharedFields,
+  ...eqFields,
+  ...closingFields,
+});
 
-  la_head_type: [],
-  la_ped_seminars: "",
-  la_ped_applies: "",
-  la_ped_discusses: "",
-  la_ped_feedback: "",
-  la_ped_content_meeting: "",
-  la_lcc_emails: "",
-  la_lcc_comfortable: "",
-  la_lcc_answers: "",
-  la_lcc_announcements: "",
-  la_lcc_expectations: "",
-  la_strengths: "",
-  la_improve: "",
+const taSchema = z.object({
+  ...headerFields,
+  role: z.literal("ta"),
+  ...taFields,
+});
 
-  ta_comfortable: "",
-  ta_circulates: "",
-  ta_peer_names: "",
-  ta_devotes: "",
-  ta_empathizes: "",
-  ta_redirects: "",
-  ta_waits: "",
-  ta_checks: "",
-  ta_encourages: "",
-  ta_creates: "",
-  ta_strengths: "",
-  ta_improve: "",
-  ta_comments: "",
+const laHeadLASchema = z
+  .object({
+    ...headerFields,
+    role: z.literal("la"),
+    feedback_type: z.literal("la_head_la"),
+    la_head_type: z
+      .array(z.string())
+      .min(1, "Please select at least one option"),
+    la_ped_seminars: z.string().optional(),
+    la_ped_applies: z.string().optional(),
+    la_ped_discusses: z.string().optional(),
+    la_ped_feedback: z.string().optional(),
+    la_ped_content_meeting: z.string().optional(),
+    la_lcc_emails: z.string().optional(),
+    la_lcc_comfortable: z.string().optional(),
+    la_lcc_answers: z.string().optional(),
+    la_lcc_announcements: z.string().optional(),
+    la_lcc_expectations: z.string().optional(),
+    la_strengths: required("Please share your Head LA's strengths"),
+    la_improve: required("Please share how your Head LA can improve"),
+  })
+  .superRefine((data, ctx) => {
+    if (data.la_head_type.includes("ped_head")) {
+      for (const [field, msg] of [
+        ["la_ped_seminars", "Please select a response"],
+        ["la_ped_applies", "Please select a response"],
+        ["la_ped_discusses", "Please select a response"],
+        ["la_ped_feedback", "Please select a response"],
+        ["la_ped_content_meeting", "Please select a response"],
+      ] as const) {
+        if (!data[field]) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [field],
+            message: msg,
+          });
+        }
+      }
+    }
+    if (data.la_head_type.includes("lcc")) {
+      for (const [field, msg] of [
+        ["la_lcc_emails", "Please select a response"],
+        ["la_lcc_comfortable", "Please select a response"],
+        ["la_lcc_answers", "Please select a response"],
+        ["la_lcc_announcements", "Please select a response"],
+        ["la_lcc_expectations", "Please select a response"],
+      ] as const) {
+        if (!data[field]) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            path: [field],
+            message: msg,
+          });
+        }
+      }
+    }
+  });
 
-  courses_without_las: "",
-  become_la: "",
-  uid: "",
-  gender: "",
-  gender_other: "",
-  groups: [],
-  group_other: "",
-  la_program_comments: "",
-};
+const studentSchema = z.discriminatedUnion("feedback_type", [
+  studentMidQuarterSchema,
+  studentEndOfQuarterSchema,
+]);
+
+export const feedbackFormSchema = z.discriminatedUnion("role", [
+  studentSchema,
+  taSchema,
+  laHeadLASchema,
+]) as unknown as z.ZodType<FeedbackFormValues, FeedbackFormValues>;
+
+// ---------------------------------------------------------------------------
+// Default values
+// ---------------------------------------------------------------------------
+
+const ARRAY_FIELDS: (keyof FeedbackFormValues)[] = [
+  "activities",
+  "la_head_type",
+  "groups",
+];
+
+const defaultValues = Object.fromEntries(
+  Object.keys(baseSchema.shape).map((key) => [
+    key,
+    ARRAY_FIELDS.includes(key as keyof FeedbackFormValues) ? [] : "",
+  ]),
+) as unknown as FeedbackFormValues;
 
 export { defaultValues };

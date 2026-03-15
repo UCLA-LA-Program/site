@@ -22,7 +22,7 @@ To develop the app, run:
 ```bash
 cd frontend
 npm i
-npm run start
+npm run dev
 ```
 
 This starts a Next.js development server in the `frontend` directory at <http://localhost:3000>. You can see any changes you make in real time here. For more information, including in-depth development patterns, please read [frontend/README.md](frontend/README.md) before proceeding.

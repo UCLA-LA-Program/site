@@ -27,7 +27,11 @@ export const LikertField = withForm({
               type="single"
               variant="outline"
               className="w-full items-stretch"
-              value={field.state.value}
+              value={
+                typeof field.state.value === "object"
+                  ? field.state.value[0]
+                  : field.state.value
+              }
               onValueChange={(value) => {
                 field.handleChange(value ?? "");
                 field.handleBlur();
