@@ -143,5 +143,5 @@ jobs:
         if: ${{ steps.apply_api_url.outputs.skip_redeploy != 'true' }}
         run: |
           BRANCH="${{ github.head_ref }}"
-          DEPLOYMENT_URL=$(vercel ls --token="$VERCEL_TOKEN" --no-color 2>/dev/null | grep "$BRANCH" | head -1 | awk '{print $2}')
+          DEPLOYMENT_URL="laprogram-git-$BRANCH-xalbd-team.vercel.app"
           vercel redeploy "$DEPLOYMENT_URL" --token="$VERCEL_TOKEN" --no-color --no-wait
