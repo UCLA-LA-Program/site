@@ -10,13 +10,12 @@ env:
   AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   TF_IN_AUTOMATION: true
 
-defaults:
-  run:
-    working-directory: ./terraform/dev
-
 jobs:
   terraform:
     name: "Terraform PR Preview Deployment"
+    defaults:
+      run:
+        working-directory: ./terraform/dev
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -106,3 +105,42 @@ jobs:
                 body
               });
             }
+
+  vercel-preview:
+    name: "Update Vercel Preview Environment"
+    runs-on: ubuntu-latest
+    needs: terraform
+    if: ${{ needs.terraform.outputs.api_url != '' }}
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    outputs:
+      skip_redeploy: ${{ steps.apply_api_url.outputs.skip_redeploy }}
+
+    steps:
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Check and update NEXT_PUBLIC_API_URL
+        id: apply_api_url
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          API_URL="${{ needs.terraform.outputs.api_url }}"
+          CURRENT=$(vercel env pull /dev/stdout --environment preview --git-branch "$BRANCH" --token="$VERCEL_TOKEN" --no-color | grep "NEXT_PUBLIC_API_URL" || true)
+
+          if [ "$CURRENT" = "NEXT_PUBLIC_API_URL=$API_URL" ]; then
+            echo "NEXT_PUBLIC_API_URL already set to correct value, skipping."
+            echo "skip_redeploy=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          echo "$API_URL" | vercel env add NEXT_PUBLIC_API_URL preview "$BRANCH" --token="$VERCEL_TOKEN" --force --no-color
+          echo "Set NEXT_PUBLIC_API_URL=$API_URL for branch $BRANCH"
+
+      - name: Redeploy Vercel preview
+        if: ${{ steps.apply_api_url.outputs.skip_redeploy != 'true' }}
+        run: |
+          BRANCH="${{ github.head_ref }}"
+          DEPLOYMENT_URL=$(vercel ls --token="$VERCEL_TOKEN" --no-color 2>/dev/null | grep "$BRANCH" | head -1 | awk '{print $2}')
+          vercel redeploy "$DEPLOYMENT_URL" --token="$VERCEL_TOKEN" --no-color --no-wait
