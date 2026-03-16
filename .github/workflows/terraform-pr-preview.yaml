@@ -108,9 +108,6 @@ jobs:
 
   vercel-preview:
     name: "Update Vercel Preview Environment"
-    defaults:
-      run:
-        working-directory: ./frontend
     runs-on: ubuntu-latest
     needs: terraform
     if: ${{ needs.terraform.outputs.api_url != '' }}
