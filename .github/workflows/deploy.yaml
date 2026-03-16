@@ -2,9 +2,6 @@ name: "Production Deployment"
 on:
   push:
     branches: [main]
-  pull_request:
-    branches: [main]
-    types: [closed]
 
 env:
   AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -15,14 +12,27 @@ jobs:
   terraform:
     name: "Terraform Production Deployment"
     runs-on: ubuntu-latest
-    if: ${{ github.event.pull_request.merged == true }}
-
     permissions:
       contents: read
+      pull-requests: read
 
     steps:
       - name: Checkout
         uses: actions/checkout@v6
+
+      - name: Get PR
+        uses: actions/github-script@v8
+        id: get_pr
+        with:
+          script: |
+            const response = await github.rest.repos.listPullRequestsAssociatedWithCommit({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              commit_sha: context.sha,
+            });
+
+            const pr = response.data.length > 0 ? response.data[0] : null;
+            core.setOutput('pr_number', pr ? pr.number : '');
 
       - name: Set up Terraform
         uses: hashicorp/setup-terraform@v4
@@ -36,11 +46,11 @@ jobs:
       - name: Destroy Preview Terraform Deployment
         working-directory: ./terraform/dev
         run: |
-          if terraform workspace list | grep -q "pr${{ github.event.number }}"; then
-            terraform workspace select pr${{ github.event.number }}
+          if terraform workspace list | grep -q "pr${{ steps.get_pr.outputs.pr_number }}"; then
+            terraform workspace select pr${{ steps.get_pr.outputs.pr_number }}
             terraform destroy -auto-approve -no-color
             terraform workspace select default
-            terraform workspace delete pr${{ github.event.number }}
+            terraform workspace delete pr${{ steps.get_pr.outputs.pr_number }}
           fi
 
       - name: Terraform Init (Release)
