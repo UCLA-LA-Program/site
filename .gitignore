@@ -1,0 +1,5 @@
+# Remove LLM skills as they are too large and clog commits
+# Perhaps find a better way to share these later; at the moment simply
+# use skills-lock.json to get the current skills.
+.agents/
+.claude/

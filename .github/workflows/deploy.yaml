@@ -1,5 +1,7 @@
 name: "Production Deployment"
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
     types: [closed]
@@ -34,7 +36,7 @@ jobs:
       - name: Destroy Preview Terraform Deployment
         working-directory: ./terraform/dev
         run: |
-          if terraform workspace show | grep -q "pr${{ github.event.number }}"; then
+          if terraform workspace list | grep -q "pr${{ github.event.number }}"; then
             terraform workspace select pr${{ github.event.number }}
             terraform destroy -auto-approve -no-color
             terraform workspace select default
