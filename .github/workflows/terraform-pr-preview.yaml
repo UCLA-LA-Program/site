@@ -144,4 +144,4 @@ jobs:
         run: |
           BRANCH="${{ github.head_ref }}"
           DEPLOYMENT_URL="laprogram-git-$BRANCH-xalbd-team.vercel.app"
-          vercel redeploy "$DEPLOYMENT_URL" --token="$VERCEL_TOKEN" --no-color --no-wait
+          vercel redeploy "$DEPLOYMENT_URL" --token="$VERCEL_TOKEN" --scope xalbd-team --no-color --no-wait
