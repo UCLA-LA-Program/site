@@ -127,6 +127,7 @@ jobs:
         run: |
           BRANCH="${{ github.head_ref }}"
           API_URL="${{ needs.terraform.outputs.api_url }}"
+          vercel env pull /dev/stdout --environment preview --git-branch "$BRANCH" --token="$VERCEL_TOKEN" --no-color 
           CURRENT=$(vercel env pull /dev/stdout --environment preview --git-branch "$BRANCH" --token="$VERCEL_TOKEN" --no-color | grep "NEXT_PUBLIC_API_URL" || true)
 
           if [ "$CURRENT" = "NEXT_PUBLIC_API_URL=$API_URL" ]; then
