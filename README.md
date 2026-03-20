@@ -1,36 +1,55 @@
 # UCLA Learning Assistant Website
 
-This monorepo contains the code for the Learning Assistant website at UCLA. This is not an informational website; it is actively used by both LAs and PDT to manage the feedback and observation cycle each quarter.
+This repository contains the code for the Learning Assistant website at UCLA. This is not an informational website; it is actively used by both LAs and PDT to manage the feedback and observation cycle each quarter.
 
 Please visit <https://www.laprogramucla.com> to see the production website.
 
-## Development Requirements/Tech Stack
+## Tech Stack
 
-- Node.js (preferably LTS)
-- Python 3.14
+- **Next.js 16** (App Router) with React 19, TypeScript, Tailwind CSS v4, shadcn/ui
+- **Cloudflare Workers** — hosting via the [OpenNext Cloudflare adapter](https://opennext.js.org/cloudflare)
+- **Cloudflare D1** — SQLite database for auth and app data
+- **BetterAuth** — authentication with magic link login
+- **Kysely** — type-safe SQL query builder (with `kysely-d1` for D1)
 
-We use:
-
-- Next.js on the frontend deployed through Vercel
-- Python on the backend run through AWS Lambdas
-- AWS for infrastructure, managed using Terraform
-
-### Frontend/Backend
-
-To develop the app, run:
+## Getting Started
 
 ```bash
-cd frontend
+cd laprogram
 npm i
 npm run dev
 ```
 
-This starts a Next.js development server in the `frontend` directory at <http://localhost:3000>. You can see any changes you make in real time here. For more information, including in-depth development patterns, please read [frontend/README.md](frontend/README.md) before proceeding.
+This starts a Next.js development server at <http://localhost:3000>.
 
-To develop API routes, make any changes you wish to make to `backend`, then make a PR targeting `main`. Please refer to [backend/README.md](backend/README.md) for more information on how to access AWS resources in a way that allows for both test and production deployments with the same code.
+To preview on the local Cloudflare Workers runtime (closer to production):
 
-Once the Github Actions pipelines run, check the PR for a comment with instructions on how to set your environment variables properly to allow your locally hosted app to access a testing version of the API; this will let you test front-end and back-end changes together without affecting production data.
+```bash
+npm run preview
+```
 
-### Infrastructure
+Copy `.env.example` to `.env` and fill in the required values. See [laprogram/README.md](laprogram/README.md) for more details.
 
-Please refer to [terraform/README.md](terraform/README.md) for more information. This should not need to be edited more than roughly once a quarter (for new database deployments).
+## Deploying
+
+```bash
+cd laprogram
+npm run deploy
+```
+
+This builds the app with the OpenNext adapter and deploys to Cloudflare Workers via Wrangler. Secrets (like `BETTER_AUTH_SECRET`) are managed with `npx wrangler secret put <NAME>`.
+
+## Project Structure
+
+```
+laprogram/              Full-stack Next.js app
+├── app/                File-based routing (pages + API routes)
+│   ├── api/auth/       BetterAuth catch-all route
+│   ├── feedback/       Feedback form (main feature)
+│   └── login/          Magic link login
+├── components/ui/      shadcn components
+├── lib/                Auth config, utilities
+├── migrations/         D1 database migrations
+├── wrangler.jsonc      Cloudflare Workers config
+└── open-next.config.ts OpenNext adapter config
+```

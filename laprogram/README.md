@@ -1,24 +1,12 @@
-# Frontend
+# LA Program App
 
-This is a [Next.js](https://nextjs.org/docs) project.
-
-## Technical Guide
-
-We use a subset of Next.js features in order to ease development and reduce cost. These include that we:
-
-- use the App Router
-- do not use Vercel for anything other than front-end deployment (all API routes are deployed through Lambdas)
-- minimize usage of Next.js Route Handlers
-- minimize usage of SSR (server-side rendering) as this app does not require SEO optimization and we wish to minimize requests to Vercel
-
-In addition, we use [shadcn](https://ui.shadcn.com/docs/components) as our component/styling library. We aim to minimize custom styling to ease development.
+Full-stack [Next.js](https://nextjs.org/docs) app deployed to [Cloudflare Workers](https://developers.cloudflare.com/workers/) via the [OpenNext adapter](https://opennext.js.org/cloudflare).
 
 ## Getting Started
 
-First, install dependencies.
+Install dependencies:
 
 ```bash
-cd frontend
 npm i
 ```
 
@@ -28,19 +16,78 @@ Run the development server:
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000) to see the app.
 
-Edit the `page.tsx` files in `/app` to change the site's contents. Please read the codebase and the [Next.js docs](https://nextjs.org/docs) for more information.
+To preview on the local Cloudflare Workers runtime (uses Wrangler + Miniflare under the hood, includes D1 and other bindings):
 
-## API Access
+```bash
+npm run preview
+```
 
-> [!WARNING]
-> Do not hardcode API routes. Instead, set the `NEXT_PUBLIC_API_ROUTE` environment variable while developing. This ensures your API calls will work on the production deployment as this URL changes between test and production deployments.
+### Environment Variables
 
-You can get a test API URL by making a PR on Github. More information is in [the root README.md](../README.md).
+Copy `.env.example` to `.env` and fill in the values:
 
-You can set the environment variable by making a copy of `.env.example`, naming it `.env`, and setting the environment variable there. Next.js automatically loads this variable upon starting the development server.
+- `BETTER_AUTH_SECRET` — secret for signing auth tokens
+- `BETTER_AUTH_URL` — base URL of the app (`http://localhost:8787` for local preview, `http://localhost:3000` for `npm run dev`)
+- `NEXT_PUBLIC_API_URL` — API base URL (if needed)
+
+For the Cloudflare preview/deploy runtime, local env vars go in `.dev.vars`.
+
+## Deploying
+
+```bash
+npm run deploy
+```
+
+This builds with OpenNext and deploys to Cloudflare Workers. Production secrets are set with:
+
+```bash
+npx wrangler secret put BETTER_AUTH_SECRET
+```
+
+## Cloudflare Bindings
+
+All Cloudflare resources are declared in `wrangler.jsonc`. Access them in server-side code:
+
+```ts
+import { getCloudflareContext } from "@opennextjs/cloudflare";
+
+const { env } = await getCloudflareContext({ async: true });
+env.auth_db   // D1 database
+env.IMAGES    // Cloudflare Images
+```
+
+After editing `wrangler.jsonc`, regenerate TypeScript types:
+
+```bash
+npm run cf-typegen
+```
+
+## Database (D1)
+
+Migrations live in `migrations/auth_db/`. Common commands:
+
+```bash
+# Create a new migration
+npx wrangler d1 migrations create auth_db "description"
+
+# Apply migrations locally
+npx wrangler d1 migrations apply auth_db --local
+
+# Apply migrations to production
+npx wrangler d1 migrations apply auth_db --remote
+
+# Query production D1
+npx wrangler d1 execute auth_db --remote --command "SELECT * FROM user"
+```
 
 ## Styling
 
-Use shadcn to add components. Use the `npx` command listed in the component documentation to add it to the project.
+Use shadcn to add components:
+
+```bash
+npx shadcn add <component>
+```
+
+Never copy-paste shadcn component source manually — always use the CLI.
