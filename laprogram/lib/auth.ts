@@ -1,5 +1,5 @@
 import { Awaitable, betterAuth, GenericEndpointContext } from "better-auth";
-import { magicLink } from "better-auth/plugins";
+import { admin, magicLink } from "better-auth/plugins";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { Kysely } from "kysely";
 import { D1Dialect } from "kysely-d1";
@@ -34,6 +34,7 @@ async function authBuilder() {
           console.log(data.url);
         },
       }),
+      admin(),
     ],
   });
 }
