@@ -1,20 +1,3 @@
-export const COURSES = [
-  "CS 31 – Introduction to Computer Science I",
-  "CS 32 – Object-Oriented Programming",
-  "CS 33 – Introduction to Computer Organization",
-  "CS 35L – Software Construction Laboratory",
-  "MATH 31A – Differential and Integral Calculus",
-  "MATH 31B – Integration and Infinite Series",
-  "MATH 32A – Calculus of Several Variables",
-  "PHYSICS 1A – Physics for Scientists and Engineers",
-  "PHYSICS 1B – Physics for Scientists and Engineers",
-  "CHEM 14A – Atomic and Molecular Structure",
-  "CHEM 14B – Thermodynamics and Kinetics",
-  "No LA",
-];
-
-export const LAS = ["AAAA", "BBBB", "CCCC", "No LA"];
-
 export const IMPROVEMENT_OPTIONS = [
   { value: "na", label: "N/A" },
   { value: "no_change", label: "No change, but still room to improve" },

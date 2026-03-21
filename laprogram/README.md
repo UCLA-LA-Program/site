@@ -53,7 +53,7 @@ All Cloudflare resources are declared in `wrangler.jsonc`. Access them in server
 ```ts
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-const { env } = await getCloudflareContext({ async: true });
+const { env } = getCloudflareContext();
 env.data      // D1 database (auth + app tables)
 env.IMAGES    // Cloudflare Images
 ```

@@ -1,3 +1,5 @@
+import "server-only";
+
 import { Awaitable, betterAuth, GenericEndpointContext } from "better-auth";
 import { admin, magicLink } from "better-auth/plugins";
 import { getCloudflareContext } from "@opennextjs/cloudflare";

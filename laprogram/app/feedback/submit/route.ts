@@ -3,10 +3,7 @@ import { headers } from "next/headers";
 import { feedbackFormSchema } from "../schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { v7 as uuidv7 } from "uuid";
-
-type Id = {
-  id: string;
-};
+import { Id } from "@/types/db";
 
 export async function POST(request: Request) {
   const auth = await getAuth();
@@ -23,10 +20,10 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { env } = await getCloudflareContext({ async: true });
+    const { env } = getCloudflareContext();
     const recipient = await env.data
       ?.prepare(
-        `SELECT user.id 
+        `SELECT user.id AS id
       FROM course
       JOIN user ON course.userId = user.id
       WHERE user.name = ?1 AND course.course_name = ?2`,

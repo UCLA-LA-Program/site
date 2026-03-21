@@ -19,10 +19,8 @@ import { TASection } from "./sections/ta-section";
 import { LAHeadLASection } from "./sections/la-head-la-section";
 import { ObservationSection } from "./sections/observation-section";
 import {
-  COURSES,
   FEEDBACK_TYPE_OPTIONS,
   LA_FEEDBACK_TYPE_OPTIONS,
-  LAS,
   ROLE_OPTIONS,
 } from "../constants";
 import { useAppForm } from "../form";
@@ -35,8 +33,13 @@ import {
   ComboboxEmpty,
   ComboboxList,
 } from "@/components/ui/combobox";
+import { LA } from "@/types/db";
+import useSWR from "swr";
+import { fetcher } from "@/lib/utils";
 
 export function FeedbackForm() {
+  const { data: las } = useSWR<LA[]>("/api/la", fetcher);
+
   const form = useAppForm({
     defaultValues,
     validators: {
@@ -58,6 +61,8 @@ export function FeedbackForm() {
       // jump to earliest mistake and do a toast
     },
   });
+
+  if (!las) return <></>;
 
   return (
     <form
@@ -160,7 +165,14 @@ export function FeedbackForm() {
         </form.Field>
 
         {/* Course */}
-        <form.Field name="course">
+        <form.Field
+          name="course"
+          listeners={{
+            onChange: () => {
+              form.setFieldValue("la", "");
+            },
+          }}
+        >
           {(field) => {
             const isInvalid =
               field.state.meta.isTouched && !field.state.meta.isValid;
@@ -174,7 +186,7 @@ export function FeedbackForm() {
                   autoHighlight
                   onValueChange={(v) => field.handleChange(v as string)}
                   value={field.state.value}
-                  items={COURSES}
+                  items={[...new Set(las.map((la) => la.course))]}
                 >
                   <ComboboxInput
                     id={field.name}
@@ -216,7 +228,13 @@ export function FeedbackForm() {
                         autoHighlight
                         onValueChange={(v) => field.handleChange(v as string)}
                         value={field.state.value}
-                        items={LAS}
+                        items={[
+                          ...new Set(
+                            las
+                              .filter((la) => la.course === course)
+                              .map((la) => la.name),
+                          ),
+                        ]}
                       >
                         <ComboboxInput
                           id={field.name}
@@ -361,11 +379,13 @@ export function FeedbackForm() {
         {/* LA sections */}
         <form.Subscribe
           selector={(state) => ({
+            la: state.values.la,
             role: state.values.role,
             feedbackType: state.values.feedback_type,
           })}
         >
-          {({ role, feedbackType }) =>
+          {({ la, role, feedbackType }) =>
+            la &&
             role === "la" &&
             feedbackType && (
               <>
@@ -384,11 +404,13 @@ export function FeedbackForm() {
         {/* Student sections */}
         <form.Subscribe
           selector={(state) => ({
+            la: state.values.la,
             role: state.values.role,
             feedbackType: state.values.feedback_type,
           })}
         >
-          {({ role, feedbackType }) =>
+          {({ la, role, feedbackType }) =>
+            la &&
             role === "student" &&
             feedbackType && (
               <>
