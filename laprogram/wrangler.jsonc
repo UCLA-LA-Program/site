@@ -28,10 +28,10 @@
   },
   "d1_databases": [
     {
-      "binding": "auth_db",
-      "database_name": "auth_db",
-      "database_id": "7b3d5917-a572-4c9c-a77e-c686ac4be234",
-      "migrations_dir": "migrations/auth_db",
+      "binding": "data",
+      "database_name": "data",
+      "database_id": "f6b11123-7185-458f-81ef-7a219952f72b",
+      "migrations_dir": "./migrations",
     },
   ],
 }

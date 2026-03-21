@@ -1,4 +1,10 @@
--- Migration number: 0001 	 2026-03-17T22:53:22.385Z
+-- Migration number: 0001 	 2026-03-21T05:39:19.526Z
+
+/*
+AUTH SECTION
+DO NOT EDIT
+*/
+
 CREATE TABLE IF NOT EXISTS "user" (
 	"id" text NOT NULL PRIMARY KEY,
 	"name" text NOT NULL,
@@ -46,3 +52,7 @@ CREATE TABLE IF NOT EXISTS "verification" (
 	"createdAt" date NOT NULL,
 	"updatedAt" date NOT NULL
 );
+
+/*
+DATA SECTION
+*/

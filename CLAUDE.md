@@ -101,6 +101,8 @@ Use the [Cloudflare REST API](https://developers.cloudflare.com/api/) or [Wrangl
 npm run deploy
 
 # Create a new D1 database
+# After creating, add the binding to wrangler.jsonc and set
+# "migrations_dir" to "migrations/<db-name>" (a subdirectory under migrations/)
 npx wrangler d1 create <db-name>
 
 # Create and apply a D1 migration
@@ -122,29 +124,12 @@ npx wrangler tail
 
 After creating a new resource with Wrangler, add its binding to `wrangler.jsonc` and run `npm run cf-typegen` to update types.
 
-**Cloudflare REST API (for automation or resources not supported by Wrangler):**
-
-```bash
-# Authenticate with API token
-export CLOUDFLARE_API_TOKEN="your-token"
-
-# List D1 databases
-curl -X GET "https://api.cloudflare.com/client/v4/accounts/{account_id}/d1/database" \
-  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN"
-
-# Create a D1 database
-curl -X POST "https://api.cloudflare.com/client/v4/accounts/{account_id}/d1/database" \
-  -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
-  -H "Content-Type: application/json" \
-  --data '{"name": "my-database"}'
-```
-
-See the [Cloudflare API docs](https://developers.cloudflare.com/api/) for the full reference. The account ID can be found in the Cloudflare dashboard under Workers & Pages.
+Wrangler supports all resources used in this project (Workers, D1, KV, R2, secrets). For resources or automation not covered by Wrangler, use the [Cloudflare REST API](https://developers.cloudflare.com/api/) with an API token. The account ID can be found in the Cloudflare dashboard under Workers & Pages.
 
 ### Environment Variables
 
 - `BETTER_AUTH_SECRET` — secret for BetterAuth token signing. Set via `wrangler secret put BETTER_AUTH_SECRET` for production, or in `.env` locally.
-- `BETTER_AUTH_URL` — base URL of the app (e.g. `http://localhost:8787` for local, production domain for prod).
+- `BETTER_AUTH_URL` — base URL of the app. **Must match the port you're running on:** `http://localhost:3000` for `npm run dev`, `http://localhost:8787` for `npm run preview`. Update this when switching between the two. Use the production domain for prod.
 - `NEXTJS_ENV` — set in `.dev.vars` for local dev (`development`).
 - Copy `.env.example` to `.env` and fill in values for local development.
 

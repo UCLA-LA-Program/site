@@ -29,7 +29,7 @@ npm run preview
 Copy `.env.example` to `.env` and fill in the values:
 
 - `BETTER_AUTH_SECRET` — secret for signing auth tokens
-- `BETTER_AUTH_URL` — base URL of the app (`http://localhost:8787` for local preview, `http://localhost:3000` for `npm run dev`)
+- `BETTER_AUTH_URL` — base URL of the app. **Must match the port you're running on:** `http://localhost:3000` for `npm run dev`, `http://localhost:8787` for `npm run preview`. Update this value when switching between the two.
 - `NEXT_PUBLIC_API_URL` — API base URL (if needed)
 
 For the Cloudflare preview/deploy runtime, local env vars go in `.dev.vars`.
