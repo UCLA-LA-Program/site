@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { FeedbackForm } from "./sections/feedback-form";
+import { FeedbackForm } from "./components/feedback-form";
 
 export const metadata: Metadata = {
   title: "Feedback",

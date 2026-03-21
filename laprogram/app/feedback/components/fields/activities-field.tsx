@@ -8,8 +8,8 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { ACTIVITIES } from "../constants";
-import { withForm, defaultValues, feedbackFormSchema } from "../form";
+import { ACTIVITIES } from "../../constants";
+import { withForm, defaultValues, feedbackFormSchema } from "../../form";
 
 export const ActivitiesField = withForm({
   defaultValues,

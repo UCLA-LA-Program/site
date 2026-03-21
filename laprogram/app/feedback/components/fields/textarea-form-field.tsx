@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import type { FeedbackFormValues } from "../schema";
+import type { FeedbackFormValues } from "../../schema";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Field,
@@ -9,7 +9,7 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
-import { withForm, defaultValues, feedbackFormSchema } from "../form";
+import { withForm, defaultValues, feedbackFormSchema } from "../../form";
 
 export const TextareaFormField = withForm({
   defaultValues,

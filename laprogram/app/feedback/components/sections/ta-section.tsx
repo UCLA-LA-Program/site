@@ -1,11 +1,11 @@
 "use client";
 
-import type { FeedbackFormValues } from "../schema";
-import { AGREEMENT_OPTIONS, TA_QUESTIONS } from "../constants";
+import type { FeedbackFormValues } from "../../schema";
+import { AGREEMENT_OPTIONS, TA_QUESTIONS } from "../../constants";
 import { LikertField } from "../fields/likert-field";
 import { TextareaFormField } from "../fields/textarea-form-field";
 import { FieldGroup } from "@/components/ui/field";
-import { withForm, defaultValues, feedbackFormSchema } from "../form";
+import { withForm, defaultValues, feedbackFormSchema } from "../../form";
 
 export const TASection = withForm({
   defaultValues,

@@ -1,12 +1,12 @@
 "use client";
 
-import type { FeedbackFormValues } from "../schema";
+import type { FeedbackFormValues } from "../../schema";
 import {
   AGREEMENT_OPTIONS,
   LA_HEAD_TYPE_OPTIONS,
   LA_LCC_QUESTIONS,
   LA_PED_QUESTIONS,
-} from "../constants";
+} from "../../constants";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Field,
@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/field";
 import { LikertField } from "../fields/likert-field";
 import { TextareaFormField } from "../fields/textarea-form-field";
-import { withForm, defaultValues, feedbackFormSchema } from "../form";
+import { withForm, defaultValues, feedbackFormSchema } from "../../form";
 
 export const LAHeadLASection = withForm({
   defaultValues,

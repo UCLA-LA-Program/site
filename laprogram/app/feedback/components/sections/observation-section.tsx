@@ -1,12 +1,12 @@
 "use client";
 
-import type { FeedbackFormValues } from "../schema";
+import type { FeedbackFormValues } from "../../schema";
 import {
   OBSERVATION_OPTIONS,
   OBSERVATION_QUESTIONS,
   OBSERVATION_ROUND_OPTIONS,
   LA_POSITION_OPTIONS,
-} from "../constants";
+} from "../../constants";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/field";
 import { LikertField } from "../fields/likert-field";
 import { TextareaFormField } from "../fields/textarea-form-field";
-import { withForm, defaultValues, feedbackFormSchema } from "../form";
+import { withForm, defaultValues, feedbackFormSchema } from "../../form";
 
 export const ObservationSection = withForm({
   defaultValues,

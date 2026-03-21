@@ -1,9 +1,9 @@
 "use client";
 
-import type { FeedbackFormValues } from "../schema";
+import type { FeedbackFormValues } from "../../schema";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Field, FieldError, FieldLabel } from "@/components/ui/field";
-import { withForm, defaultValues, feedbackFormSchema } from "../form";
+import { withForm, defaultValues, feedbackFormSchema } from "../../form";
 
 export const LikertField = withForm({
   defaultValues,

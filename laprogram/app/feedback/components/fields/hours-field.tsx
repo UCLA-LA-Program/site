@@ -7,7 +7,7 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
-import { withForm, defaultValues, feedbackFormSchema } from "../form";
+import { withForm, defaultValues, feedbackFormSchema } from "../../form";
 
 export const HoursField = withForm({
   defaultValues,

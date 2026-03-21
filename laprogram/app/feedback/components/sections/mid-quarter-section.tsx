@@ -1,13 +1,13 @@
 "use client";
 
-import type { FeedbackFormValues } from "../schema";
-import { AGREEMENT_OPTIONS, MID_QUARTER_QUESTIONS } from "../constants";
+import type { FeedbackFormValues } from "../../schema";
+import { AGREEMENT_OPTIONS, MID_QUARTER_QUESTIONS } from "../../constants";
 import { ActivitiesField } from "../fields/activities-field";
 import { HoursField } from "../fields/hours-field";
 import { LikertField } from "../fields/likert-field";
 import { TextareaFormField } from "../fields/textarea-form-field";
 import { FieldGroup } from "@/components/ui/field";
-import { withForm, defaultValues, feedbackFormSchema } from "../form";
+import { withForm, defaultValues, feedbackFormSchema } from "../../form";
 
 export const MidQuarterSection = withForm({
   defaultValues,
