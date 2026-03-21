@@ -5,7 +5,8 @@ import { END_OF_QUARTER_QUESTIONS } from "../../constants";
 import { LikertField } from "../fields/likert-field";
 import { TextareaFormField } from "../fields/textarea-form-field";
 import { FieldGroup } from "@/components/ui/field";
-import { withForm, defaultValues, feedbackFormSchema } from "../../form";
+import { withForm } from "../../form";
+import { defaultValues, feedbackFormSchema } from "../../schema";
 import { ActivitiesField } from "../fields/activities-field";
 import { HoursField } from "../fields/hours-field";
 

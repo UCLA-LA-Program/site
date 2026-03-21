@@ -9,7 +9,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { ACTIVITIES } from "../../constants";
-import { withForm, defaultValues, feedbackFormSchema } from "../../form";
+import { withForm } from "../../form";
+import { defaultValues, feedbackFormSchema } from "../../schema";
 
 export const ActivitiesField = withForm({
   defaultValues,

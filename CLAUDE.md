@@ -23,13 +23,16 @@ npm run cf-typegen   # regenerate Cloudflare env type definitions
 
 ```bash
 # Apply migrations to remote D1
-npx wrangler d1 migrations apply auth_db --remote
+npx wrangler d1 migrations apply data --remote
 
 # Apply migrations locally (for preview)
-npx wrangler d1 migrations apply auth_db --local
+npx wrangler d1 migrations apply data --local
 
 # Open a SQL console against remote D1
-npx wrangler d1 execute auth_db --remote --command "SELECT * FROM user"
+npx wrangler d1 execute data --remote --command "SELECT * FROM user"
+
+# Seed local DB with test data
+npx wrangler d1 execute data --local --file scripts/testing.sql
 ```
 
 ## Architecture
@@ -47,8 +50,9 @@ npx wrangler d1 execute auth_db --remote --command "SELECT * FROM user"
 
 #### Authentication
 
-- **BetterAuth** with magic link plugin. Server config in `lib/auth.ts`, client in `lib/auth-client.ts`.
-- Uses Cloudflare D1 (SQLite) for session/user storage via Kysely + `kysely-d1`.
+- **BetterAuth** with magic link plugin, admin plugin, and impersonation. Server config in `lib/auth.ts`, client in `lib/auth-client.ts`.
+- Uses a single Cloudflare D1 database (`data` binding) for all storage — auth tables (`user`, `session`, `account`, `verification`) and app tables (`course`, `feedback`) share one DB.
+- The `user` table includes BetterAuth admin fields (`role`, `banned`, `banReason`, `banExpires`) and an `impersonatedBy` field on `session`.
 - The `auth.ts` module calls `getCloudflareContext()` to access the D1 binding at runtime — this is async, so a singleton pattern wraps the auth instance.
 - Magic link sending is currently a stub (logs URL to console). Will need a real email transport (e.g. Cloudflare Email Workers or Resend).
 
@@ -57,7 +61,7 @@ npx wrangler d1 execute auth_db --remote --command "SELECT * FROM user"
 The feedback form is the most complex part of the frontend. It conditionally renders different sections based on role (`student`, `la`, `ta`) and feedback type.
 
 - **Schema** (`schema.ts`): validation uses nested `z.discriminatedUnion` — first on `role`, then on `feedback_type` (and `la_head_type` for LA→Head LA). Shared field groups (`headerFields`, `closingFields`, `mqFields`, `eqFields`, `laPedFields`, `laLccFields`, `obsFields`, `taFields`, etc.) are defined once and spread into both variant schemas and `baseSchema`. `baseSchema` exists only for type inference (`FeedbackFormValues`) and generating `defaultValues` — it is built from the field groups, not maintained manually. When adding a new field, add it to the relevant field group; it will flow into `baseSchema`, `defaultValues`, and the variant schema automatically.
-- **Constants** (`constants.ts`): all dropdown/radio options and question lists. Courses and LAs are currently hardcoded (will eventually be fetched from D1).
+- **Constants** (`constants.ts`): all dropdown/radio options and question lists. Courses and LAs are currently hardcoded (will eventually be fetched from the `course` and `user` tables in D1).
 - The exported `feedbackFormSchema` is cast to `z.ZodType<FeedbackFormValues, FeedbackFormValues>` because the discriminated union's inferred type is narrower than the flat `FeedbackFormValues` that TanStack Form expects. This cast is safe — runtime validation is correct.
 
 ### Cloudflare Resources
@@ -66,7 +70,7 @@ All infrastructure is on Cloudflare. The `wrangler.jsonc` file defines every bin
 
 | Resource | Binding name | Purpose |
 |----------|-------------|---------|
-| D1 Database | `auth_db` | BetterAuth user/session storage |
+| D1 Database | `data` | All app data — auth (user/session/account/verification) and app tables (course, feedback) |
 | Assets | `ASSETS` | Static files from `.open-next/assets` |
 | Service | `WORKER_SELF_REFERENCE` | Self-referencing worker binding (used by OpenNext) |
 | Images | `IMAGES` | Cloudflare Images integration |
@@ -79,7 +83,7 @@ Inside Next.js server code (route handlers, server components, server actions), 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const { env } = await getCloudflareContext({ async: true });
-// env.auth_db   — D1 database
+// env.data      — D1 database (auth + app tables)
 // env.ASSETS    — static asset fetcher
 // env.IMAGES    — Cloudflare Images
 ```
@@ -133,12 +137,22 @@ Wrangler supports all resources used in this project (Workers, D1, KV, R2, secre
 - `NEXTJS_ENV` — set in `.dev.vars` for local dev (`development`).
 - Copy `.env.example` to `.env` and fill in values for local development.
 
+### Database Schema
+
+All tables live in a single D1 database (`data`). The init migration (`migrations/0001_init.sql`) creates:
+
+- **Auth tables** (managed by BetterAuth — do not edit): `user`, `session`, `account`, `verification`
+- **`course`** — course assignments. Composite primary key `(userId, course_name, position)`. Indexed on `course_name` for listing all LAs in a course.
+- **`feedback`** — feedback submissions linking a giver to a recipient (references `user.id`). Indexed on `recipientId`.
+
+A default admin user (`pdt.laprogram@gmail.com`, role `admin`) is seeded in the init migration. Test data can be loaded from `scripts/testing.sql`.
+
 ### Migrations
 
-D1 migrations live in `migrations/auth_db/`. To create a new migration:
+D1 migrations live in `migrations/`. To create a new migration:
 
 ```bash
-npx wrangler d1 migrations create auth_db "description of change"
+npx wrangler d1 migrations create data "description of change"
 ```
 
-Then edit the generated SQL file and apply with `npx wrangler d1 migrations apply auth_db --local` (local) or `--remote` (production).
+Then edit the generated SQL file and apply with `npx wrangler d1 migrations apply data --local` (local) or `--remote` (production).

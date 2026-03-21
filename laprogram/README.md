@@ -54,7 +54,7 @@ All Cloudflare resources are declared in `wrangler.jsonc`. Access them in server
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const { env } = await getCloudflareContext({ async: true });
-env.auth_db   // D1 database
+env.data      // D1 database (auth + app tables)
 env.IMAGES    // Cloudflare Images
 ```
 
@@ -66,20 +66,29 @@ npm run cf-typegen
 
 ## Database (D1)
 
-Migrations live in `migrations/auth_db/`. Common commands:
+A single D1 database (`data`) holds all tables:
+
+- **Auth tables** (managed by BetterAuth): `user`, `session`, `account`, `verification`
+- **`course`** — maps users to courses with a position (composite key: `userId`, `course_name`, `position`)
+- **`feedback`** — feedback submissions from one user to another
+
+Migrations live in `migrations/`. Common commands:
 
 ```bash
 # Create a new migration
-npx wrangler d1 migrations create auth_db "description"
+npx wrangler d1 migrations create data "description"
 
 # Apply migrations locally
-npx wrangler d1 migrations apply auth_db --local
+npx wrangler d1 migrations apply data --local
 
 # Apply migrations to production
-npx wrangler d1 migrations apply auth_db --remote
+npx wrangler d1 migrations apply data --remote
 
 # Query production D1
-npx wrangler d1 execute auth_db --remote --command "SELECT * FROM user"
+npx wrangler d1 execute data --remote --command "SELECT * FROM user"
+
+# Seed local DB with test data
+npx wrangler d1 execute data --local --file scripts/testing.sql
 ```
 
 ## Styling

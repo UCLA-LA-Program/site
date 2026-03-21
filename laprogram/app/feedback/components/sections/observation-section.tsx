@@ -18,7 +18,8 @@ import {
 } from "@/components/ui/field";
 import { LikertField } from "../fields/likert-field";
 import { TextareaFormField } from "../fields/textarea-form-field";
-import { withForm, defaultValues, feedbackFormSchema } from "../../form";
+import { withForm } from "../../form";
+import { defaultValues, feedbackFormSchema } from "../../schema";
 
 export const ObservationSection = withForm({
   defaultValues,

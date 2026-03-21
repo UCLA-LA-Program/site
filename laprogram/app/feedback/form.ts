@@ -1,5 +1,4 @@
 import { createFormHook, createFormHookContexts } from "@tanstack/react-form";
-import { feedbackFormSchema, defaultValues } from "./schema";
 
 const { fieldContext, formContext } = createFormHookContexts();
 
@@ -9,5 +8,3 @@ export const { useAppForm, withForm } = createFormHook({
   fieldComponents: {},
   formComponents: {},
 });
-
-export { defaultValues, feedbackFormSchema };

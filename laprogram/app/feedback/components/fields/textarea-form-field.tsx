@@ -9,7 +9,8 @@ import {
   FieldError,
   FieldLabel,
 } from "@/components/ui/field";
-import { withForm, defaultValues, feedbackFormSchema } from "../../form";
+import { withForm } from "../../form";
+import { defaultValues, feedbackFormSchema } from "../../schema";
 
 export const TextareaFormField = withForm({
   defaultValues,

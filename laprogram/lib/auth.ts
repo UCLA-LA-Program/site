@@ -15,12 +15,12 @@ interface Database {
 
 async function authBuilder() {
   const { env } = await getCloudflareContext({ async: true });
-  if (!env.auth_db) {
+  if (!env.data) {
     throw Error("Could not find D1 auth_db for BetterAuth initialization");
   }
 
   const db = new Kysely<Database>({
-    dialect: new D1Dialect({ database: env.auth_db }),
+    dialect: new D1Dialect({ database: env.data }),
   });
 
   return betterAuth({

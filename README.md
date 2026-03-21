@@ -8,8 +8,8 @@ Please visit <https://www.laprogramucla.com> to see the production website.
 
 - **Next.js 16** (App Router) with React 19, TypeScript, Tailwind CSS v4, shadcn/ui
 - **Cloudflare Workers** — hosting via the [OpenNext Cloudflare adapter](https://opennext.js.org/cloudflare)
-- **Cloudflare D1** — SQLite database for auth and app data
-- **BetterAuth** — authentication with magic link login
+- **Cloudflare D1** — single SQLite database (`data`) for auth and app tables (users, courses, feedback)
+- **BetterAuth** — authentication with magic link login, admin/ban support, impersonation
 - **Kysely** — type-safe SQL query builder (with `kysely-d1` for D1)
 
 ## Getting Started
@@ -49,7 +49,8 @@ laprogram/              Full-stack Next.js app
 │   └── login/          Magic link login
 ├── components/ui/      shadcn components
 ├── lib/                Auth config, utilities
-├── migrations/         D1 database migrations
+├── migrations/         D1 database migrations (single "data" DB)
+├── scripts/            SQL seed scripts (testing.sql)
 ├── wrangler.jsonc      Cloudflare Workers config
 └── open-next.config.ts OpenNext adapter config
 ```

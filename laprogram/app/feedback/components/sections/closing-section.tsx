@@ -10,7 +10,11 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { BECOME_LA_OPTIONS, GENDER_OPTIONS, GROUP_OPTIONS } from "../../constants";
+import {
+  BECOME_LA_OPTIONS,
+  GENDER_OPTIONS,
+  GROUP_OPTIONS,
+} from "../../constants";
 import {
   Combobox,
   ComboboxChip,
@@ -24,7 +28,8 @@ import {
   useComboboxAnchor,
 } from "@/components/ui/combobox";
 import { TextareaFormField } from "../fields/textarea-form-field";
-import { withForm, defaultValues, feedbackFormSchema } from "../../form";
+import { withForm } from "../../form";
+import { defaultValues, feedbackFormSchema } from "../../schema";
 import {
   Select,
   SelectContent,

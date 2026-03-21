@@ -25,7 +25,8 @@ import {
   LAS,
   ROLE_OPTIONS,
 } from "../constants";
-import { useAppForm, defaultValues, feedbackFormSchema } from "../form";
+import { useAppForm } from "../form";
+import { defaultValues, feedbackFormSchema } from "../schema";
 import {
   Combobox,
   ComboboxContent,
@@ -42,10 +43,19 @@ export function FeedbackForm() {
       onSubmit: feedbackFormSchema,
     },
     onSubmit: async ({ value }) => {
-      console.log("Form submitted:", value);
+      const response = await fetch("/feedback/submit", {
+        method: "POST",
+        body: JSON.stringify(value),
+      });
+      // TODO: failure case
+
+      if (response.ok) {
+        form.reset();
+        // toast
+      }
     },
     onSubmitInvalid({ value }) {
-      console.log("Form submitted invalid:", value);
+      // jump to earliest mistake and do a toast
     },
   });
 

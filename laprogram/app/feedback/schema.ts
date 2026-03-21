@@ -195,7 +195,7 @@ const taSchema = z.object({
 
 const laCommon = {
   ...headerFields,
-  role: z.literal("la") as z.ZodLiteral<"la">,
+  role: z.literal("la"),
   feedback_type: z.literal("la_head_la"),
   ...laSharedFields,
 };
