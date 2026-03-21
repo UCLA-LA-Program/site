@@ -1,0 +1,18 @@
+{
+  "name": "cron",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-03-21",
+
+  "triggers": {
+    "crons": [
+      "0 8 * * *",     // once a day, 12/1AM PST
+      "0 8 * * 1"      // once a week, 12/1AM PST
+    ]
+  },
+
+  // will need some database stuff here later
+
+  "vars": {
+    "API_BASE_URL": "NEED TO FIX LATER" // Current Airtable base, change each quarter
+  }
+}

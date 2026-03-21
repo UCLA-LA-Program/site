@@ -8,5 +8,8 @@
   },
   "dependencies": {
     "@backend/shared": "*"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260317.1"
   }
 }
