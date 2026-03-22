@@ -1,7 +1,7 @@
 "use client";
 
 import type { FeedbackFormValues } from "../../schema";
-import { END_OF_QUARTER_QUESTIONS } from "../../constants";
+import { END_OF_QUARTER_QUESTIONS, EQ_SENSITIVE_QUESTIONS, EQ_TEXT_FIELDS } from "../../constants";
 import { LikertField } from "../fields/likert-field";
 import { TextareaFormField } from "../fields/textarea-form-field";
 import { FieldGroup } from "@/components/ui/field";
@@ -26,12 +26,24 @@ export const EndOfQuarterSection = withForm({
           options={options}
         />
       ))}
-      <TextareaFormField
-        form={form}
-        fieldName="eq_comments"
-        label="Are there any final comments you'd like to share with your LA now that the quarter is coming to an end?"
-        required
-      />
+      {EQ_SENSITIVE_QUESTIONS.map(({ value, label, options }) => (
+        <LikertField
+          key={value}
+          form={form}
+          fieldName={value as keyof FeedbackFormValues}
+          label={label}
+          options={options}
+        />
+      ))}
+      {EQ_TEXT_FIELDS.map(({ value, label }) => (
+        <TextareaFormField
+          key={value}
+          form={form}
+          fieldName={value as keyof FeedbackFormValues}
+          label={label}
+          required
+        />
+      ))}
     </FieldGroup>
   ),
 });

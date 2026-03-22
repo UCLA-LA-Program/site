@@ -1,16 +1,11 @@
 import { getAuth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { feedbackFormSchema } from "../schema";
+import { feedbackFormSchema, FeedbackFormValues } from "@/app/feedback/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { v7 as uuidv7 } from "uuid";
 import { Id } from "@/types/db";
+import { headers } from "next/headers";
 
 export async function POST(request: Request) {
-  const auth = await getAuth();
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
   const feedback_request = await request.json();
   const feedback = feedbackFormSchema.safeParse(feedback_request);
   if (!feedback.success) {
@@ -31,6 +26,7 @@ export async function POST(request: Request) {
       .bind(feedback.data.la, feedback.data.course)
       ?.run<Id>();
 
+    // avoid storing name and email in the feedback so we can show without identifiable data
     const { name, email, ...anon_feedback } = feedback.data;
     await env.data
       ?.prepare(
@@ -50,4 +46,32 @@ export async function POST(request: Request) {
   }
 
   return new Response(null, { status: 200 });
+}
+
+export async function GET() {
+  const auth = await getAuth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session) {
+    return new Response("Unauthenticated user.", { status: 401 });
+  }
+
+  let feedback;
+  try {
+    const { env } = getCloudflareContext();
+    feedback = await env.data
+      ?.prepare(`SELECT feedback FROM feedback WHERE user.recipientId = ?1`)
+      .bind(session.user.id)
+      ?.run<FeedbackFormValues>();
+
+    if (!feedback || feedback.error) {
+      return new Response("Encountered database error.", { status: 500 });
+    }
+  } catch {
+    return new Response("Encountered database error.", { status: 500 });
+  }
+
+  return new Response(JSON.stringify(feedback.results), { status: 200 });
 }

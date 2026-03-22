@@ -50,7 +50,7 @@ export function FeedbackForm() {
       onSubmit: feedbackFormSchema,
     },
     onSubmit: async ({ value }) => {
-      const response = await fetch("/feedback/submit", {
+      const response = await fetch("/feedback", {
         method: "POST",
         body: JSON.stringify(value),
       });

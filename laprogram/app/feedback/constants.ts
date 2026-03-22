@@ -226,6 +226,45 @@ export const GROUP_OPTIONS = [
   { value: "prefer_not_to_say", label: "Prefer not to say" },
 ];
 
+// ---------------------------------------------------------------------------
+// Free-text field labels (shared between form sections and view tables)
+// ---------------------------------------------------------------------------
+
+export const OBS_TEXT_FIELDS = [
+  { value: "obs_strengths", label: "What are the LA's strengths at the moment?" },
+  { value: "obs_improve", label: "What can the LA improve at the moment?" },
+  { value: "obs_comments", label: "Additional Comments" },
+];
+
+export const OBS_SENSITIVE_TEXT_FIELDS = [
+  { value: "obs_pedagogy_techniques", label: "Did you notice your peer implementing pedagogy techniques in a way similar to you, different from you, and/or in a way you want to try?" },
+];
+
+export const MQ_TEXT_FIELDS = [
+  { value: "mq_strengths", label: "What are your LA's strengths?" },
+  { value: "mq_improve", label: "How can your LA improve to help you learn more?" },
+];
+
+export const MQ_SENSITIVE_TEXT_FIELDS = [
+  { value: "mq_course_change", label: "What would you change about this course to improve how LAs help you learn?" },
+  { value: "mq_study_habits", label: "Is there anything you want to change about your own learning or study habits to improve your learning in this course?" },
+];
+
+export const EQ_TEXT_FIELDS = [
+  { value: "eq_comments", label: "Are there any final comments you'd like to share with your LA now that the quarter is coming to an end?" },
+];
+
+export const TA_TEXT_FIELDS = [
+  { value: "ta_strengths", label: "What are the LA's strengths currently?" },
+  { value: "ta_improve", label: "What can the LA improve currently?" },
+  { value: "ta_comments", label: "Any additional comments?" },
+];
+
+export const LA_HEAD_TEXT_FIELDS = [
+  { value: "la_strengths", label: "What are some of your Head LA's strengths?" },
+  { value: "la_improve", label: "What can your Head LA improve upon or do differently to better support you?" },
+];
+
 export const OBSERVATION_ROUND_OPTIONS = [
   { value: "round_1", label: "Observations Round 1 (Weeks 3-4)" },
   { value: "round_2", label: "Observations Round 2 (Weeks 7-8)" },
@@ -381,6 +420,9 @@ export const END_OF_QUARTER_QUESTIONS = [
       "How much improvement have you seen in your LA's support of you feeling more like you belong in STEM?",
     options: IMPROVEMENT_OPTIONS,
   },
+];
+
+export const EQ_SENSITIVE_QUESTIONS = [
   {
     value: "eq_group_belonging",
     label:

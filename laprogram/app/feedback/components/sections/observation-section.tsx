@@ -6,6 +6,8 @@ import {
   OBSERVATION_QUESTIONS,
   OBSERVATION_ROUND_OPTIONS,
   LA_POSITION_OPTIONS,
+  OBS_TEXT_FIELDS,
+  OBS_SENSITIVE_TEXT_FIELDS,
 } from "../../constants";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -140,45 +142,23 @@ export const ObservationSection = withForm({
         />
       ))}
 
-      {/* Strengths */}
-      <TextareaFormField
-        form={form}
-        fieldName="obs_strengths"
-        label="What are the LA's strengths at the moment?"
-        description="Please give specific examples, if possible."
-        required
-      />
-
-      {/* Improve */}
-      <TextareaFormField
-        form={form}
-        fieldName="obs_improve"
-        label="What can the LA improve at the moment?"
-        description="Please give specific examples, if possible."
-        required
-      />
-
-      {/* Pedagogy techniques */}
-      <TextareaFormField
-        form={form}
-        fieldName="obs_pedagogy_techniques"
-        label="Did you notice your peer implementing pedagogy techniques in a way similar to you, different from you, and/or in a way you want to try?"
-        description={
-          <>
-            You may fill this out <strong>once</strong>, not for every LA you
-            observe. Your response to this question is not sent to LAs and can
-            be used to complete your final project.
-          </>
-        }
-      />
-
-      {/* Additional comments */}
-      <TextareaFormField
-        form={form}
-        fieldName="obs_comments"
-        label="Additional Comments"
-        description="Feel free to elaborate on anything indicated above or to explain something not yet mentioned."
-      />
+      {OBS_TEXT_FIELDS.map(({ value, label }) => (
+        <TextareaFormField
+          key={value}
+          form={form}
+          fieldName={value as keyof FeedbackFormValues}
+          label={label}
+          required={value === "obs_strengths" || value === "obs_improve"}
+        />
+      ))}
+      {OBS_SENSITIVE_TEXT_FIELDS.map(({ value, label }) => (
+        <TextareaFormField
+          key={value}
+          form={form}
+          fieldName={value as keyof FeedbackFormValues}
+          label={label}
+        />
+      ))}
     </FieldGroup>
   ),
 });

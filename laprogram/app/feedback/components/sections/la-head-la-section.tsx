@@ -6,6 +6,7 @@ import {
   LA_HEAD_TYPE_OPTIONS,
   LA_LCC_QUESTIONS,
   LA_PED_QUESTIONS,
+  LA_HEAD_TEXT_FIELDS,
 } from "../../constants";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -83,18 +84,15 @@ export const LAHeadLASection = withForm({
         )}
       </form.Subscribe>
 
-      <TextareaFormField
-        form={form}
-        fieldName="la_strengths"
-        label="What are some of your Head LA's strengths?"
-        required
-      />
-      <TextareaFormField
-        form={form}
-        fieldName="la_improve"
-        label="What can your Head LA improve upon or do differently to better support you?"
-        required
-      />
+      {LA_HEAD_TEXT_FIELDS.map(({ value, label }) => (
+        <TextareaFormField
+          key={value}
+          form={form}
+          fieldName={value as keyof FeedbackFormValues}
+          label={label}
+          required
+        />
+      ))}
     </FieldGroup>
   ),
 });

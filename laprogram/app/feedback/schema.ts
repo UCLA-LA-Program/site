@@ -7,14 +7,14 @@ const required = (msg: string) => z.string().min(1, msg);
 // Shared field groups
 // ---------------------------------------------------------------------------
 
-const headerFields = {
+export const headerFields = {
   name: required("Name is required"),
   email: z.email("Please enter a valid email"),
   course: required("Please select a course"),
   la: required("Please select an LA"),
 };
 
-const closingFields = {
+export const closingFields = {
   become_la: required("Please select an option"),
   courses_without_las: z.string().optional(),
   uid: z
@@ -33,12 +33,12 @@ const closingFields = {
   la_program_comments: z.string().optional(),
 };
 
-const studentSharedFields = {
+export const studentSharedFields = {
   activities: z.array(z.string()).min(1, "Please select at least one activity"),
   hours: required("Please enter hours"),
 };
 
-const mqFields = {
+export const mqFields = {
   mq_approachable: required("Please select a response"),
   mq_helpful: required("Please select a response"),
   mq_familiar: required("Please select a response"),
@@ -55,7 +55,7 @@ const mqFields = {
   mq_study_habits: z.string().optional(),
 };
 
-const eqFields = {
+export const eqFields = {
   eq_approachability: required("Please select a response"),
   eq_helpfulness: required("Please select a response"),
   eq_familiarity: required("Please select a response"),
@@ -69,7 +69,7 @@ const eqFields = {
   eq_comments: required("Please share any final comments"),
 };
 
-const laPedFields = {
+export const laPedFields = {
   la_ped_seminars: required("Please select a response"),
   la_ped_applies: required("Please select a response"),
   la_ped_discusses: required("Please select a response"),
@@ -77,7 +77,7 @@ const laPedFields = {
   la_ped_content_meeting: required("Please select a response"),
 };
 
-const laLccFields = {
+export const laLccFields = {
   la_lcc_emails: required("Please select a response"),
   la_lcc_comfortable: required("Please select a response"),
   la_lcc_answers: required("Please select a response"),
@@ -85,7 +85,7 @@ const laLccFields = {
   la_lcc_expectations: required("Please select a response"),
 };
 
-const laSharedFields = {
+export const laSharedFields = {
   la_strengths: required("Please share your Head LA's strengths"),
   la_improve: required("Please share how your Head LA can improve"),
 };
@@ -97,7 +97,7 @@ const laFields = {
   ...laSharedFields,
 };
 
-const obsFields = {
+export const obsFields = {
   obs_round: required("Please select a round"),
   obs_section: required("Please describe the observed section"),
   obs_la_position: required("Please select an LA position"),
@@ -118,7 +118,7 @@ const obsFields = {
   obs_comments: z.string().optional(),
 };
 
-const taFields = {
+export const taFields = {
   ta_comfortable: required("Please select a response"),
   ta_circulates: required("Please select a response"),
   ta_peer_names: required("Please select a response"),
@@ -135,7 +135,7 @@ const taFields = {
 };
 
 // Built from field groups — single source of truth for FeedbackFormValues
-export const baseSchema = z.object({
+const baseSchema = z.object({
   ...headerFields,
   role: z.string(),
   feedback_type: z.string(),
@@ -156,14 +156,12 @@ export type FeedbackFormValues = z.infer<typeof baseSchema>;
 
 const ARRAY_FIELDS: (keyof FeedbackFormValues)[] = ["activities", "groups"];
 
-const defaultValues = Object.fromEntries(
+export const defaultValues = Object.fromEntries(
   Object.keys(baseSchema.shape).map((key) => [
     key,
     ARRAY_FIELDS.includes(key as keyof FeedbackFormValues) ? [] : "",
   ]),
 ) as unknown as FeedbackFormValues;
-
-export { defaultValues };
 
 // ---------------------------------------------------------------------------
 // Variant schemas
