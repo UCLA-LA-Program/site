@@ -36,6 +36,7 @@ import {
 import { LA } from "@/types/db";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
+import { toast } from "sonner";
 
 export function FeedbackForm() {
   const { data: las } = useSWR<LA[]>("/api/la", fetcher, {
@@ -53,15 +54,20 @@ export function FeedbackForm() {
         method: "POST",
         body: JSON.stringify(value),
       });
-      // TODO: failure case
 
       if (response.ok) {
         form.reset();
-        // toast
+        toast.success("Feedback has been submitted!");
+      } else {
+        toast.error("Error submitting feedback. Try again later.");
       }
     },
-    onSubmitInvalid({ value }) {
-      // jump to earliest mistake and do a toast
+    onSubmitInvalid() {
+      const first_invalid = document.querySelector(
+        '[aria-invalid="true"]',
+      ) as HTMLInputElement;
+      first_invalid?.focus();
+      toast.error("Please fix form errors.");
     },
   });
 

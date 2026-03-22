@@ -31,6 +31,7 @@ export async function POST(request: Request) {
       .bind(feedback.data.la, feedback.data.course)
       ?.run<Id>();
 
+    const { name, email, ...anon_feedback } = feedback.data;
     env.data
       ?.prepare(
         `INSERT INTO feedback (id, giverName, giverEmail, recipientId, feedback) 
@@ -38,10 +39,10 @@ export async function POST(request: Request) {
       )
       .bind(
         uuidv7(),
-        feedback.data.name,
-        feedback.data.email,
+        name,
+        email,
         recipient?.results[0].id,
-        feedback.data,
+        JSON.stringify(anon_feedback),
       );
   } catch {
     return new Response("Encountered database error.", { status: 500 });

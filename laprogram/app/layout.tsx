@@ -5,6 +5,7 @@ import Link from "next/link";
 import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: {
@@ -38,6 +39,7 @@ export default function RootLayout({
           </div>
         </header>
         {children}
+        <Toaster position="top-center" offset="16px" mobileOffset="16px" />
         <footer className="relative z-10 px-8 py-6">
           <div className="mx-auto max-w-5xl">
             <p className="text-center text-xs text-muted-foreground/50">
