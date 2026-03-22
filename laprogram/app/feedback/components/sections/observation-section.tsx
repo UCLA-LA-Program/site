@@ -2,7 +2,6 @@
 
 import type { FeedbackFormValues } from "../../schema";
 import {
-  OBSERVATION_OPTIONS,
   OBSERVATION_QUESTIONS,
   OBSERVATION_ROUND_OPTIONS,
   LA_POSITION_OPTIONS,
@@ -56,7 +55,6 @@ export const ObservationSection = withForm({
                   ))}
                 </FieldGroup>
               </RadioGroup>
-              {isInvalid && <FieldError errors={field.state.meta.errors} />}
             </Field>
           );
         }}
@@ -87,7 +85,6 @@ export const ObservationSection = withForm({
                 onBlur={field.handleBlur}
                 aria-invalid={isInvalid}
               />
-              {isInvalid && <FieldError errors={field.state.meta.errors} />}
             </Field>
           );
         }}
@@ -125,40 +122,33 @@ export const ObservationSection = withForm({
                   ))}
                 </FieldGroup>
               </RadioGroup>
-              {isInvalid && <FieldError errors={field.state.meta.errors} />}
             </Field>
           );
         }}
       </form.Field>
 
       {/* Likert questions */}
-      {OBSERVATION_QUESTIONS.map(({ value, label }) => (
+      {OBSERVATION_QUESTIONS.map(({ value, label, options }) => (
         <LikertField
           key={value}
           form={form}
           fieldName={value as keyof FeedbackFormValues}
           label={label}
-          options={OBSERVATION_OPTIONS}
+          options={options!}
         />
       ))}
 
-      {OBS_TEXT_FIELDS.map(({ value, label }) => (
-        <TextareaFormField
-          key={value}
-          form={form}
-          fieldName={value as keyof FeedbackFormValues}
-          label={label}
-          required={value === "obs_strengths" || value === "obs_improve"}
-        />
-      ))}
-      {OBS_SENSITIVE_TEXT_FIELDS.map(({ value, label }) => (
-        <TextareaFormField
-          key={value}
-          form={form}
-          fieldName={value as keyof FeedbackFormValues}
-          label={label}
-        />
-      ))}
+      {[...OBS_TEXT_FIELDS, ...OBS_SENSITIVE_TEXT_FIELDS].map(
+        ({ value, label, required }) => (
+          <TextareaFormField
+            key={value}
+            form={form}
+            fieldName={value as keyof FeedbackFormValues}
+            label={label}
+            required={required}
+          />
+        ),
+      )}
     </FieldGroup>
   ),
 });

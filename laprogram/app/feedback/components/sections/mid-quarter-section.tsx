@@ -1,7 +1,7 @@
 "use client";
 
 import type { FeedbackFormValues } from "../../schema";
-import { AGREEMENT_OPTIONS, MID_QUARTER_QUESTIONS, MQ_TEXT_FIELDS, MQ_SENSITIVE_TEXT_FIELDS } from "../../constants";
+import { MID_QUARTER_QUESTIONS, MQ_TEXT_FIELDS, MQ_SENSITIVE_TEXT_FIELDS } from "../../constants";
 import { ActivitiesField } from "../fields/activities-field";
 import { HoursField } from "../fields/hours-field";
 import { LikertField } from "../fields/likert-field";
@@ -17,31 +17,22 @@ export const MidQuarterSection = withForm({
     <FieldGroup>
       <ActivitiesField form={form} />
       <HoursField form={form} />
-      {MID_QUARTER_QUESTIONS.map(({ value, label }) => (
+      {MID_QUARTER_QUESTIONS.map(({ value, label, options }) => (
         <LikertField
           key={value}
           form={form}
           fieldName={value as keyof FeedbackFormValues}
           label={label}
-          options={AGREEMENT_OPTIONS}
+          options={options!}
         />
       ))}
-      {MQ_TEXT_FIELDS.map(({ value, label }) => (
+      {[...MQ_TEXT_FIELDS, ...MQ_SENSITIVE_TEXT_FIELDS].map(({ value, label, required }) => (
         <TextareaFormField
           key={value}
           form={form}
           fieldName={value as keyof FeedbackFormValues}
           label={label}
-          required
-        />
-      ))}
-      {MQ_SENSITIVE_TEXT_FIELDS.map(({ value, label }) => (
-        <TextareaFormField
-          key={value}
-          form={form}
-          fieldName={value as keyof FeedbackFormValues}
-          label={label}
-          required={value === "mq_course_change"}
+          required={required}
         />
       ))}
     </FieldGroup>

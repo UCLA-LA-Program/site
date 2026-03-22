@@ -105,7 +105,6 @@ export function FeedbackForm() {
                   onBlur={field.handleBlur}
                   aria-invalid={isInvalid}
                 />
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
           }}
@@ -167,7 +166,6 @@ export function FeedbackForm() {
                     </div>
                   ))}
                 </RadioGroup>
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
           }}
@@ -213,7 +211,6 @@ export function FeedbackForm() {
                     </ComboboxList>
                   </ComboboxContent>
                 </Combobox>
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
           }}
@@ -261,9 +258,6 @@ export function FeedbackForm() {
                           </ComboboxList>
                         </ComboboxContent>
                       </Combobox>
-                      {isInvalid && (
-                        <FieldError errors={field.state.meta.errors} />
-                      )}
                     </Field>
                   );
                 }}
@@ -321,9 +315,6 @@ export function FeedbackForm() {
                           </div>
                         ))}
                       </RadioGroup>
-                      {isInvalid && (
-                        <FieldError errors={field.state.meta.errors} />
-                      )}
                     </Field>
                   );
                 }}
@@ -374,9 +365,6 @@ export function FeedbackForm() {
                           </div>
                         ))}
                       </RadioGroup>
-                      {isInvalid && (
-                        <FieldError errors={field.state.meta.errors} />
-                      )}
                     </Field>
                   );
                 }}

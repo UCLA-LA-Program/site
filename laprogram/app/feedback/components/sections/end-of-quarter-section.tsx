@@ -23,7 +23,7 @@ export const EndOfQuarterSection = withForm({
           form={form}
           fieldName={value as keyof FeedbackFormValues}
           label={label}
-          options={options}
+          options={options!}
         />
       ))}
       {EQ_SENSITIVE_QUESTIONS.map(({ value, label, options }) => (
@@ -32,16 +32,16 @@ export const EndOfQuarterSection = withForm({
           form={form}
           fieldName={value as keyof FeedbackFormValues}
           label={label}
-          options={options}
+          options={options!}
         />
       ))}
-      {EQ_TEXT_FIELDS.map(({ value, label }) => (
+      {EQ_TEXT_FIELDS.map(({ value, label, required }) => (
         <TextareaFormField
           key={value}
           form={form}
           fieldName={value as keyof FeedbackFormValues}
           label={label}
-          required
+          required={required}
         />
       ))}
     </FieldGroup>

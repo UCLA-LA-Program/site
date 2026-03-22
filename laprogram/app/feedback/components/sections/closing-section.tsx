@@ -102,7 +102,6 @@ export const ClosingSection = withForm({
                     </div>
                   ))}
                 </RadioGroup>
-                {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
             );
           }}

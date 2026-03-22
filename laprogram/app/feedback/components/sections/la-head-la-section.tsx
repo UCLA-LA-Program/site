@@ -2,7 +2,6 @@
 
 import type { FeedbackFormValues } from "../../schema";
 import {
-  AGREEMENT_OPTIONS,
   LA_HEAD_TYPE_OPTIONS,
   LA_LCC_QUESTIONS,
   LA_PED_QUESTIONS,
@@ -61,36 +60,36 @@ export const LAHeadLASection = withForm({
         {(la_head_type) => (
           <>
             {(la_head_type === "ped_head" || la_head_type === "ped_lcc") &&
-              LA_PED_QUESTIONS.map(({ value, label }) => (
+              LA_PED_QUESTIONS.map(({ value, label, options }) => (
                 <LikertField
                   key={value}
                   form={form}
                   fieldName={value as keyof FeedbackFormValues}
                   label={label}
-                  options={AGREEMENT_OPTIONS}
+                  options={options!}
                 />
               ))}
             {(la_head_type === "lcc" || la_head_type === "ped_lcc") &&
-              LA_LCC_QUESTIONS.map(({ value, label }) => (
+              LA_LCC_QUESTIONS.map(({ value, label, options }) => (
                 <LikertField
                   key={value}
                   form={form}
                   fieldName={value as keyof FeedbackFormValues}
                   label={label}
-                  options={AGREEMENT_OPTIONS}
+                  options={options!}
                 />
               ))}
           </>
         )}
       </form.Subscribe>
 
-      {LA_HEAD_TEXT_FIELDS.map(({ value, label }) => (
+      {LA_HEAD_TEXT_FIELDS.map(({ value, label, required }) => (
         <TextareaFormField
           key={value}
           form={form}
           fieldName={value as keyof FeedbackFormValues}
           label={label}
-          required
+          required={required}
         />
       ))}
     </FieldGroup>

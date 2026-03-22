@@ -2,7 +2,7 @@
 
 import type { FeedbackFormValues } from "../../schema";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { Field, FieldError, FieldLabel } from "@/components/ui/field";
+import { Field, FieldLabel } from "@/components/ui/field";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";
 
@@ -48,7 +48,6 @@ export const LikertField = withForm({
                 </ToggleGroupItem>
               ))}
             </ToggleGroup>
-            {isInvalid && <FieldError errors={field.state.meta.errors} />}
           </Field>
         );
       }}

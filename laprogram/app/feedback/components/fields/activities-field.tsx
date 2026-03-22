@@ -4,7 +4,6 @@ import { Checkbox } from "@/components/ui/checkbox";
 import {
   Field,
   FieldDescription,
-  FieldError,
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
@@ -47,7 +46,6 @@ export const ActivitiesField = withForm({
                 </Field>
               ))}
             </FieldGroup>
-            {isInvalid && <FieldError errors={field.state.meta.errors} />}
           </Field>
         );
       }}

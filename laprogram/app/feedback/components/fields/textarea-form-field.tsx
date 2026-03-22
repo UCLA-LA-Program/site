@@ -3,12 +3,7 @@
 import type { ReactNode } from "react";
 import type { FeedbackFormValues } from "../../schema";
 import { Textarea } from "@/components/ui/textarea";
-import {
-  Field,
-  FieldDescription,
-  FieldError,
-  FieldLabel,
-} from "@/components/ui/field";
+import { Field, FieldDescription, FieldLabel } from "@/components/ui/field";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";
 
@@ -47,7 +42,6 @@ export const TextareaFormField = withForm({
               onBlur={field.handleBlur}
               aria-invalid={isInvalid || undefined}
             />
-            {isInvalid && <FieldError errors={field.state.meta.errors} />}
           </Field>
         );
       }}

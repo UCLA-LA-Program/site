@@ -3,6 +3,7 @@
 import { ColumnDef } from "@tanstack/react-table";
 import type { FeedbackFormValues } from "../schema";
 import {
+  type FieldEntry,
   OBSERVATION_QUESTIONS,
   LA_PED_QUESTIONS,
   LA_LCC_QUESTIONS,
@@ -16,10 +17,8 @@ import {
   LA_HEAD_TEXT_FIELDS,
 } from "../constants";
 
-type QuestionEntry = { value: string; label: string };
-
 function fromQuestions(
-  questions: QuestionEntry[],
+  questions: readonly FieldEntry[],
 ): ColumnDef<FeedbackFormValues>[] {
   return questions.map((q) => ({
     accessorKey: q.value,
