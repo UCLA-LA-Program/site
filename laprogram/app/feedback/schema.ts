@@ -26,10 +26,17 @@ const required = (msg: string) => z.string().min(1, msg);
 
 function zodFromFields(fields: readonly FieldEntry[]) {
   return Object.fromEntries(
-    fields.map((f) => [
-      f.value,
-      f.required ? required(f.label) : z.string().optional(),
-    ]),
+    fields.map((f) => {
+      const values = f.options?.map((o) => o.value);
+      const schema = values
+        ? z.enum(values as [string, ...string[]], {
+            message: "Please select a response",
+          })
+        : f.required
+          ? required(f.label)
+          : z.string().optional();
+      return [f.value, f.required ? schema : schema.optional()];
+    }),
   );
 }
 
@@ -141,7 +148,6 @@ export const defaultValues = Object.fromEntries(
 // ---------------------------------------------------------------------------
 
 const studentMidQuarterSchema = z.object({
-  ...headerFields,
   role: z.literal("student"),
   feedback_type: z.literal("mid_quarter"),
   ...studentSharedFields,
@@ -150,7 +156,6 @@ const studentMidQuarterSchema = z.object({
 });
 
 const studentEndOfQuarterSchema = z.object({
-  ...headerFields,
   role: z.literal("student"),
   feedback_type: z.literal("end_of_quarter"),
   ...studentSharedFields,
@@ -159,13 +164,11 @@ const studentEndOfQuarterSchema = z.object({
 });
 
 const taSchema = z.object({
-  ...headerFields,
   role: z.literal("ta"),
   ...taFields,
 });
 
 const laCommon = {
-  ...headerFields,
   role: z.literal("la"),
   feedback_type: z.literal("la_head_la"),
   ...laSharedFields,
@@ -197,7 +200,6 @@ const laHeadLASchema = z.discriminatedUnion("la_head_type", [
 ]);
 
 const laObservationSchema = z.object({
-  ...headerFields,
   role: z.literal("la"),
   feedback_type: z.literal("la_observation"),
   ...obsFields,
@@ -213,8 +215,8 @@ const studentSchema = z.discriminatedUnion("feedback_type", [
   studentEndOfQuarterSchema,
 ]);
 
-export const feedbackFormSchema = z.discriminatedUnion("role", [
-  studentSchema,
-  taSchema,
-  laSchema,
-]) as unknown as z.ZodType<FeedbackFormValues, FeedbackFormValues>;
+export const feedbackFormSchema = z
+  .object(headerFields)
+  .and(
+    z.discriminatedUnion("role", [studentSchema, taSchema, laSchema]),
+  ) as unknown as z.ZodType<FeedbackFormValues, FeedbackFormValues>;

@@ -62,11 +62,8 @@ export function FeedbackForm() {
         toast.error("Error submitting feedback. Try again later.");
       }
     },
-    onSubmitInvalid() {
-      const first_invalid = document.querySelector(
-        '[aria-invalid="true"]',
-      ) as HTMLInputElement;
-      first_invalid?.focus();
+    onSubmitInvalid({ value }) {
+      console.log(feedbackFormSchema.safeParse(value).error);
       toast.error("Please fix form errors.");
     },
   });
