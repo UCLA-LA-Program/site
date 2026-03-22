@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       ?.run<Id>();
 
     const { name, email, ...anon_feedback } = feedback.data;
-    env.data
+    await env.data
       ?.prepare(
         `INSERT INTO feedback (id, giverName, giverEmail, recipientId, feedback) 
       VALUES (?1, ?2, ?3, ?4, ?5)`,
@@ -43,7 +43,8 @@ export async function POST(request: Request) {
         email,
         recipient?.results[0].id,
         JSON.stringify(anon_feedback),
-      );
+      )
+      .run();
   } catch {
     return new Response("Encountered database error.", { status: 500 });
   }
