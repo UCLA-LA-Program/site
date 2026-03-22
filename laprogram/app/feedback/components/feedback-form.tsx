@@ -38,7 +38,10 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 
 export function FeedbackForm() {
-  const { data: las } = useSWR<LA[]>("/api/la", fetcher);
+  const { data: las } = useSWR<LA[]>("/api/la", fetcher, {
+    suspense: true,
+    fallbackData: [],
+  });
 
   const form = useAppForm({
     defaultValues,
