@@ -42,10 +42,8 @@ import {
 export const ClosingSection = withForm({
   defaultValues,
   validators: { onSubmit: feedbackFormSchema },
-  render: ({ form }) => {
-    // eslint-disable-next-line react-hooks/rules-of-hooks
+  render: function Render({ form }) {
     const anchor = useComboboxAnchor();
-
     return (
       <FieldGroup>
         <TextareaFormField

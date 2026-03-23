@@ -62,8 +62,9 @@ export function FeedbackForm() {
         toast.error("Error submitting feedback. Try again later.");
       }
     },
-    onSubmitInvalid({ value }) {
-      console.log(feedbackFormSchema.safeParse(value).error);
+    onSubmitInvalid() {
+      const first_invalid = document.querySelector('[data-invalid="true"]');
+      first_invalid?.scrollIntoView({ behavior: "smooth", block: "center" });
       toast.error("Please fix form errors.");
     },
   });
