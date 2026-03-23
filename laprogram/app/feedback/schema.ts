@@ -2,20 +2,20 @@ import { z } from "zod";
 import { isValid as luhnIsValid } from "luhn-js";
 import {
   type FieldEntry,
-  OBSERVATION_QUESTIONS,
-  MID_QUARTER_QUESTIONS,
-  END_OF_QUARTER_QUESTIONS,
+  OBSERVATION_NONSENSITIVE_QUESTIONS,
+  MID_QUARTER_NONSENSITIVE_QUESTIONS,
+  END_OF_QUARTER_NONSENSITIVE_QUESTIONS,
   EQ_SENSITIVE_QUESTIONS,
-  TA_QUESTIONS,
-  LA_PED_QUESTIONS,
-  LA_LCC_QUESTIONS,
-  OBS_TEXT_FIELDS,
+  TA_NONSENSITIVE_QUESTIONS,
+  LA_PED_NONSENSITIVE_QUESTIONS,
+  LA_LCC_NONSENSITIVE_QUESTIONS,
+  OBS_NONSENSITIVE_TEXT_FIELDS,
   OBS_SENSITIVE_TEXT_FIELDS,
-  MQ_TEXT_FIELDS,
+  MQ_NONSENSITIVE_TEXT_FIELDS,
   MQ_SENSITIVE_TEXT_FIELDS,
-  EQ_TEXT_FIELDS,
-  TA_TEXT_FIELDS,
-  LA_HEAD_TEXT_FIELDS,
+  EQ_NONSENSITIVE_TEXT_FIELDS,
+  TA_NONSENSITIVE_TEXT_FIELDS,
+  LA_HEAD_NONSENSITIVE_TEXT_FIELDS,
 } from "./constants";
 
 const required = (msg: string) => z.string().min(1, msg);
@@ -76,22 +76,22 @@ export const studentSharedFields = {
 };
 
 export const mqFields = {
-  ...zodFromFields(MID_QUARTER_QUESTIONS),
-  ...zodFromFields(MQ_TEXT_FIELDS),
+  ...zodFromFields(MID_QUARTER_NONSENSITIVE_QUESTIONS),
+  ...zodFromFields(MQ_NONSENSITIVE_TEXT_FIELDS),
   ...zodFromFields(MQ_SENSITIVE_TEXT_FIELDS),
 };
 
 export const eqFields = {
-  ...zodFromFields(END_OF_QUARTER_QUESTIONS),
+  ...zodFromFields(END_OF_QUARTER_NONSENSITIVE_QUESTIONS),
   ...zodFromFields(EQ_SENSITIVE_QUESTIONS),
-  ...zodFromFields(EQ_TEXT_FIELDS),
+  ...zodFromFields(EQ_NONSENSITIVE_TEXT_FIELDS),
 };
 
-export const laPedFields = zodFromFields(LA_PED_QUESTIONS);
+export const laPedFields = zodFromFields(LA_PED_NONSENSITIVE_QUESTIONS);
 
-export const laLccFields = zodFromFields(LA_LCC_QUESTIONS);
+export const laLccFields = zodFromFields(LA_LCC_NONSENSITIVE_QUESTIONS);
 
-export const laSharedFields = zodFromFields(LA_HEAD_TEXT_FIELDS);
+export const laSharedFields = zodFromFields(LA_HEAD_NONSENSITIVE_TEXT_FIELDS);
 
 const laFields = {
   la_head_type: z.string(),
@@ -104,14 +104,14 @@ export const obsFields = {
   obs_round: required("Please select a round"),
   obs_section: required("Please describe the observed section"),
   obs_la_position: required("Please select an LA position"),
-  ...zodFromFields(OBSERVATION_QUESTIONS),
-  ...zodFromFields(OBS_TEXT_FIELDS),
+  ...zodFromFields(OBSERVATION_NONSENSITIVE_QUESTIONS),
+  ...zodFromFields(OBS_NONSENSITIVE_TEXT_FIELDS),
   ...zodFromFields(OBS_SENSITIVE_TEXT_FIELDS),
 };
 
 export const taFields = {
-  ...zodFromFields(TA_QUESTIONS),
-  ...zodFromFields(TA_TEXT_FIELDS),
+  ...zodFromFields(TA_NONSENSITIVE_QUESTIONS),
+  ...zodFromFields(TA_NONSENSITIVE_TEXT_FIELDS),
 };
 
 // Built from field groups — single source of truth for FeedbackFormValues
@@ -220,57 +220,3 @@ export const feedbackFormSchema = z
   .and(
     z.discriminatedUnion("role", [studentSchema, taSchema, laSchema]),
   ) as unknown as z.ZodType<FeedbackFormValues, FeedbackFormValues>;
-
-// ---------------------------------------------------------------------------
-// Anonymous view schemas — only fields safe to display per tab.
-// Parsing through these strips everything else (demographics, sensitive text).
-// ---------------------------------------------------------------------------
-
-function viewFields(fields: readonly FieldEntry[]) {
-  return Object.fromEntries(fields.map((f) => [f.value, z.any()]));
-}
-
-const anonMidQuarterSchema = z.object({
-  feedback_type: z.literal("mid_quarter"),
-  activities: z.any(),
-  hours: z.any(),
-  ...viewFields(MID_QUARTER_QUESTIONS),
-  ...viewFields(MQ_TEXT_FIELDS),
-});
-
-const anonEndOfQuarterSchema = z.object({
-  feedback_type: z.literal("end_of_quarter"),
-  activities: z.any(),
-  hours: z.any(),
-  ...viewFields(END_OF_QUARTER_QUESTIONS),
-  ...viewFields(EQ_TEXT_FIELDS),
-});
-
-const anonObservationSchema = z.object({
-  feedback_type: z.literal("la_observation"),
-  ...viewFields(OBSERVATION_QUESTIONS),
-  ...viewFields(OBS_TEXT_FIELDS),
-});
-
-const anonHeadLASchema = z.object({
-  feedback_type: z.literal("la_head_la"),
-  ...viewFields(LA_PED_QUESTIONS),
-  ...viewFields(LA_LCC_QUESTIONS),
-  ...viewFields(LA_HEAD_TEXT_FIELDS),
-});
-
-const anonTASchema = z.object({
-  role: z.literal("ta"),
-  ...viewFields(TA_QUESTIONS),
-  ...viewFields(TA_TEXT_FIELDS),
-});
-
-export const anonFeedbackSchema = z.union([
-  anonMidQuarterSchema,
-  anonEndOfQuarterSchema,
-  anonObservationSchema,
-  anonHeadLASchema,
-  anonTASchema,
-]);
-
-export type AnonFeedback = z.infer<typeof anonFeedbackSchema>;

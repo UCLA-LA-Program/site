@@ -2,10 +2,10 @@
 
 import type { FeedbackFormValues } from "../../schema";
 import {
-  OBSERVATION_QUESTIONS,
+  OBSERVATION_NONSENSITIVE_QUESTIONS,
   OBSERVATION_ROUND_OPTIONS,
   LA_POSITION_OPTIONS,
-  OBS_TEXT_FIELDS,
+  OBS_NONSENSITIVE_TEXT_FIELDS,
   OBS_SENSITIVE_TEXT_FIELDS,
 } from "../../constants";
 import { Input } from "@/components/ui/input";
@@ -127,7 +127,7 @@ export const ObservationSection = withForm({
       </form.Field>
 
       {/* Likert questions */}
-      {OBSERVATION_QUESTIONS.map(({ value, label, options }) => (
+      {OBSERVATION_NONSENSITIVE_QUESTIONS.map(({ value, label, options }) => (
         <LikertField
           key={value}
           form={form}
@@ -137,7 +137,7 @@ export const ObservationSection = withForm({
         />
       ))}
 
-      {[...OBS_TEXT_FIELDS, ...OBS_SENSITIVE_TEXT_FIELDS].map(
+      {[...OBS_NONSENSITIVE_TEXT_FIELDS, ...OBS_SENSITIVE_TEXT_FIELDS].map(
         ({ value, label, required }) => (
           <TextareaFormField
             key={value}

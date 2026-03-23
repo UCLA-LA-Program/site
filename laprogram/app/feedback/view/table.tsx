@@ -2,8 +2,9 @@
 
 import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
+import { cn } from "@/lib/utils";
 import type { Column } from "./columns";
-import type { AnonFeedback } from "../schema";
+import type { AnonFeedback } from "./columns";
 
 import {
   Table,
@@ -33,14 +34,17 @@ export function FeedbackTable({ columns, data }: FeedbackTableProps) {
 
   return (
     <div className="overflow-auto rounded-md border">
-      <Table className="table-fixed">
+      <Table className="table-fixed text-xs">
         <TableHeader>
           <TableRow>
-            <TableHead className="w-10" />
+            <TableHead className="w-8 border-b-0" />
             {columns.map((col) => (
               <TableHead
                 key={col.key}
-                className="w-40 text-xs py-2 whitespace-normal align-text-top"
+                className={cn(
+                  "w-40 px-2 py-2 whitespace-normal align-text-top border-l",
+                  col.width,
+                )}
               >
                 {col.header}
               </TableHead>
@@ -57,7 +61,7 @@ export function FeedbackTable({ columns, data }: FeedbackTableProps) {
                   className="cursor-pointer"
                   onClick={() => toggleRow(idx)}
                 >
-                  <TableCell className="w-10 px-2">
+                  <TableCell className="w-8 px-2">
                     {expanded ? (
                       <ChevronDown className="h-4 w-4 text-muted-foreground" />
                     ) : (
@@ -69,10 +73,12 @@ export function FeedbackTable({ columns, data }: FeedbackTableProps) {
                     return (
                       <TableCell
                         key={col.key}
-                        className="whitespace-normal align-top"
+                        className="px-2 whitespace-normal align-top border-l"
                       >
                         <div className={expanded ? "" : "line-clamp-3"}>
-                          {col.render ? col.render(val) : (val as React.ReactNode)}
+                          {col.render
+                            ? col.render(val)
+                            : (val as React.ReactNode)}
                         </div>
                       </TableCell>
                     );
@@ -84,7 +90,7 @@ export function FeedbackTable({ columns, data }: FeedbackTableProps) {
             <TableRow>
               <TableCell
                 colSpan={columns.length + 1}
-                className="h-24 text-center"
+                className="h-16 text-center"
               >
                 No results.
               </TableCell>

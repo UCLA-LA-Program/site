@@ -3,9 +3,9 @@
 import type { FeedbackFormValues } from "../../schema";
 import {
   LA_HEAD_TYPE_OPTIONS,
-  LA_LCC_QUESTIONS,
-  LA_PED_QUESTIONS,
-  LA_HEAD_TEXT_FIELDS,
+  LA_LCC_NONSENSITIVE_QUESTIONS,
+  LA_PED_NONSENSITIVE_QUESTIONS,
+  LA_HEAD_NONSENSITIVE_TEXT_FIELDS,
 } from "../../constants";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -60,7 +60,7 @@ export const LAHeadLASection = withForm({
         {(la_head_type) => (
           <>
             {(la_head_type === "ped_head" || la_head_type === "ped_lcc") &&
-              LA_PED_QUESTIONS.map(({ value, label, options }) => (
+              LA_PED_NONSENSITIVE_QUESTIONS.map(({ value, label, options }) => (
                 <LikertField
                   key={value}
                   form={form}
@@ -70,7 +70,7 @@ export const LAHeadLASection = withForm({
                 />
               ))}
             {(la_head_type === "lcc" || la_head_type === "ped_lcc") &&
-              LA_LCC_QUESTIONS.map(({ value, label, options }) => (
+              LA_LCC_NONSENSITIVE_QUESTIONS.map(({ value, label, options }) => (
                 <LikertField
                   key={value}
                   form={form}
@@ -83,7 +83,7 @@ export const LAHeadLASection = withForm({
         )}
       </form.Subscribe>
 
-      {LA_HEAD_TEXT_FIELDS.map(({ value, label, required }) => (
+      {LA_HEAD_NONSENSITIVE_TEXT_FIELDS.map(({ value, label, required }) => (
         <TextareaFormField
           key={value}
           form={form}

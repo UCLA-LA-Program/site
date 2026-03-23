@@ -13,7 +13,7 @@ import { authClient } from "@/lib/auth-client";
 import { redirect } from "next/navigation";
 import { fetcher } from "@/lib/utils";
 import useSWR from "swr";
-import type { AnonFeedback } from "../schema";
+import type { AnonFeedback } from "./columns";
 
 const TABLES = [
   {

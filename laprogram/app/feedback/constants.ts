@@ -51,7 +51,7 @@ export const ACTIVITIES = [
   { value: "study_session", label: "Review/Study Session" },
 ];
 
-export const TA_QUESTIONS: FieldEntry[] = [
+export const TA_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
   {
     value: "ta_comfortable",
     label:
@@ -144,7 +144,7 @@ export const LA_HEAD_TYPE_OPTIONS = [
   { value: "ped_lcc", label: "Both Ped Head and LCC" },
 ];
 
-export const LA_PED_QUESTIONS: FieldEntry[] = [
+export const LA_PED_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
   {
     value: "la_ped_seminars",
     label:
@@ -181,7 +181,7 @@ export const LA_PED_QUESTIONS: FieldEntry[] = [
   },
 ];
 
-export const LA_LCC_QUESTIONS: FieldEntry[] = [
+export const LA_LCC_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
   {
     value: "la_lcc_emails",
     label: "My Head LA responds to emails in a timely manner.",
@@ -277,7 +277,7 @@ export const GROUP_OPTIONS = [
 // Free-text field labels (shared between form sections and view tables)
 // ---------------------------------------------------------------------------
 
-export const OBS_TEXT_FIELDS = [
+export const OBS_NONSENSITIVE_TEXT_FIELDS = [
   {
     value: "obs_strengths",
     label: "What are the LA's strengths at the moment?",
@@ -300,7 +300,7 @@ export const OBS_SENSITIVE_TEXT_FIELDS = [
   },
 ] as const;
 
-export const MQ_TEXT_FIELDS = [
+export const MQ_NONSENSITIVE_TEXT_FIELDS = [
   {
     value: "mq_strengths",
     label: "What are your LA's strengths?",
@@ -328,7 +328,7 @@ export const MQ_SENSITIVE_TEXT_FIELDS = [
   },
 ] as const;
 
-export const EQ_TEXT_FIELDS = [
+export const EQ_NONSENSITIVE_TEXT_FIELDS = [
   {
     value: "eq_comments",
     label:
@@ -337,7 +337,7 @@ export const EQ_TEXT_FIELDS = [
   },
 ] as const;
 
-export const TA_TEXT_FIELDS = [
+export const TA_NONSENSITIVE_TEXT_FIELDS = [
   {
     value: "ta_strengths",
     label: "What are the LA's strengths currently?",
@@ -351,7 +351,7 @@ export const TA_TEXT_FIELDS = [
   { value: "ta_comments", label: "Any additional comments?", required: false },
 ] as const;
 
-export const LA_HEAD_TEXT_FIELDS = [
+export const LA_HEAD_NONSENSITIVE_TEXT_FIELDS = [
   {
     value: "la_strengths",
     label: "What are some of your Head LA's strengths?",
@@ -378,7 +378,7 @@ export const LA_POSITION_OPTIONS = [
   { value: "lcc_ped_head", label: "LCC + Pedagogy Head LA" },
 ];
 
-export const OBSERVATION_QUESTIONS: FieldEntry[] = [
+export const OBSERVATION_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
   {
     value: "obs_empathized",
     label: "The LA empathized with struggling peers...",
@@ -455,7 +455,7 @@ export const OBSERVATION_QUESTIONS: FieldEntry[] = [
   },
 ];
 
-export const MID_QUARTER_QUESTIONS: FieldEntry[] = [
+export const MID_QUARTER_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
   {
     value: "mq_approachable",
     label: "My LA is approachable.",
@@ -523,7 +523,7 @@ export const MID_QUARTER_QUESTIONS: FieldEntry[] = [
   },
 ];
 
-export const END_OF_QUARTER_QUESTIONS: FieldEntry[] = [
+export const END_OF_QUARTER_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
   {
     value: "eq_approachability",
     label: "How much improvement have you seen in your LA's approachability?",

@@ -2,8 +2,8 @@
 
 import type { FeedbackFormValues } from "../../schema";
 import {
-  MID_QUARTER_QUESTIONS,
-  MQ_TEXT_FIELDS,
+  MID_QUARTER_NONSENSITIVE_QUESTIONS,
+  MQ_NONSENSITIVE_TEXT_FIELDS,
   MQ_SENSITIVE_TEXT_FIELDS,
 } from "../../constants";
 import { ActivitiesField } from "../fields/activities-field";
@@ -21,7 +21,7 @@ export const MidQuarterSection = withForm({
     <FieldGroup>
       <ActivitiesField form={form} />
       <HoursField form={form} />
-      {MID_QUARTER_QUESTIONS.map(({ value, label, options }) => (
+      {MID_QUARTER_NONSENSITIVE_QUESTIONS.map(({ value, label, options }) => (
         <LikertField
           key={value}
           form={form}
@@ -30,7 +30,7 @@ export const MidQuarterSection = withForm({
           options={options!}
         />
       ))}
-      {[...MQ_TEXT_FIELDS, ...MQ_SENSITIVE_TEXT_FIELDS].map(
+      {[...MQ_NONSENSITIVE_TEXT_FIELDS, ...MQ_SENSITIVE_TEXT_FIELDS].map(
         ({ value, label, required }) => (
           <TextareaFormField
             key={value}

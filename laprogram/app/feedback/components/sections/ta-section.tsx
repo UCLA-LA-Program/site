@@ -1,7 +1,10 @@
 "use client";
 
 import type { FeedbackFormValues } from "../../schema";
-import { TA_QUESTIONS, TA_TEXT_FIELDS } from "../../constants";
+import {
+  TA_NONSENSITIVE_QUESTIONS,
+  TA_NONSENSITIVE_TEXT_FIELDS,
+} from "../../constants";
 import { LikertField } from "../fields/likert-field";
 import { TextareaFormField } from "../fields/textarea-form-field";
 import { FieldGroup } from "@/components/ui/field";
@@ -13,7 +16,7 @@ export const TASection = withForm({
   validators: { onSubmit: feedbackFormSchema },
   render: ({ form }) => (
     <FieldGroup>
-      {TA_QUESTIONS.map(({ value, label, options }) => (
+      {TA_NONSENSITIVE_QUESTIONS.map(({ value, label, options }) => (
         <LikertField
           key={value}
           form={form}
@@ -22,7 +25,7 @@ export const TASection = withForm({
           options={options!}
         />
       ))}
-      {TA_TEXT_FIELDS.map(({ value, label, required }) => (
+      {TA_NONSENSITIVE_TEXT_FIELDS.map(({ value, label, required }) => (
         <TextareaFormField
           key={value}
           form={form}

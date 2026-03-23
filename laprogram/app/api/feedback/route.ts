@@ -1,9 +1,10 @@
 import { getAuth } from "@/lib/auth";
-import { feedbackFormSchema, anonFeedbackSchema } from "@/app/feedback/schema";
+import { feedbackFormSchema } from "@/app/feedback/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { v7 as uuidv7 } from "uuid";
 import { Id } from "@/types/db";
 import { headers } from "next/headers";
+import { anonFeedbackSchema } from "@/app/feedback/view/columns";
 
 export async function POST(request: Request) {
   const feedback_request = await request.json();
