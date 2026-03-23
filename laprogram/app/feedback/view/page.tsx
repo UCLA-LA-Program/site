@@ -25,10 +25,10 @@ const TABLES = [
 ] as const;
 
 export default function FeedbackViewPage() {
-  const { data: session } = authClient.useSession();
+  const { data: session, isPending } = authClient.useSession();
   console.log(session);
 
-  if (!session) {
+  if (!isPending && !session) {
     redirect("/login");
   }
 

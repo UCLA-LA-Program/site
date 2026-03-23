@@ -27,7 +27,6 @@ export default async function RootLayout({
   const session = await auth.api.getSession({
     headers: await headers(),
   });
-  console.log(session);
 
   return (
     <html lang="en" className={cn(inter.variable, "font-sans", "antialiased")}>
