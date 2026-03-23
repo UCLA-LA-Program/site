@@ -11,6 +11,9 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { authClient } from "@/lib/auth-client";
 import { redirect } from "next/navigation";
+import { fetcher } from "@/lib/utils";
+import useSWR from "swr";
+import { FeedbackFormValues } from "../schema";
 
 const TABLES = [
   { id: "mid_quarter", label: "Mid-Quarter", columns: midQuarterColumns },
@@ -26,17 +29,27 @@ const TABLES = [
 
 export default function FeedbackViewPage() {
   const { data: session, isPending } = authClient.useSession();
-  console.log(session);
+  const { data: feedback } = useSWR<FeedbackFormValues[]>(
+    "/api/feedback",
+    fetcher,
+    {
+      suspense: true,
+      fallbackData: [],
+    },
+  );
 
   if (!isPending && !session) {
     redirect("/login");
   }
+
+  if (!feedback) return <></>;
 
   return (
     <div className="mx-auto w-full px-8 py-5">
       <h1 className="mb-5 text-2xl font-bold tracking-tight">
         Feedback Responses
       </h1>
+      <p>{JSON.stringify(feedback)}</p>
       <Tabs defaultValue="mid_quarter">
         <TabsList>
           {TABLES.map((t) => (
@@ -47,7 +60,7 @@ export default function FeedbackViewPage() {
         </TabsList>
         {TABLES.map((t) => (
           <TabsContent key={t.id} value={t.id}>
-            <DataTable columns={t.columns} data={[]} />
+            <DataTable columns={t.columns} data={feedback} />
           </TabsContent>
         ))}
       </Tabs>

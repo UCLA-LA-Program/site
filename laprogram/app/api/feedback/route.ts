@@ -62,7 +62,7 @@ export async function GET() {
   try {
     const { env } = getCloudflareContext();
     feedback = await env.data
-      ?.prepare(`SELECT feedback FROM feedback WHERE user.recipientId = ?1`)
+      ?.prepare(`SELECT feedback FROM feedback WHERE recipientId = ?1`)
       .bind(session.user.id)
       ?.run<FeedbackFormValues>();
 
