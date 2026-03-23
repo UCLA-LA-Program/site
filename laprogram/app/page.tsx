@@ -41,9 +41,6 @@ export default function Page() {
                 <ArrowRight />{" "}
               </Link>
             </Button>
-            <Button asChild variant="outline" size="lg" className="px-7">
-              <Link href="/login">LA Portal</Link>
-            </Button>
           </div>
         </section>
       </main>

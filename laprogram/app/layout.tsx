@@ -6,6 +6,8 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
+import { FeedbackMenu } from "@/components/feedback-menu";
+import { UserMenu } from "@/components/user-menu";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 
@@ -37,11 +39,19 @@ export default async function RootLayout({
               UCLA LA Program
             </Link>
             {session ? (
-              session.user.name
+              <nav className="flex items-center gap-2">
+                <FeedbackMenu />
+                <UserMenu name={session.user.name} />
+              </nav>
             ) : (
-              <Button asChild variant="outline">
-                <Link href="/login">Login</Link>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button asChild variant="ghost">
+                  <Link href="/feedback">Give Feedback</Link>
+                </Button>
+                <Button asChild variant="outline">
+                  <Link href="/login">Login</Link>
+                </Button>
+              </div>
             )}
           </div>
         </header>
