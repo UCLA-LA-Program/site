@@ -1,6 +1,6 @@
 "use client";
 
-import { DataTable } from "./table";
+import { FeedbackTable } from "./table";
 import {
   midQuarterColumns,
   endOfQuarterColumns,
@@ -13,30 +13,51 @@ import { authClient } from "@/lib/auth-client";
 import { redirect } from "next/navigation";
 import { fetcher } from "@/lib/utils";
 import useSWR from "swr";
-import { FeedbackFormValues } from "../schema";
+import type { AnonFeedback } from "../schema";
 
 const TABLES = [
-  { id: "mid_quarter", label: "Mid-Quarter", columns: midQuarterColumns },
+  {
+    id: "mid_quarter",
+    label: "Mid-Quarter",
+    columns: midQuarterColumns,
+    filter: (f: AnonFeedback) =>
+      "feedback_type" in f && f.feedback_type === "mid_quarter",
+  },
   {
     id: "end_of_quarter",
     label: "End-of-Quarter",
     columns: endOfQuarterColumns,
+    filter: (f: AnonFeedback) =>
+      "feedback_type" in f && f.feedback_type === "end_of_quarter",
   },
-  { id: "observation", label: "Observation", columns: observationColumns },
-  { id: "head_la", label: "Head LA", columns: headLAColumns },
-  { id: "ta", label: "TA → LA", columns: taColumns },
-] as const;
+  {
+    id: "observation",
+    label: "Observation",
+    columns: observationColumns,
+    filter: (f: AnonFeedback) =>
+      "feedback_type" in f && f.feedback_type === "la_observation",
+  },
+  {
+    id: "head_la",
+    label: "Head LA",
+    columns: headLAColumns,
+    filter: (f: AnonFeedback) =>
+      "feedback_type" in f && f.feedback_type === "la_head_la",
+  },
+  {
+    id: "ta",
+    label: "TA → LA",
+    columns: taColumns,
+    filter: (f: AnonFeedback) => "role" in f && f.role === "ta",
+  },
+];
 
 export default function FeedbackViewPage() {
   const { data: session, isPending } = authClient.useSession();
-  const { data: feedback } = useSWR<FeedbackFormValues[]>(
-    "/api/feedback",
-    fetcher,
-    {
-      suspense: true,
-      fallbackData: [],
-    },
-  );
+  const { data: feedback } = useSWR<AnonFeedback[]>("/api/feedback", fetcher, {
+    suspense: true,
+    fallbackData: [],
+  });
 
   if (!isPending && !session) {
     redirect("/login");
@@ -49,7 +70,6 @@ export default function FeedbackViewPage() {
       <h1 className="mb-5 text-2xl font-bold tracking-tight">
         Feedback Responses
       </h1>
-      <p>{JSON.stringify(feedback)}</p>
       <Tabs defaultValue="mid_quarter">
         <TabsList>
           {TABLES.map((t) => (
@@ -60,7 +80,10 @@ export default function FeedbackViewPage() {
         </TabsList>
         {TABLES.map((t) => (
           <TabsContent key={t.id} value={t.id}>
-            <DataTable columns={t.columns} data={feedback} />
+            <FeedbackTable
+              columns={t.columns}
+              data={feedback.filter(t.filter)}
+            />
           </TabsContent>
         ))}
       </Tabs>

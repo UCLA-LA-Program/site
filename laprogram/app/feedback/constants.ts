@@ -42,13 +42,13 @@ export const OBSERVATION_OPTIONS = [
 ];
 
 export const ACTIVITIES = [
-  { value: "discussion", label: "Discussion or lab section" },
+  { value: "discussion", label: "Discussion/Lab Section" },
   {
     value: "lecture",
-    label: "Lecture (if you have interacted with LAs during lecture)",
+    label: "Lecture",
   },
-  { value: "office_hours", label: "Office hours" },
-  { value: "study_session", label: "Review / study session" },
+  { value: "office_hours", label: "Office Hours" },
+  { value: "study_session", label: "Review/Study Session" },
 ];
 
 export const TA_QUESTIONS: FieldEntry[] = [

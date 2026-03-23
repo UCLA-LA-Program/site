@@ -1,5 +1,5 @@
 import { getAuth } from "@/lib/auth";
-import { feedbackFormSchema, FeedbackFormValues } from "@/app/feedback/schema";
+import { feedbackFormSchema, anonFeedbackSchema } from "@/app/feedback/schema";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { v7 as uuidv7 } from "uuid";
 import { Id } from "@/types/db";
@@ -58,20 +58,26 @@ export async function GET() {
     return new Response("Unauthenticated user.", { status: 401 });
   }
 
-  let feedback;
+  let rows;
   try {
     const { env } = getCloudflareContext();
-    feedback = await env.data
+    const result = await env.data
       ?.prepare(`SELECT feedback FROM feedback WHERE recipientId = ?1`)
       .bind(session.user.id)
-      ?.run<FeedbackFormValues>();
+      ?.run<{ feedback: string }>();
 
-    if (!feedback || feedback.error) {
+    if (!result || result.error) {
       return new Response("Encountered database error.", { status: 500 });
     }
+    rows = result.results;
   } catch {
     return new Response("Encountered database error.", { status: 500 });
   }
 
-  return new Response(JSON.stringify(feedback.results), { status: 200 });
+  const safe = rows.flatMap((row) => {
+    const parsed = anonFeedbackSchema.safeParse(JSON.parse(row.feedback));
+    return parsed.success ? [parsed.data] : [];
+  });
+
+  return new Response(JSON.stringify(safe), { status: 200 });
 }

@@ -220,3 +220,57 @@ export const feedbackFormSchema = z
   .and(
     z.discriminatedUnion("role", [studentSchema, taSchema, laSchema]),
   ) as unknown as z.ZodType<FeedbackFormValues, FeedbackFormValues>;
+
+// ---------------------------------------------------------------------------
+// Anonymous view schemas — only fields safe to display per tab.
+// Parsing through these strips everything else (demographics, sensitive text).
+// ---------------------------------------------------------------------------
+
+function viewFields(fields: readonly FieldEntry[]) {
+  return Object.fromEntries(fields.map((f) => [f.value, z.any()]));
+}
+
+const anonMidQuarterSchema = z.object({
+  feedback_type: z.literal("mid_quarter"),
+  activities: z.any(),
+  hours: z.any(),
+  ...viewFields(MID_QUARTER_QUESTIONS),
+  ...viewFields(MQ_TEXT_FIELDS),
+});
+
+const anonEndOfQuarterSchema = z.object({
+  feedback_type: z.literal("end_of_quarter"),
+  activities: z.any(),
+  hours: z.any(),
+  ...viewFields(END_OF_QUARTER_QUESTIONS),
+  ...viewFields(EQ_TEXT_FIELDS),
+});
+
+const anonObservationSchema = z.object({
+  feedback_type: z.literal("la_observation"),
+  ...viewFields(OBSERVATION_QUESTIONS),
+  ...viewFields(OBS_TEXT_FIELDS),
+});
+
+const anonHeadLASchema = z.object({
+  feedback_type: z.literal("la_head_la"),
+  ...viewFields(LA_PED_QUESTIONS),
+  ...viewFields(LA_LCC_QUESTIONS),
+  ...viewFields(LA_HEAD_TEXT_FIELDS),
+});
+
+const anonTASchema = z.object({
+  role: z.literal("ta"),
+  ...viewFields(TA_QUESTIONS),
+  ...viewFields(TA_TEXT_FIELDS),
+});
+
+export const anonFeedbackSchema = z.union([
+  anonMidQuarterSchema,
+  anonEndOfQuarterSchema,
+  anonObservationSchema,
+  anonHeadLASchema,
+  anonTASchema,
+]);
+
+export type AnonFeedback = z.infer<typeof anonFeedbackSchema>;
