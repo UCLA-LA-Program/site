@@ -4,8 +4,10 @@ import Link from "next/link";
 
 import "./globals.css";
 import { cn } from "@/lib/utils";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
+import { getAuth } from "@/lib/auth";
+import { headers } from "next/headers";
 
 export const metadata: Metadata = {
   title: {
@@ -16,11 +18,17 @@ export const metadata: Metadata = {
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const auth = await getAuth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+  console.log(session);
+
   return (
     <html lang="en" className={cn(inter.variable, "font-sans", "antialiased")}>
       <body className="flex min-h-svh flex-col">
@@ -29,13 +37,13 @@ export default function RootLayout({
             <Link href="/" className="text-base font-semibold tracking-tight">
               UCLA LA Program
             </Link>
-            <Link
-              href="/login"
-              className={buttonVariants({ variant: "outline" })}
-            />
-            <Button asChild variant="outline">
-              <Link href="/login">Login</Link>
-            </Button>
+            {session ? (
+              session.user.name
+            ) : (
+              <Button asChild variant="outline">
+                <Link href="/login">Login</Link>
+              </Button>
+            )}
           </div>
         </header>
         {children}

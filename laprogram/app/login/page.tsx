@@ -1,9 +1,6 @@
-import type { Metadata } from "next";
-import { Button } from "@/components/ui/button";
+"use client";
 
-export const metadata: Metadata = {
-  title: "Login",
-};
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
   Card,
@@ -14,13 +11,16 @@ import {
 } from "@/components/ui/card";
 import { ArrowRight } from "lucide-react";
 import { PageBackground } from "@/components/page-background";
+import { authClient } from "@/lib/auth-client";
 
 export default function LoginPage() {
   async function handleSubmit(formData: FormData) {
-    "use server";
-    const email = formData.get("email");
-    // TODO: trigger OTP send for email
-    console.log(email);
+    const email = formData.get("email")?.toString();
+    if (!email) return;
+
+    await authClient.signIn.magicLink({
+      email,
+    });
   }
 
   return (

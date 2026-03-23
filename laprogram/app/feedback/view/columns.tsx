@@ -4,17 +4,17 @@ import { ColumnDef } from "@tanstack/react-table";
 import type { FeedbackFormValues } from "../schema";
 import {
   type FieldEntry,
+  MID_QUARTER_QUESTIONS,
+  END_OF_QUARTER_QUESTIONS,
   OBSERVATION_QUESTIONS,
   LA_PED_QUESTIONS,
   LA_LCC_QUESTIONS,
-  MID_QUARTER_QUESTIONS,
-  END_OF_QUARTER_QUESTIONS,
   TA_QUESTIONS,
-  OBS_TEXT_FIELDS,
   MQ_TEXT_FIELDS,
   EQ_TEXT_FIELDS,
-  TA_TEXT_FIELDS,
+  OBS_TEXT_FIELDS,
   LA_HEAD_TEXT_FIELDS,
+  TA_TEXT_FIELDS,
 } from "../constants";
 
 function fromQuestions(
@@ -27,31 +27,7 @@ function fromQuestions(
 }
 
 // ---------------------------------------------------------------------------
-// 1. Observation
-// ---------------------------------------------------------------------------
-export const observationColumns: ColumnDef<FeedbackFormValues>[] = [
-  ...fromQuestions(OBSERVATION_QUESTIONS),
-  ...fromQuestions(OBS_TEXT_FIELDS),
-];
-
-// ---------------------------------------------------------------------------
-// 2. Ped Head (LA → Head LA)
-// ---------------------------------------------------------------------------
-export const pedHeadColumns: ColumnDef<FeedbackFormValues>[] = [
-  ...fromQuestions(LA_PED_QUESTIONS),
-  ...fromQuestions(LA_HEAD_TEXT_FIELDS),
-];
-
-// ---------------------------------------------------------------------------
-// 3. LCC (LA → Head LA)
-// ---------------------------------------------------------------------------
-export const lccColumns: ColumnDef<FeedbackFormValues>[] = [
-  ...fromQuestions(LA_LCC_QUESTIONS),
-  ...fromQuestions(LA_HEAD_TEXT_FIELDS),
-];
-
-// ---------------------------------------------------------------------------
-// 4. Mid-Quarter (student → LA)
+// 1. Mid-Quarter (student → LA)
 // ---------------------------------------------------------------------------
 export const midQuarterColumns: ColumnDef<FeedbackFormValues>[] = [
   { accessorKey: "activities", header: "LA-Supported Activities" },
@@ -61,7 +37,7 @@ export const midQuarterColumns: ColumnDef<FeedbackFormValues>[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 5. End-of-Quarter (student → LA)
+// 2. End-of-Quarter (student → LA)
 // ---------------------------------------------------------------------------
 export const endOfQuarterColumns: ColumnDef<FeedbackFormValues>[] = [
   { accessorKey: "activities", header: "LA-Supported Activities" },
@@ -71,7 +47,24 @@ export const endOfQuarterColumns: ColumnDef<FeedbackFormValues>[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 6. TA → LA
+// 3. Observation (LA → LA)
+// ---------------------------------------------------------------------------
+export const observationColumns: ColumnDef<FeedbackFormValues>[] = [
+  ...fromQuestions(OBSERVATION_QUESTIONS),
+  ...fromQuestions(OBS_TEXT_FIELDS),
+];
+
+// ---------------------------------------------------------------------------
+// 4. Head LA (LA → Head LA) — Ped + LCC merged
+// ---------------------------------------------------------------------------
+export const headLAColumns: ColumnDef<FeedbackFormValues>[] = [
+  ...fromQuestions(LA_PED_QUESTIONS),
+  ...fromQuestions(LA_LCC_QUESTIONS),
+  ...fromQuestions(LA_HEAD_TEXT_FIELDS),
+];
+
+// ---------------------------------------------------------------------------
+// 5. TA → LA
 // ---------------------------------------------------------------------------
 export const taColumns: ColumnDef<FeedbackFormValues>[] = [
   ...fromQuestions(TA_QUESTIONS),

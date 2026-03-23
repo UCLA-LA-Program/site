@@ -32,14 +32,17 @@ export function DataTable<TData, TValue>({
   });
 
   return (
-    <div className="overflow-hidden rounded-md border">
-      <Table>
+    <div className="overflow-auto rounded-md border">
+      <Table className="table-fixed">
         <TableHeader>
           {table.getHeaderGroups().map((headerGroup) => (
             <TableRow key={headerGroup.id}>
               {headerGroup.headers.map((header) => {
                 return (
-                  <TableHead key={header.id}>
+                  <TableHead
+                    key={header.id}
+                    className="w-40 text-xs py-2 whitespace-normal align-text-top"
+                  >
                     {header.isPlaceholder
                       ? null
                       : flexRender(
