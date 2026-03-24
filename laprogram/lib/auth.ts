@@ -1,11 +1,12 @@
 import "server-only";
 
-import { Awaitable, betterAuth, GenericEndpointContext } from "better-auth";
+import { betterAuth } from "better-auth";
 import { admin, magicLink } from "better-auth/plugins";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { Kysely } from "kysely";
 import { D1Dialect } from "kysely-d1";
 import { nextCookies } from "better-auth/next-js";
+import sendMagicLinkSES from "./email";
 
 async function authBuilder() {
   const { env } = await getCloudflareContext({ async: true });
@@ -25,11 +26,8 @@ async function authBuilder() {
     plugins: [
       magicLink({
         disableSignUp: true,
-        sendMagicLink: function (
-          data: { email: string; url: string; token: string },
-          _ctx?: GenericEndpointContext | undefined,
-        ): Awaitable<void> {
-          console.log(data.url);
+        sendMagicLink: (data) => {
+          sendMagicLinkSES(data.email, data.url);
         },
       }),
       admin(),
