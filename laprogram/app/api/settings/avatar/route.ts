@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     if (!transformedImage) throw Error();
 
-    const fileName = `avatars/${process.env.NODE_ENV === "development" && "development/"}${session.user.id}/${uuidv7()}.webp`;
+    const fileName = `/avatars/${process.env.NODE_ENV === "development" && "development/"}${session.user.id}/${uuidv7()}.webp`;
     await env.storage?.put(fileName, await transformedImage.blob(), {
       httpMetadata: { contentType: "image/webp" },
     });
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     return Response.json({
       url: process.env.NEXT_PUBLIC_BUCKET_URL + fileName,
     });
-  } catch (e) {
+  } catch {
     return new Response("Upload failed.", { status: 500 });
   }
 }
