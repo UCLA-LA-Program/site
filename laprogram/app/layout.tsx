@@ -57,7 +57,7 @@ export default async function RootLayout({
         </header>
         {children}
         <Toaster position="top-center" offset="16px" mobileOffset="16px" />
-        <footer className="relative z-10 px-8 py-6">
+        <footer className="relative z-10 mt-auto px-8 py-6">
           <div className="mx-auto max-w-5xl">
             <p className="text-center text-xs text-muted-foreground/50">
               Made with &lt;3 by the LA Program PDT
