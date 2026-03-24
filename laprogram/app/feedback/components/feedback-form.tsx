@@ -21,7 +21,7 @@ import { ObservationSection } from "./sections/observation-section";
 import {
   FEEDBACK_TYPE_OPTIONS,
   LA_FEEDBACK_TYPE_OPTIONS,
-  LA_POSITION_OPTIONS,
+  LA_POSITION_MAP,
   ROLE_OPTIONS,
 } from "../constants";
 
@@ -40,11 +40,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import { toast } from "sonner";
 import Image from "next/image";
-import { CircleUser, User, UserRound } from "lucide-react";
-
-const LA_POSITION_MAP = new Map(
-  LA_POSITION_OPTIONS.map((o) => [o.value, o.label]),
-);
+import { UserRound } from "lucide-react";
 
 export function FeedbackForm() {
   const { data: las } = useSWR<LA[]>("/api/la", fetcher, {

@@ -1,3 +1,16 @@
+export const LA_POSITION_OPTIONS = [
+  { value: "new", label: "New LA" },
+  { value: "returner", label: "Returning LA" },
+  { value: "ped", label: "Pedagogy Head LA" },
+  { value: "lcc", label: "LA Course Coordinator (LCC)" },
+  { value: "returner_lcc", label: "Returner + LCC" },
+  { value: "ped_lcc", label: "Pedagogy Head + LCC" },
+];
+
+export const LA_POSITION_MAP = new Map(
+  LA_POSITION_OPTIONS.map((o) => [o.value, o.label]),
+);
+
 export type FieldEntry = {
   value: string;
   label: string;
@@ -5,7 +18,7 @@ export type FieldEntry = {
   options?: { value: string; label: string }[];
 };
 
-export const IMPROVEMENT_OPTIONS = [
+const IMPROVEMENT_OPTIONS = [
   { value: "na", label: "N/A" },
   { value: "no_change", label: "No change, but still room to improve" },
   { value: "little_improvement", label: "Little improvement" },
@@ -16,7 +29,7 @@ export const IMPROVEMENT_OPTIONS = [
   },
 ];
 
-export const AGREEMENT_OPTIONS = [
+const AGREEMENT_OPTIONS = [
   { value: "na", label: "N/A" },
   { value: "strongly_disagree", label: "Strongly Disagree" },
   { value: "disagree", label: "Disagree" },
@@ -24,7 +37,7 @@ export const AGREEMENT_OPTIONS = [
   { value: "strongly_agree", label: "Strongly Agree" },
 ];
 
-export const OBSERVATION_OPTIONS = [
+const OBSERVATION_OPTIONS = [
   { value: "na", label: "N/A (no opportunities to do so)" },
   { value: "not_yet", label: "Not yet" },
   { value: "almost_never", label: "Almost never" },
@@ -368,15 +381,6 @@ export const LA_HEAD_NONSENSITIVE_TEXT_FIELDS = [
 export const OBSERVATION_ROUND_OPTIONS = [
   { value: "round_1", label: "Observations Round 1 (Weeks 3-4)" },
   { value: "round_2", label: "Observations Round 2 (Weeks 7-8)" },
-];
-
-export const LA_POSITION_OPTIONS = [
-  { value: "new", label: "New LA" },
-  { value: "returner", label: "Returning LA" },
-  { value: "ped", label: "Pedagogy Head LA" },
-  { value: "lcc", label: "LA Course Coordinator (LCC)" },
-  { value: "returner_lcc", label: "Returner + LCC" },
-  { value: "ped_lcc", label: "Pedagogy Head + LCC" },
 ];
 
 export const OBSERVATION_NONSENSITIVE_QUESTIONS: FieldEntry[] = [

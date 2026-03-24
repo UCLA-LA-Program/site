@@ -7,9 +7,16 @@ import { Button } from "@/components/ui/button";
 import { Camera, UserRound } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
+import useSWR from "swr";
+import { fetcher } from "@/lib/utils";
+import type { Position } from "@/types/db";
 
 export default function SettingsPage() {
   const { data: session, isPending } = authClient.useSession();
+  const { data: positions } = useSWR<Position[]>("/api/la/self", fetcher, {
+    suspense: true,
+    fallbackData: [],
+  });
   const [preview, setPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
@@ -53,8 +60,33 @@ export default function SettingsPage() {
     <div className="mx-auto w-full max-w-lg px-8 py-10">
       <h1 className="mb-6 text-2xl font-bold">Settings</h1>
 
+      <div className="mb-8">
+        <span className="font-medium text-lg">I am...</span>
+        <p>{session.user.name}</p>
+        <p>{session.user.email}</p>
+      </div>
+
+      <div className="mb-8">
+        <span className="font-medium text-lg">Courses</span>
+        {positions && positions.length > 0 ? (
+          <ul className="space-y-1">
+            {positions.map((p) => (
+              <li key={`${p.course_name}-${p.position}`}>
+                {p.course_name} ({p.position})
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <span className="mt-1">No courses listed.</span>
+        )}
+        <p className="text-xs text-muted-foreground mt-3">
+          Contact PDT if inaccurate information has not resolved itself within
+          24 hours.
+        </p>
+      </div>
+
       <div className="space-y-4">
-        <label className="text-sm font-medium">Headshot</label>
+        <label className="font-medium text-lg">Headshot</label>
         <div className="flex items-center gap-6">
           <button
             type="button"

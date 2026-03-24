@@ -44,14 +44,14 @@ function zodFromFields(fields: readonly FieldEntry[]) {
 // Shared field groups
 // ---------------------------------------------------------------------------
 
-export const headerFields = {
+const headerFields = {
   name: required("Name is required"),
   email: z.email("Please enter a valid email"),
   course: required("Please select a course"),
   la: required("Please select an LA"),
 };
 
-export const closingFields = {
+const closingFields = {
   become_la: required("Please select an option"),
   courses_without_las: z.string().optional(),
   uid: z
@@ -70,28 +70,28 @@ export const closingFields = {
   la_program_comments: z.string().optional(),
 };
 
-export const studentSharedFields = {
+const studentSharedFields = {
   activities: z.array(z.string()).min(1, "Please select at least one activity"),
   hours: required("Please enter a number of hours"),
 };
 
-export const mqFields = {
+const mqFields = {
   ...zodFromFields(MID_QUARTER_NONSENSITIVE_QUESTIONS),
   ...zodFromFields(MQ_NONSENSITIVE_TEXT_FIELDS),
   ...zodFromFields(MQ_SENSITIVE_TEXT_FIELDS),
 };
 
-export const eqFields = {
+const eqFields = {
   ...zodFromFields(END_OF_QUARTER_NONSENSITIVE_QUESTIONS),
   ...zodFromFields(EQ_SENSITIVE_QUESTIONS),
   ...zodFromFields(EQ_NONSENSITIVE_TEXT_FIELDS),
 };
 
-export const laPedFields = zodFromFields(LA_PED_NONSENSITIVE_QUESTIONS);
+const laPedFields = zodFromFields(LA_PED_NONSENSITIVE_QUESTIONS);
 
-export const laLccFields = zodFromFields(LA_LCC_NONSENSITIVE_QUESTIONS);
+const laLccFields = zodFromFields(LA_LCC_NONSENSITIVE_QUESTIONS);
 
-export const laSharedFields = zodFromFields(LA_HEAD_NONSENSITIVE_TEXT_FIELDS);
+const laSharedFields = zodFromFields(LA_HEAD_NONSENSITIVE_TEXT_FIELDS);
 
 const laFields = {
   la_head_type: z.string(),
@@ -100,7 +100,7 @@ const laFields = {
   ...laSharedFields,
 };
 
-export const obsFields = {
+const obsFields = {
   obs_round: required("Please select a round"),
   obs_section: required("Please describe the observed section"),
   obs_la_position: required("Please select an LA position"),
@@ -109,7 +109,7 @@ export const obsFields = {
   ...zodFromFields(OBS_SENSITIVE_TEXT_FIELDS),
 };
 
-export const taFields = {
+const taFields = {
   ...zodFromFields(TA_NONSENSITIVE_QUESTIONS),
   ...zodFromFields(TA_NONSENSITIVE_TEXT_FIELDS),
 };
