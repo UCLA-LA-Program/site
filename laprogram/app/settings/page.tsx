@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import type { Position } from "@/types/db";
+import { LA_POSITION_MAP } from "@/app/feedback/constants";
 
 export default function SettingsPage() {
   const { data: session, isPending } = authClient.useSession();
@@ -72,7 +73,7 @@ export default function SettingsPage() {
           <ul className="space-y-1">
             {positions.map((p) => (
               <li key={`${p.course_name}-${p.position}`}>
-                {p.course_name} ({p.position})
+                {p.course_name} ({LA_POSITION_MAP.get(p.position) ?? p.position})
               </li>
             ))}
           </ul>
