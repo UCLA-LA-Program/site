@@ -8,3 +8,8 @@ export type LA = {
   position: string;
   image: string;
 };
+
+export type Position = {
+  course_name: string;
+  position: string;
+};

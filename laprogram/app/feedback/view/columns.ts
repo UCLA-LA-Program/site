@@ -22,8 +22,6 @@ export interface Column {
   render?: (value: unknown) => React.ReactNode;
 }
 
-const activityMap = new Map(ACTIVITIES.map((a) => [a.value, a.label]));
-
 function fromQuestions(questions: readonly FieldEntry[]): Column[] {
   return questions.map((q) => {
     const optionMap = q.options
@@ -41,6 +39,8 @@ function fromQuestions(questions: readonly FieldEntry[]): Column[] {
   });
 }
 
+const activityMap = new Map(ACTIVITIES.map((a) => [a.value, a.label]));
+
 const activitiesColumn: Column = {
   key: "activities",
   header: "LA-Supported Activities",
@@ -53,7 +53,7 @@ const activitiesColumn: Column = {
 const hoursColumn: Column = {
   key: "hours",
   header: "Hours in LA-Supported Activities",
-  width: "w-24",
+  width: "w-20",
 };
 
 // ---------------------------------------------------------------------------
@@ -85,9 +85,19 @@ export const observationColumns: Column[] = [
 ];
 
 // ---------------------------------------------------------------------------
-// 4. Head LA (LA → Head LA) — Ped + LCC merged
+// 4. Head LA (LA → Head LA) — split by position
 // ---------------------------------------------------------------------------
-export const headLAColumns: Column[] = [
+export const headLAPedColumns: Column[] = [
+  ...fromQuestions(LA_PED_NONSENSITIVE_QUESTIONS),
+  ...fromQuestions(LA_HEAD_NONSENSITIVE_TEXT_FIELDS),
+];
+
+export const headLALccColumns: Column[] = [
+  ...fromQuestions(LA_LCC_NONSENSITIVE_QUESTIONS),
+  ...fromQuestions(LA_HEAD_NONSENSITIVE_TEXT_FIELDS),
+];
+
+export const headLAAllColumns: Column[] = [
   ...fromQuestions(LA_PED_NONSENSITIVE_QUESTIONS),
   ...fromQuestions(LA_LCC_NONSENSITIVE_QUESTIONS),
   ...fromQuestions(LA_HEAD_NONSENSITIVE_TEXT_FIELDS),

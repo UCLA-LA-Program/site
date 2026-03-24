@@ -37,6 +37,7 @@ import { LA } from "@/types/db";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import { toast } from "sonner";
+import Image from "next/image";
 
 export function FeedbackForm() {
   const { data: las } = useSWR<LA[]>("/api/la", fetcher, {
@@ -232,13 +233,7 @@ export function FeedbackForm() {
                         autoHighlight
                         onValueChange={(v) => field.handleChange(v as string)}
                         value={field.state.value}
-                        items={[
-                          ...new Set(
-                            las
-                              .filter((la) => la.course === course)
-                              .map((la) => la.name),
-                          ),
-                        ]}
+                        items={las.filter((la) => la.course === course)}
                       >
                         <ComboboxInput
                           id={field.name}
@@ -248,9 +243,12 @@ export function FeedbackForm() {
                         <ComboboxContent>
                           <ComboboxEmpty>No option found.</ComboboxEmpty>
                           <ComboboxList>
-                            {(laName) => (
-                              <ComboboxItem key={laName} value={laName}>
-                                {laName}
+                            {(la: LA) => (
+                              <ComboboxItem key={la.name} value={la.name}>
+                                {la.name + la.position}
+                                {la.image && (
+                                  <Image src={la.image} alt={la.name}></Image>
+                                )}
                               </ComboboxItem>
                             )}
                           </ComboboxList>

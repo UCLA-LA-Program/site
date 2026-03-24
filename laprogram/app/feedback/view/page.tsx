@@ -5,56 +5,95 @@ import {
   midQuarterColumns,
   endOfQuarterColumns,
   observationColumns,
-  headLAColumns,
+  headLAPedColumns,
+  headLALccColumns,
+  headLAAllColumns,
   taColumns,
 } from "./columns";
+import type { Column } from "./columns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { authClient } from "@/lib/auth-client";
 import { redirect } from "next/navigation";
 import { fetcher } from "@/lib/utils";
 import useSWR from "swr";
 import type { AnonFeedback } from "./columns";
+import { Position } from "@/types/db";
 
-const TABLES = [
-  {
-    id: "mid_quarter",
-    label: "Mid-Quarter",
-    columns: midQuarterColumns,
-    filter: (f: AnonFeedback) =>
-      "feedback_type" in f && f.feedback_type === "mid_quarter",
-  },
-  {
-    id: "end_of_quarter",
-    label: "End-of-Quarter",
-    columns: endOfQuarterColumns,
-    filter: (f: AnonFeedback) =>
-      "feedback_type" in f && f.feedback_type === "end_of_quarter",
-  },
-  {
-    id: "observation",
-    label: "Observation",
-    columns: observationColumns,
-    filter: (f: AnonFeedback) =>
-      "feedback_type" in f && f.feedback_type === "la_observation",
-  },
-  {
-    id: "head_la",
-    label: "Head LA",
-    columns: headLAColumns,
-    filter: (f: AnonFeedback) =>
-      "feedback_type" in f && f.feedback_type === "la_head_la",
-  },
-  {
+interface TableDef {
+  id: string;
+  label: string;
+  columns: Column[];
+  filter: (f: AnonFeedback) => boolean;
+}
+
+function buildTables(positions: Position[]): TableDef[] {
+  const positionSet = new Set(positions.map((p) => p.position));
+  const isPed = positionSet.has("ped_head") || positionSet.has("lcc_ped_head");
+  const isLcc = positionSet.has("lcc") || positionSet.has("lcc_ped_head");
+
+  const tables: TableDef[] = [
+    {
+      id: "mid_quarter",
+      label: "Mid-Quarter",
+      columns: midQuarterColumns,
+      filter: (f) => "feedback_type" in f && f.feedback_type === "mid_quarter",
+    },
+    {
+      id: "end_of_quarter",
+      label: "End-of-Quarter",
+      columns: endOfQuarterColumns,
+      filter: (f) =>
+        "feedback_type" in f && f.feedback_type === "end_of_quarter",
+    },
+    {
+      id: "observation",
+      label: "Observation",
+      columns: observationColumns,
+      filter: (f) =>
+        "feedback_type" in f && f.feedback_type === "la_observation",
+    },
+  ];
+
+  if (isPed && isLcc) {
+    tables.push({
+      id: "head_la",
+      label: "Head LA",
+      columns: headLAAllColumns,
+      filter: (f) => "feedback_type" in f && f.feedback_type === "la_head_la",
+    });
+  } else if (isPed) {
+    tables.push({
+      id: "head_la",
+      label: "Head LA (Ped)",
+      columns: headLAPedColumns,
+      filter: (f) => "feedback_type" in f && f.feedback_type === "la_head_la",
+    });
+  } else if (isLcc) {
+    tables.push({
+      id: "head_la",
+      label: "Head LA (LCC)",
+      columns: headLALccColumns,
+      filter: (f) => "feedback_type" in f && f.feedback_type === "la_head_la",
+    });
+  }
+
+  tables.push({
     id: "ta",
-    label: "TA → LA",
+    label: "TA",
     columns: taColumns,
-    filter: (f: AnonFeedback) => "role" in f && f.role === "ta",
-  },
-];
+    filter: (f) => "role" in f && f.role === "ta",
+  });
+
+  return tables;
+}
 
 export default function FeedbackViewPage() {
   const { data: session, isPending } = authClient.useSession();
   const { data: feedback } = useSWR<AnonFeedback[]>("/api/feedback", fetcher, {
+    suspense: true,
+    fallbackData: [],
+  });
+  const { data: positions } = useSWR<Position[]>("/api/la/self", fetcher, {
     suspense: true,
     fallbackData: [],
   });
@@ -63,7 +102,8 @@ export default function FeedbackViewPage() {
     redirect("/login");
   }
 
-  if (!feedback) return <></>;
+  if (!feedback || !positions) return <></>;
+  const tables = buildTables(positions ?? []);
 
   return (
     <div className="mx-auto w-full px-8 py-5">
@@ -72,13 +112,13 @@ export default function FeedbackViewPage() {
       </h1>
       <Tabs defaultValue="mid_quarter">
         <TabsList>
-          {TABLES.map((t) => (
+          {tables.map((t) => (
             <TabsTrigger key={t.id} value={t.id}>
               {t.label}
             </TabsTrigger>
           ))}
         </TabsList>
-        {TABLES.map((t) => (
+        {tables.map((t) => (
           <TabsContent key={t.id} value={t.id}>
             <FeedbackTable
               columns={t.columns}

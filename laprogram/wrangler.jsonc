@@ -34,4 +34,10 @@
       "migrations_dir": "./migrations",
     },
   ],
+  "r2_buckets": [
+    {
+      "bucket_name": "storage",
+      "binding": "storage",
+    },
+  ],
 }
