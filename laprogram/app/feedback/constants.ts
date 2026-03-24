@@ -371,11 +371,12 @@ export const OBSERVATION_ROUND_OPTIONS = [
 ];
 
 export const LA_POSITION_OPTIONS = [
-  { value: "new_la", label: "New LA" },
-  { value: "returning_la", label: "Returning LA" },
-  { value: "ped_head", label: "Pedagogy Head LA" },
+  { value: "new", label: "New LA" },
+  { value: "returner", label: "Returning LA" },
+  { value: "ped", label: "Pedagogy Head LA" },
   { value: "lcc", label: "LA Course Coordinator (LCC)" },
-  { value: "lcc_ped_head", label: "LCC + Pedagogy Head LA" },
+  { value: "returner_lcc", label: "Returner + LCC" },
+  { value: "ped_lcc", label: "Pedagogy Head + LCC" },
 ];
 
 export const OBSERVATION_NONSENSITIVE_QUESTIONS: FieldEntry[] = [

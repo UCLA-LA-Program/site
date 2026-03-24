@@ -2,7 +2,7 @@
   "$schema": "node_modules/wrangler/config-schema.json",
   "main": ".open-next/worker.js",
   "name": "laprogram",
-  "compatibility_date": "2026-03-15",
+  "compatibility_date": "2026-03-12",
   "compatibility_flags": ["nodejs_compat"],
   "preview_urls": true,
   "env": {
@@ -38,6 +38,7 @@
     {
       "bucket_name": "storage",
       "binding": "storage",
+      "remote": true,
     },
   ],
 }

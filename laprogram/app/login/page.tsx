@@ -12,15 +12,22 @@ import {
 import { ArrowRight } from "lucide-react";
 import { PageBackground } from "@/components/page-background";
 import { authClient } from "@/lib/auth-client";
+import { redirect } from "next/navigation";
+
+async function handleSubmit(formData: FormData) {
+  const email = formData.get("email")?.toString();
+  if (!email) return;
+
+  await authClient.signIn.magicLink({
+    email,
+  });
+}
 
 export default function LoginPage() {
-  async function handleSubmit(formData: FormData) {
-    const email = formData.get("email")?.toString();
-    if (!email) return;
+  const { data: session, isPending } = authClient.useSession();
 
-    await authClient.signIn.magicLink({
-      email,
-    });
+  if (!isPending && session) {
+    redirect("/");
   }
 
   return (

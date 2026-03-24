@@ -21,8 +21,10 @@ import { ObservationSection } from "./sections/observation-section";
 import {
   FEEDBACK_TYPE_OPTIONS,
   LA_FEEDBACK_TYPE_OPTIONS,
+  LA_POSITION_OPTIONS,
   ROLE_OPTIONS,
 } from "../constants";
+
 import { useAppForm } from "../form";
 import { defaultValues, feedbackFormSchema } from "../schema";
 import {
@@ -38,6 +40,11 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import { toast } from "sonner";
 import Image from "next/image";
+import { CircleUser, User, UserRound } from "lucide-react";
+
+const LA_POSITION_MAP = new Map(
+  LA_POSITION_OPTIONS.map((o) => [o.value, o.label]),
+);
 
 export function FeedbackForm() {
   const { data: las } = useSWR<LA[]>("/api/la", fetcher, {
@@ -245,10 +252,27 @@ export function FeedbackForm() {
                           <ComboboxList>
                             {(la: LA) => (
                               <ComboboxItem key={la.name} value={la.name}>
-                                {la.name + la.position}
-                                {la.image && (
-                                  <Image src={la.image} alt={la.name}></Image>
+                                {la.image ? (
+                                  <Image
+                                    src={la.image}
+                                    alt={la.name}
+                                    width={300}
+                                    height={300}
+                                    className="h-24 w-24 rounded-sm"
+                                  />
+                                ) : (
+                                  <UserRound
+                                    className="size-24 rounded-sm"
+                                    strokeWidth={1}
+                                  />
                                 )}
+                                <div className="flex flex-col pl-3">
+                                  <span className="text-sm">{la.name}</span>
+                                  <span className="text-xs text-muted-foreground">
+                                    {LA_POSITION_MAP.get(la.position) ??
+                                      la.position}
+                                  </span>
+                                </div>
                               </ComboboxItem>
                             )}
                           </ComboboxList>
