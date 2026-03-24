@@ -14,6 +14,7 @@ import { PageBackground } from "@/components/page-background";
 import { authClient } from "@/lib/auth-client";
 import { useState, useEffect } from "react";
 import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function Login() {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
@@ -31,8 +32,12 @@ export default function Login() {
     if (!email) return;
 
     setLoading(true);
-    await authClient.signIn.magicLink({ email });
+    const { error } = await authClient.signIn.magicLink({ email });
     setLoading(false);
+    if (error) {
+      toast.error(error.message ?? "Something went wrong. Please try again.");
+      return;
+    }
     setSubmittedEmail(email);
     setCooldown(15);
   }
@@ -40,8 +45,14 @@ export default function Login() {
   async function handleResend() {
     if (!submittedEmail) return;
     setLoading(true);
-    await authClient.signIn.magicLink({ email: submittedEmail });
+    const { error } = await authClient.signIn.magicLink({
+      email: submittedEmail,
+    });
     setLoading(false);
+    if (error) {
+      toast.error(error.message ?? "Something went wrong. Please try again.");
+      return;
+    }
     setCooldown(15);
   }
 
