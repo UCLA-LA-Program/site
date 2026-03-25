@@ -12,13 +12,13 @@ import {
 import { ArrowLeft, ArrowRight, RotateCw, Mail } from "lucide-react";
 import { PageBackground } from "@/components/page-background";
 import { authClient } from "@/lib/auth-client";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Login() {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [pending, startTransition] = useTransition();
   const [cooldown, setCooldown] = useState(0);
 
   useEffect(() => {
@@ -27,33 +27,18 @@ export default function Login() {
     return () => clearTimeout(timer);
   }, [cooldown]);
 
-  async function handleSubmit(formData: FormData) {
-    const email = formData.get("email")?.toString();
-    if (!email) return;
-
-    setLoading(true);
-    const { error } = await authClient.signIn.magicLink({ email });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message ?? "Something went wrong. Please try again.");
-      return;
-    }
-    setSubmittedEmail(email);
-    setCooldown(15);
-  }
-
-  async function handleResend() {
-    if (!submittedEmail) return;
-    setLoading(true);
-    const { error } = await authClient.signIn.magicLink({
-      email: submittedEmail,
+  function sendLink(email: string) {
+    startTransition(async () => {
+      const { error } = await authClient.signIn.magicLink({ email });
+      if (error) {
+        toast.error(error.message ?? "Something went wrong. Please try again.");
+        return;
+      }
+      startTransition(() => {
+        setSubmittedEmail(email);
+        setCooldown(15);
+      });
     });
-    setLoading(false);
-    if (error) {
-      toast.error(error.message ?? "Something went wrong. Please try again.");
-      return;
-    }
-    setCooldown(15);
   }
 
   return (
@@ -79,11 +64,11 @@ export default function Login() {
             <CardContent className="flex flex-col gap-3">
               <Button
                 variant="outline"
-                onClick={handleResend}
-                disabled={loading || cooldown > 0}
+                onClick={() => sendLink(submittedEmail ?? "")}
+                disabled={pending || cooldown > 0}
                 className="gap-2"
               >
-                {loading ? (
+                {pending ? (
                   <Loader2 className="h-4 w-4 animate-spin" />
                 ) : (
                   <RotateCw className="h-4 w-4" />
@@ -109,7 +94,13 @@ export default function Login() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form action={handleSubmit} className="flex flex-col gap-3">
+              <form
+                action={(formData) => {
+                  const email = formData.get("email")?.toString();
+                  if (email) sendLink(email);
+                }}
+                className="flex flex-col gap-3"
+              >
                 <Input
                   type="email"
                   name="email"
@@ -117,9 +108,9 @@ export default function Login() {
                   required
                   autoFocus
                 />
-                <Button type="submit" disabled={loading} className="gap-2">
+                <Button type="submit" disabled={pending} className="gap-2">
                   Continue
-                  {loading ? (
+                  {pending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />
                   ) : (
                     <ArrowRight className="h-4 w-4" />
