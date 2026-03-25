@@ -24,8 +24,8 @@ export default async function sendMagicLink(email: string, url: string) {
       from: "UCLA LA Program <login@laprogramucla.com>",
       to: email,
       subject: "[UCLA LA Program] — No Account",
-      text: `Someone requested a login link for the UCLA LA Program using this email address, but no account exists for ${email}.\n\nIf you believe this is a mistake, please try other emails (the email we used to create your account was the email you used to apply to the LA Program) before contacting PDT.\n\nIf you didn't request this, you can safely ignore this email.`,
-      html: `<p>Someone requested a login link for the UCLA LA Program using this email address, but no account exists for <strong>${email}</strong>.</p><p>If you believe this is a mistake, please try other emails (the email we used to create your account was the email you used to apply to the LA Program) before contacting PDT.</p><p>If you didn't request this, you can safely ignore this email.</p>`,
+      text: `Someone requested a login link for the UCLA LA Program using this email address, but no account exists for ${email}.\n\nIf you believe you have an account, please try other emails before contacting PDT. The email we used to create your account was the email you used to apply to the LA Program.\n\nIf you didn't request this, you can safely ignore this email.`,
+      html: `<p>Someone requested a login link for the UCLA LA Program using this email address, but no account exists for <strong>${email}</strong>.</p><p>If you believe you have an account, please try other emails before contacting PDT. The email we used to create your account was the email you used to apply to the LA Program.</p><p>If you didn't request this, you can safely ignore this email.</p>`,
     });
     return;
   }
