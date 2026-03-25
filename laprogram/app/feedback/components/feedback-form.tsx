@@ -40,9 +40,12 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import { toast } from "sonner";
 import Image from "next/image";
-import { UserRound } from "lucide-react";
+import { UserRound, LogIn } from "lucide-react";
+import { authClient } from "@/lib/auth-client";
+import Link from "next/link";
 
 export function FeedbackForm() {
+  const { data: session } = authClient.useSession();
   const { data: las } = useSWR<LA[]>("/api/la", fetcher, {
     suspense: true,
     fallbackData: [],
@@ -138,7 +141,15 @@ export function FeedbackForm() {
         </form.Field>
 
         {/* Role */}
-        <form.Field name="role">
+        <form.Field
+          name="role"
+          listeners={{
+            onChange: () => {
+              form.setFieldValue("course", "");
+              form.setFieldValue("la", "");
+            },
+          }}
+        >
           {(field) => {
             const isInvalid =
               field.state.meta.isTouched && !field.state.meta.isValid;
@@ -173,50 +184,75 @@ export function FeedbackForm() {
           }}
         </form.Field>
 
-        {/* Course */}
-        <form.Field
-          name="course"
-          listeners={{
-            onChange: () => {
-              form.setFieldValue("la", "");
-            },
-          }}
-        >
-          {(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
-            return (
-              <Field data-invalid={isInvalid}>
-                <FieldLabel htmlFor={field.name}>
-                  Course of LA being given feedback{" "}
-                  <span className="text-destructive">*</span>
-                </FieldLabel>
-                <Combobox
-                  autoHighlight
-                  onValueChange={(v) => field.handleChange(v as string)}
-                  value={field.state.value}
-                  items={[...new Set(las.map((la) => la.course))]}
-                >
-                  <ComboboxInput
-                    id={field.name}
-                    placeholder="Select a course"
-                    aria-invalid={isInvalid}
-                  />
-                  <ComboboxContent>
-                    <ComboboxEmpty>No option found.</ComboboxEmpty>
-                    <ComboboxList>
-                      {(c) => (
-                        <ComboboxItem key={c} value={c}>
-                          {c}
-                        </ComboboxItem>
-                      )}
-                    </ComboboxList>
-                  </ComboboxContent>
-                </Combobox>
-              </Field>
-            );
-          }}
-        </form.Field>
+        {/* Sign-in gate for LAs */}
+        <form.Subscribe selector={(state) => state.values.role}>
+          {(role) =>
+            role === "la" &&
+            !session && (
+              <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-6 text-center">
+                <LogIn className="h-6 w-6 text-muted-foreground" />
+                <p className="text-sm text-muted-foreground">
+                  LAs must login to submit Head LA & Observation feedback.
+                </p>
+                <Button asChild size="sm">
+                  <Link href="/login">Login</Link>
+                </Button>
+              </div>
+            )
+          }
+        </form.Subscribe>
+
+        {/* Course — hidden until role is selected; hidden for unauthenticated LAs */}
+        <form.Subscribe selector={(state) => state.values.role}>
+          {(role) =>
+            role &&
+            (role !== "la" || session) && (
+              <form.Field
+                name="course"
+                listeners={{
+                  onChange: () => {
+                    form.setFieldValue("la", "");
+                  },
+                }}
+              >
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        Course of LA being given feedback{" "}
+                        <span className="text-destructive">*</span>
+                      </FieldLabel>
+                      <Combobox
+                        autoHighlight
+                        onValueChange={(v) => field.handleChange(v as string)}
+                        value={field.state.value}
+                        items={[...new Set(las.map((la) => la.course))]}
+                      >
+                        <ComboboxInput
+                          id={field.name}
+                          placeholder="Select a course"
+                          aria-invalid={isInvalid}
+                        />
+                        <ComboboxContent>
+                          <ComboboxEmpty>No option found.</ComboboxEmpty>
+                          <ComboboxList>
+                            {(c) => (
+                              <ComboboxItem key={c} value={c}>
+                                {c}
+                              </ComboboxItem>
+                            )}
+                          </ComboboxList>
+                        </ComboboxContent>
+                      </Combobox>
+                    </Field>
+                  );
+                }}
+              </form.Field>
+            )
+          }
+        </form.Subscribe>
 
         {/* LA */}
         <form.Subscribe selector={(state) => state.values.course}>
