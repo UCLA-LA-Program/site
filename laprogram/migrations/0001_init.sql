@@ -60,7 +60,7 @@ CREATE TABLE IF NOT EXISTS "verification" (
 
 -- Create admin user
 INSERT INTO user (id, name, email, emailVerified, createdAt, updatedAt, role)
-VALUES ('admin_user_id', 'Program Development Team', 'pdt.laprogram@gmail.com', 0, datetime('now'), datetime('now'), 'admin');
+VALUES ('admin_user_id', 'Program Development Team', 'pdt.laprogram@gmail.com', 1, datetime('now'), datetime('now'), 'admin');
 
 /*
 DATA SECTION
@@ -80,11 +80,8 @@ CREATE INDEX "course_name" ON "course" ("course_name");
 -- Feedback submissions
 CREATE TABLE IF NOT EXISTS "feedback" (
 	"id" text NOT NULL PRIMARY KEY,
-	"giverName" text NOT NULL,
-	"giverEmail" text NOT NULL,
 	"recipientId" text NOT NULL,
 	"feedback" text NOT NULL,
-	"createdAt" date NOT NULL DEFAULT (datetime('now')),
 	FOREIGN KEY ("recipientId") REFERENCES "user" ("id")
 );
 

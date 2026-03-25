@@ -27,20 +27,12 @@ export async function POST(request: Request) {
       .bind(feedback.data.la, feedback.data.course)
       ?.run<Id>();
 
-    // avoid storing name and email in the feedback so we can show without identifiable data
-    const { name, email, ...anon_feedback } = feedback.data;
     await env.data
       ?.prepare(
-        `INSERT INTO feedback (id, giverName, giverEmail, recipientId, feedback) 
-      VALUES (?1, ?2, ?3, ?4, ?5)`,
+        `INSERT INTO feedback (id, recipientId, feedback) 
+      VALUES (?1, ?2, ?3)`,
       )
-      .bind(
-        uuidv7(),
-        name,
-        email,
-        recipient?.results[0].id,
-        JSON.stringify(anon_feedback),
-      )
+      .bind(uuidv7(), recipient?.results[0].id, JSON.stringify(feedback))
       .run();
   } catch {
     return new Response("Encountered database error.", { status: 500 });
