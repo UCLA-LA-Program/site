@@ -8,14 +8,15 @@ import { anonFeedbackSchema } from "@/app/feedback/view/columns";
 import { sortBy } from "lodash";
 
 export async function POST(request: Request) {
-  const feedback_request = await request.json();
-  const feedback = feedbackFormSchema.safeParse(feedback_request);
-  if (!feedback.success) {
-    return new Response(feedback.error.message, {
+  const request_json = await request.json();
+  const parsed = feedbackFormSchema.safeParse(request_json);
+  if (!parsed.success) {
+    return new Response(parsed.error.message, {
       status: 400,
     });
   }
 
+  const feedback = parsed.data;
   try {
     const { env } = getCloudflareContext();
     const recipient = await env.data
@@ -25,7 +26,7 @@ export async function POST(request: Request) {
       JOIN user ON course.userId = user.id
       WHERE user.name = ?1 AND course.course_name = ?2`,
       )
-      .bind(feedback.data.la, feedback.data.course)
+      .bind(feedback.la, feedback.course)
       ?.run<Id>();
 
     await env.data
