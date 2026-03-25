@@ -1,6 +1,6 @@
 "use client";
 
-import { FeedbackTable } from "./table";
+import { FeedbackTable } from "./FeedbackTable";
 import {
   midQuarterColumns,
   endOfQuarterColumns,

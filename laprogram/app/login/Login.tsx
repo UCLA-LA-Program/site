@@ -10,7 +10,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { ArrowLeft, ArrowRight, RotateCw, Mail } from "lucide-react";
-import { PageBackground } from "@/components/page-background";
+import { PageBackground } from "@/components/PageBackground";
 import { authClient } from "@/lib/auth-client";
 import { useState, useEffect, useTransition } from "react";
 import { Loader2 } from "lucide-react";

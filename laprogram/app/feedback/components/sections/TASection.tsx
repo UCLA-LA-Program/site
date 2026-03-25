@@ -5,8 +5,8 @@ import {
   TA_NONSENSITIVE_QUESTIONS,
   TA_NONSENSITIVE_TEXT_FIELDS,
 } from "../../constants";
-import { LikertField } from "../fields/likert-field";
-import { TextareaFormField } from "../fields/textarea-form-field";
+import { LikertField } from "../fields/LikertField";
+import { TextareaFormField } from "../fields/TextareaFormField";
 import { FieldGroup } from "@/components/ui/field";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";

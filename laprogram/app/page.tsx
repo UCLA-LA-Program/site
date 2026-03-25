@@ -3,7 +3,7 @@ import Link from "next/link";
 
 import { ArrowRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { PageBackground } from "@/components/page-background";
+import { PageBackground } from "@/components/PageBackground";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 

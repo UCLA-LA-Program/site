@@ -27,7 +27,7 @@ import {
   ComboboxValue,
   useComboboxAnchor,
 } from "@/components/ui/combobox";
-import { TextareaFormField } from "../fields/textarea-form-field";
+import { TextareaFormField } from "../fields/TextareaFormField";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";
 import {

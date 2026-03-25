@@ -17,8 +17,6 @@ export default async function sendMagicLink(email: string, url: string) {
     .bind(email)
     .first();
 
-  console.log(url);
-
   if (!user) {
     await transporter.sendMail({
       from: "UCLA LA Program <login@laprogramucla.com>",

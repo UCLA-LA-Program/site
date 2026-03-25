@@ -14,8 +14,8 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { LikertField } from "../fields/likert-field";
-import { TextareaFormField } from "../fields/textarea-form-field";
+import { LikertField } from "../fields/LikertField";
+import { TextareaFormField } from "../fields/TextareaFormField";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";
 

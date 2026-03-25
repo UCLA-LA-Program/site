@@ -6,13 +6,13 @@ import {
   EQ_SENSITIVE_QUESTIONS,
   EQ_NONSENSITIVE_TEXT_FIELDS,
 } from "../../constants";
-import { LikertField } from "../fields/likert-field";
-import { TextareaFormField } from "../fields/textarea-form-field";
+import { LikertField } from "../fields/LikertField";
+import { TextareaFormField } from "../fields/TextareaFormField";
 import { FieldGroup } from "@/components/ui/field";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";
-import { ActivitiesField } from "../fields/activities-field";
-import { HoursField } from "../fields/hours-field";
+import { ActivitiesField } from "../fields/ActivitiesField";
+import { HoursField } from "../fields/HoursField";
 
 export const EndOfQuarterSection = withForm({
   defaultValues,

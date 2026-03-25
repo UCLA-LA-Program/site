@@ -6,10 +6,10 @@ import {
   MQ_NONSENSITIVE_TEXT_FIELDS,
   MQ_SENSITIVE_TEXT_FIELDS,
 } from "../../constants";
-import { ActivitiesField } from "../fields/activities-field";
-import { HoursField } from "../fields/hours-field";
-import { LikertField } from "../fields/likert-field";
-import { TextareaFormField } from "../fields/textarea-form-field";
+import { ActivitiesField } from "../fields/ActivitiesField";
+import { HoursField } from "../fields/HoursField";
+import { LikertField } from "../fields/LikertField";
+import { TextareaFormField } from "../fields/TextareaFormField";
 import { FieldGroup } from "@/components/ui/field";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";
