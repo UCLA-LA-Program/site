@@ -34,7 +34,7 @@ export default async function sendMagicLink(email: string, url: string) {
     from: "UCLA LA Program <login@laprogramucla.com>",
     to: email,
     subject: "[UCLA LA Program] - Login Link",
-    text: `Click the link below to log in to the UCLA LA Program:\n\n${url}\n\nThis link will expire shortly. If you didn't request this, you can safely ignore this email.`,
-    html: `<p>Click the link below to log in to the UCLA LA Program:</p><p><a href="${url}">Log in</a></p><p>This link will expire shortly. If you didn't request this, you can safely ignore this email.</p>`,
+    text: `Click the link below to log in to the UCLA LA Program website:\n\n${url}\n\nThis link will expire shortly. If you didn't request this, you can safely ignore this email.`,
+    html: `<p>Click the link below to log in to the UCLA LA Program website:</p><p><a href="${url}">Log in!</a></p><p>This link will expire shortly. If you didn't request this, you can safely ignore this email.</p>`,
   });
 }
