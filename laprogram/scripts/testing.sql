@@ -3,7 +3,7 @@
 
 -- Users
 INSERT INTO user (id, name, email, emailVerified, createdAt, updatedAt) VALUES
-  ('user_1', 'Alice Kim',    'pdt.laprogram+1@gmail.com', 1, datetime('now'), datetime('now')),
+  ('user_1', 'Alice Kim',    'pdt.laprogram+1@gmail.com', 0, datetime('now'), datetime('now')),
   ('user_2', 'Bob Chen',     'pdt.laprogram+2@gmail.com', 1, datetime('now'), datetime('now')),
   ('user_3', 'Carol Davis',  'pdt.laprogram+3@gmail.com', 1, datetime('now'), datetime('now')),
   ('user_4', 'Dan Nguyen',   'pdt.laprogram+4@gmail.com', 1, datetime('now'), datetime('now')),

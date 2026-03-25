@@ -5,6 +5,7 @@ import { v7 as uuidv7 } from "uuid";
 import { Id } from "@/types/db";
 import { headers } from "next/headers";
 import { anonFeedbackSchema } from "@/app/feedback/view/columns";
+import { sortBy } from "lodash";
 
 export async function POST(request: Request) {
   const feedback_request = await request.json();
@@ -55,9 +56,9 @@ export async function GET() {
   try {
     const { env } = getCloudflareContext();
     const result = await env.data
-      ?.prepare(`SELECT feedback FROM feedback WHERE recipientId = ?1`)
+      ?.prepare(`SELECT id, feedback FROM feedback WHERE recipientId = ?1`)
       .bind(session.user.id)
-      ?.run<{ feedback: string }>();
+      ?.run<{ id: string; feedback: string }>();
 
     if (!result || result.error) {
       return new Response("Encountered database error.", { status: 500 });
@@ -67,8 +68,10 @@ export async function GET() {
     return new Response("Encountered database error.", { status: 500 });
   }
 
-  const safe = rows.flatMap((row) => {
-    const parsed = anonFeedbackSchema.safeParse(JSON.parse(row.feedback));
+  const sorted = sortBy(rows, (r) => r.id);
+
+  const safe = sorted.flatMap((r) => {
+    const parsed = anonFeedbackSchema.safeParse(JSON.parse(r.feedback));
     return parsed.success ? [parsed.data] : [];
   });
 
