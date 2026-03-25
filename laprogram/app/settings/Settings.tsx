@@ -1,0 +1,142 @@
+"use client";
+
+import { useState, useRef } from "react";
+import { authClient } from "@/lib/auth-client";
+import { Button } from "@/components/ui/button";
+import { Camera, UserRound } from "lucide-react";
+import Image from "next/image";
+import { toast } from "sonner";
+import useSWR from "swr";
+import { fetcher } from "@/lib/utils";
+import type { Position } from "@/types/db";
+import { LA_POSITION_MAP } from "@/app/feedback/constants";
+import Link from "next/link";
+
+export default function Settings() {
+  const { data: session, isPending } = authClient.useSession();
+  const { data: positions } = useSWR<Position[]>("/api/la/self", fetcher, {
+    suspense: true,
+    fallbackData: [],
+  });
+  const [preview, setPreview] = useState<string | null>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
+
+  if (!session || isPending) return <></>;
+
+  const imageUrl = preview ?? session.user.image;
+
+  function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPreview(URL.createObjectURL(file));
+  }
+
+  async function handleUpload() {
+    const file = fileRef.current?.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const res = await fetch("/api/settings/avatar", {
+      method: "POST",
+      body: formData,
+    });
+
+    if (res.ok) {
+      const { url } = await res.json<{ url: string }>();
+      await authClient.updateUser({ image: url });
+      setPreview(null);
+      toast.success("Changed headshot!");
+    } else {
+      toast.error(await res.text());
+    }
+  }
+
+  return (
+    <div className="mx-auto w-full max-w-lg px-8 py-10">
+      <h1 className="mb-6 text-2xl font-bold">Settings</h1>
+
+      <div className="mb-8">
+        <span className="font-medium text-lg">I am...</span>
+        <p>{session.user.name}</p>
+        <p>{session.user.email}</p>
+      </div>
+
+      <div className="mb-8">
+        <span className="font-medium text-lg">Courses</span>
+        {positions && positions.length > 0 ? (
+          <ul className="space-y-1">
+            {positions.map((p) => (
+              <li key={`${p.course_name}-${p.position}`}>
+                {p.course_name} ({LA_POSITION_MAP.get(p.position) ?? p.position}
+                )
+              </li>
+            ))}
+          </ul>
+        ) : (
+          <span className="mt-1">No courses listed.</span>
+        )}
+        <p className="text-xs text-muted-foreground mt-3">
+          <Link
+            href="/contact"
+            className="underline-offset-2 hover:underline text-primary"
+          >
+            Contact us
+          </Link>{" "}
+          if inaccurate information has not resolved itself within 24 hours.
+        </p>
+      </div>
+
+      <div className="space-y-4">
+        <label className="font-medium text-lg">Headshot</label>
+        <div className="flex items-center gap-6">
+          <button
+            type="button"
+            onClick={() => fileRef.current?.click()}
+            className="group relative h-24 w-24 overflow-hidden rounded-sm border"
+          >
+            {imageUrl ? (
+              <Image
+                src={imageUrl}
+                alt="Profile Picture"
+                width={300}
+                height={300}
+                className="h-full w-full"
+              />
+            ) : (
+              <UserRound className="h-full w-full" strokeWidth={1} />
+            )}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
+              <Camera className="h-5 w-5 text-white" />
+            </div>
+          </button>
+          <div className="space-x-2">
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fileRef.current?.click()}
+            >
+              {imageUrl ? "Replace Image" : "Upload Image"}
+            </Button>
+            {preview && (
+              <Button size="sm" onClick={handleUpload}>
+                Save
+              </Button>
+            )}
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          JPEG, PNG, or WebP. Max 2 MB.
+        </p>
+      </div>
+    </div>
+  );
+}
