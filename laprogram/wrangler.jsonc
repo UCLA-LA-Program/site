@@ -29,6 +29,12 @@
       "migrations_dir": "./migrations",
     },
   ],
+  "vars": { 
+    "CRON_SECRET": "",
+    "AIRTABLE_API_KEY": "",
+    "AIRTABLE_BASE_ID": "",
+    "BETTER_AUTH_URL": "",
+  },
   "r2_buckets": [
     {
       "bucket_name": "storage",
