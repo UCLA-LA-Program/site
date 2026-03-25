@@ -12,12 +12,12 @@ import {
   FieldLabel,
   FieldSeparator,
 } from "@/components/ui/field";
-import { ClosingSection } from "./sections/closing-section";
-import { EndOfQuarterSection } from "./sections/end-of-quarter-section";
-import { MidQuarterSection } from "./sections/mid-quarter-section";
-import { TASection } from "./sections/ta-section";
-import { LAHeadLASection } from "./sections/la-head-la-section";
-import { ObservationSection } from "./sections/observation-section";
+import { ClosingSection } from "./sections/ClosingSection";
+import { EndOfQuarterSection } from "./sections/EndOfQuarterSection";
+import { MidQuarterSection } from "./sections/MidQuarterSection";
+import { TASection } from "./sections/TASection";
+import { LAHeadLASection } from "./sections/LAHeadLASection";
+import { ObservationSection } from "./sections/ObservationSection";
 import {
   FEEDBACK_TYPE_OPTIONS,
   LA_FEEDBACK_TYPE_OPTIONS,

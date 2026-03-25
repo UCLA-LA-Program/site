@@ -6,8 +6,8 @@ import "./globals.css";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/sonner";
-import { FeedbackMenu } from "@/components/feedback-menu";
-import { UserMenu } from "@/components/user-menu";
+import { FeedbackMenu } from "@/components/FeedbackMenu";
+import { UserMenu } from "@/components/UserMenu";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 
