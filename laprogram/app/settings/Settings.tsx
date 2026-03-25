@@ -10,6 +10,7 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import type { Position } from "@/types/db";
 import { LA_POSITION_MAP } from "@/app/feedback/constants";
+import Link from "next/link";
 
 export default function Settings() {
   const { data: session, isPending } = authClient.useSession();
@@ -77,8 +78,13 @@ export default function Settings() {
           <span className="mt-1">No courses listed.</span>
         )}
         <p className="text-xs text-muted-foreground mt-3">
-          Contact PDT if inaccurate information has not resolved itself within
-          24 hours.
+          <Link
+            href="/contact"
+            className="underline-offset-2 hover:underline text-primary"
+          >
+            Contact us
+          </Link>{" "}
+          if inaccurate information has not resolved itself within 24 hours.
         </p>
       </div>
 

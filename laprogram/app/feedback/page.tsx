@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { FeedbackForm } from "./components/feedback-form";
+import Link from "next/link";
 
 export const metadata: Metadata = {
   title: "Feedback",
@@ -15,13 +16,13 @@ export default function FeedbackPage() {
           </h1>
           <p className="text-sm text-muted-foreground">
             Thanks for providing feedback to LAs! If you have any issues with
-            this form, please contact{" "}
-            <a
-              href="mailto:pdt.laprogram@gmail.com"
-              className="text-primary underline-offset-4 hover:underline"
+            this form, please{" "}
+            <Link
+              href="/contact"
+              className="underline-offset-2 hover:underline text-primary"
             >
-              pdt.laprogram@gmail.com
-            </a>
+              contact us
+            </Link>
             .
           </p>
           <p className="mt-2 text-sm text-muted-foreground italic">
