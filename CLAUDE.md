@@ -43,9 +43,15 @@ npx wrangler d1 execute data --local --file scripts/testing.sql
 - Deployed to **Cloudflare Workers** using `@opennextjs/cloudflare`. Config in `wrangler.jsonc` and `open-next.config.ts`.
 - `app/` — file-based routing. Current routes:
   - `/` — landing page (hero with CTA links to `/feedback` and `/login`)
-  - `/feedback` — multi-variant feedback form (the main feature)
+  - `/feedback` — multi-variant feedback form (the main feature, public)
+  - `/feedback/view` — tabbed tables showing feedback received by the logged-in LA (auth required)
   - `/login` — email-based magic link login via BetterAuth
+  - `/settings` — user settings: avatar upload, course info display (auth required)
   - `/api/auth/[...all]` — BetterAuth catch-all API route
+  - `/api/feedback` — POST (public): submit feedback; GET (auth): retrieve feedback for current user
+  - `/api/la` — GET (public): list all LAs with name, course, position, image
+  - `/api/la/self` — GET (auth): get current user's course positions
+  - `/api/settings/avatar` — POST (auth): upload and transform avatar image
 - `components/ui/` — shadcn components. Add new ones with `npx shadcn add <component>`. Never copy-paste component source manually.
 
 #### Authentication
@@ -54,15 +60,21 @@ npx wrangler d1 execute data --local --file scripts/testing.sql
 - Uses a single Cloudflare D1 database (`data` binding) for all storage — auth tables (`user`, `session`, `account`, `verification`) and app tables (`course`, `feedback`) share one DB.
 - The `user` table includes BetterAuth admin fields (`role`, `banned`, `banReason`, `banExpires`) and an `impersonatedBy` field on `session`.
 - The `auth.ts` module calls `getCloudflareContext()` to access the D1 binding at runtime — this is async, so a singleton pattern wraps the auth instance.
-- Magic link sending is currently a stub (logs URL to console). Will need a real email transport (e.g. Cloudflare Email Workers or Resend).
+- Magic links are sent via AWS SES (`lib/email.ts`). Before sending, the `user` table is checked — if no account exists for the email, a "no account found" email is sent instead of the magic link.
+- Pages requiring auth (`/settings`, `/feedback/view`) wrap their client component in a server component that checks the session via `getAuth()` and redirects to `/login`. The client component does not handle auth checks.
 
 #### Feedback form (`app/feedback/`)
 
 The feedback form is the most complex part of the frontend. It conditionally renders different sections based on role (`student`, `la`, `ta`) and feedback type.
 
+- The course selector is hidden until a role is selected. When the user selects "an LA", they must be signed in to proceed — unauthenticated LAs see a sign-in prompt. Students and TAs can use the form without authentication.
 - **Schema** (`schema.ts`): validation uses nested `z.discriminatedUnion` — first on `role`, then on `feedback_type` (and `la_head_type` for LA→Head LA). Shared field groups (`headerFields`, `closingFields`, `mqFields`, `eqFields`, `laPedFields`, `laLccFields`, `obsFields`, `taFields`, etc.) are defined once and spread into both variant schemas and `baseSchema`. `baseSchema` exists only for type inference (`FeedbackFormValues`) and generating `defaultValues` — it is built from the field groups, not maintained manually. When adding a new field, add it to the relevant field group; it will flow into `baseSchema`, `defaultValues`, and the variant schema automatically.
-- **Constants** (`constants.ts`): all dropdown/radio options and question lists. Courses and LAs are currently hardcoded (will eventually be fetched from the `course` and `user` tables in D1).
+- **Constants** (`constants.ts`): all dropdown/radio options and question lists. Courses and LAs are fetched from the API (`/api/la`), not hardcoded.
 - The exported `feedbackFormSchema` is cast to `z.ZodType<FeedbackFormValues, FeedbackFormValues>` because the discriminated union's inferred type is narrower than the flat `FeedbackFormValues` that TanStack Form expects. This cast is safe — runtime validation is correct.
+
+#### Feedback view (`app/feedback/view/`)
+
+Tabbed interface for LAs to view feedback they've received. Columns are defined in `columns.ts` with anonymized schemas that strip sensitive fields. Tables are built dynamically based on the user's course positions (e.g., Ped Heads see Head LA pedagogy columns, LCCs see logistical columns).
 
 ### Cloudflare Resources
 
@@ -71,9 +83,10 @@ All infrastructure is on Cloudflare. The `wrangler.jsonc` file defines every bin
 | Resource | Binding name | Purpose |
 |----------|-------------|---------|
 | D1 Database | `data` | All app data — auth (user/session/account/verification) and app tables (course, feedback) |
+| R2 Bucket | `storage` | Avatar image storage |
 | Assets | `ASSETS` | Static files from `.open-next/assets` |
 | Service | `WORKER_SELF_REFERENCE` | Self-referencing worker binding (used by OpenNext) |
-| Images | `IMAGES` | Cloudflare Images integration |
+| Images | `IMAGES` | Cloudflare Images transformation (avatar resizing to 300x300 webp) |
 
 #### Accessing Cloudflare resources in code
 
@@ -84,6 +97,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 const { env } = await getCloudflareContext({ async: true });
 // env.data      — D1 database (auth + app tables)
+// env.storage   — R2 bucket (avatar storage)
 // env.ASSETS    — static asset fetcher
 // env.IMAGES    — Cloudflare Images
 ```
@@ -134,6 +148,7 @@ Wrangler supports all resources used in this project (Workers, D1, KV, R2, secre
 
 - `BETTER_AUTH_SECRET` — secret for BetterAuth token signing. Set via `wrangler secret put BETTER_AUTH_SECRET` for production, or in `.env` locally.
 - `BETTER_AUTH_URL` — base URL of the app. **Must match the port you're running on:** `http://localhost:3000` for `npm run dev`, `http://localhost:8787` for `npm run preview`. Update this when switching between the two. Use the production domain for prod.
+- `NEXT_PUBLIC_BUCKET_URL` — public URL of the R2 bucket for avatar images.
 - `NEXTJS_ENV` — set in `.dev.vars` for local dev (`development`).
 - Copy `.env.example` to `.env` and fill in values for local development.
 
@@ -143,7 +158,7 @@ All tables live in a single D1 database (`data`). The init migration (`migration
 
 - **Auth tables** (managed by BetterAuth — do not edit): `user`, `session`, `account`, `verification`
 - **`course`** — course assignments. Composite primary key `(userId, course_name, position)`. Indexed on `course_name` for listing all LAs in a course.
-- **`feedback`** — feedback submissions linking a giver to a recipient (references `user.id`). Indexed on `recipientId`.
+- **`feedback`** — feedback submissions linking a giver to a recipient (references `user.id`). Stores form data as a JSON string in the `feedback` column. Indexed on `recipientId`.
 
 A default admin user (`pdt.laprogram@gmail.com`, role `admin`) is seeded in the init migration. Test data can be loaded from `scripts/testing.sql`.
 
@@ -156,3 +171,7 @@ npx wrangler d1 migrations create data "description of change"
 ```
 
 Then edit the generated SQL file and apply with `npx wrangler d1 migrations apply data --local` (local) or `--remote` (production).
+
+### Page Pattern
+
+Pages that need metadata export and/or auth checks use a **server component wrapper** (`page.tsx`) that exports metadata and checks the session, then renders a client component for the interactive UI. Examples: `/login` (`page.tsx` → `Login.tsx`), `/settings` (`page.tsx` → `Settings.tsx`), `/feedback/view` (`page.tsx` → `FeedbackView.tsx`). The `/feedback` page is a server component itself since the form component handles its own client-side rendering.
