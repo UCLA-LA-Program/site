@@ -14,9 +14,13 @@ async function authBuilder() {
     throw Error("Could not find D1 for BetterAuth initialization");
   }
 
+  if (!process.env.NEXT_PUBLIC_BETTER_AUTH_URL) {
+    throw Error("Could not find trusted URL");
+  }
+
   return betterAuth({
-    baseURL: env.BETTER_AUTH_URL,
-    trustedOrigins: [env.BETTER_AUTH_URL],
+    baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
+    trustedOrigins: [process.env.NEXT_PUBLIC_BETTER_AUTH_URL],
     database: {
       db: new Kysely({
         dialect: new D1Dialect({ database: env.data }),
