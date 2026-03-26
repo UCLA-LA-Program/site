@@ -5,13 +5,19 @@ import { SESv2Client, SendEmailCommand } from "@aws-sdk/client-sesv2";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export default async function sendMagicLink(email: string, url: string) {
-  const sesClient = new SESv2Client({ region: "us-west-2" });
+  const { env } = await getCloudflareContext({ async: true });
+
+  const sesClient = new SESv2Client({
+    region: "us-west-2",
+    credentials: {
+      accessKeyId: env.AWS_ACCESS_KEY_ID,
+      secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+    },
+  });
 
   const transporter = nodemailer.createTransport({
     SES: { sesClient, SendEmailCommand },
   });
-
-  const { env } = await getCloudflareContext({ async: true });
   const user = await env.data
     ?.prepare("SELECT id FROM user WHERE email = ?")
     .bind(email)
