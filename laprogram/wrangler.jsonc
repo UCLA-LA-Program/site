@@ -29,13 +29,6 @@
       "migrations_dir": "./migrations",
     },
   ],
-  "vars": { 
-    "CRON_SECRET": "",
-    "AIRTABLE_API_KEY": "",
-    "AIRTABLE_BASE_ID": "",
-    "AWS_ACCESS_KEY_ID": "",
-    "AWS_SECRET_ACCESS_KEY": "",
-  },
   "r2_buckets": [
     {
       "bucket_name": "storage",
