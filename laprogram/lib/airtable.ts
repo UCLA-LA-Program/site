@@ -1,6 +1,3 @@
-import { getCloudflareContext } from "@opennextjs/cloudflare";
-
-
 export interface AirtableRecord {
   id: string;
   fields: {
@@ -13,15 +10,13 @@ export interface AirtableRecord {
 }
 
 export async function fetchCourseMap(): Promise<Map<string, { course: string; lcc: string }>> {
-  const { env } = await getCloudflareContext({ async: true });
-
   const params = new URLSearchParams();
   params.append("fields[]", "Course on AirTable");
   params.append("fields[]", "LCC");
 
   const response = await fetch(
-    `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/List of Courses?${params}`,
-    { headers: { Authorization: `Bearer ${env.AIRTABLE_API_KEY}` } }
+    `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/List of Courses?${params}`,
+    { headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` } }
   );
 
   if (!response.ok) {

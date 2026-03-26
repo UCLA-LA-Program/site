@@ -10,8 +10,8 @@ export default async function sendMagicLink(email: string, url: string) {
   const sesClient = new SESv2Client({
     region: "us-west-2",
     credentials: {
-      accessKeyId: env.AWS_ACCESS_KEY_ID,
-      secretAccessKey: env.AWS_SECRET_ACCESS_KEY,
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
     },
   });
 

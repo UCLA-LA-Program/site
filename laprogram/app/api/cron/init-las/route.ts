@@ -6,7 +6,7 @@ export async function POST(request: Request) {
   try {
     const { env } = await getCloudflareContext({ async: true });
 
-    if (request.headers.get("x-cron-secret") !== env.CRON_SECRET) {
+    if (request.headers.get("x-cron-secret") !== process.env.CRON_SECRET) {
       return new Response("Unauthorized", { status: 401 });
     }
 
@@ -28,8 +28,8 @@ export async function POST(request: Request) {
       if (offset) params.append("offset", offset);
 
       const response = await fetch(
-        `https://api.airtable.com/v0/${env.AIRTABLE_BASE_ID}/LA Roster?${params}`,
-        { headers: { Authorization: `Bearer ${env.AIRTABLE_API_KEY}` } }
+        `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/LA Roster?${params}`,
+        { headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` } }
       );
 
       if (!response.ok) {
