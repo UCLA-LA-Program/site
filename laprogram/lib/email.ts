@@ -5,6 +5,11 @@ import * as postmark from "postmark";
 
 export default async function sendMagicLink(email: string, url: string) {
   const { env } = await getCloudflareContext({ async: true });
+
+  if (!process.env.POSTMARK_SERVER_TOKEN) {
+    return;
+  }
+
   const name = await env.data
     ?.prepare("SELECT id, name FROM user WHERE email = ?")
     .bind(email)
