@@ -7,6 +7,7 @@ export default async function sendMagicLink(email: string, url: string) {
   const { env } = await getCloudflareContext({ async: true });
 
   if (!process.env.POSTMARK_SERVER_TOKEN) {
+    console.log("could not retrieve env.POSTMARK_SERVER_TOKEN");
     return;
   }
 
@@ -16,6 +17,7 @@ export default async function sendMagicLink(email: string, url: string) {
     .first("name");
 
   if (!name) {
+    console.log(`could not locate user with email ${email}`);
     return;
   }
 
