@@ -33,6 +33,7 @@ export default async function sendMagicLink(email: string, url: string) {
         "Content-Type": "application/json",
         Accept: "application/json",
         "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN,
+        "User-Agent": "Cloudflare-Worker/1.0",
       },
       body: JSON.stringify({
         From: "admin@laprogramucla.com",
