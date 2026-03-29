@@ -1,7 +1,6 @@
 import "server-only";
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import * as postmark from "postmark";
 
 export default async function sendMagicLink(email: string, url: string) {
   const { env } = await getCloudflareContext({ async: true });
@@ -23,13 +22,25 @@ export default async function sendMagicLink(email: string, url: string) {
     return;
   }
 
-  const client = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
+  const response = await fetch(
+    "https://api.postmarkapp.com/email/withTemplate",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN,
+      },
+      body: JSON.stringify({
+        From: "admin@laprogramucla.com",
+        To: email,
+        TemplateId: 44160184,
+        TemplateModel: {
+          name: name,
+          action_url: url,
+        },
+      }),
+    },
+  );
 
-  const response = await client.sendEmailWithTemplate({
-    TemplateId: 44160184,
-    From: "admin@laprogramucla.com",
-    To: email,
-    TemplateModel: { name: name, action_url: url },
-  });
   console.log(response);
 }
