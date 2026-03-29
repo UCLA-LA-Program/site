@@ -30,8 +30,8 @@ async function authBuilder() {
     plugins: [
       magicLink({
         disableSignUp: true,
-        sendMagicLink: (data) => {
-          sendMagicLinkSES(data.email, data.url);
+        sendMagicLink: async (data) => {
+          await sendMagicLinkSES(data.email, data.url);
         },
       }),
       admin(),
