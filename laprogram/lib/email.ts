@@ -6,18 +6,15 @@ import * as postmark from "postmark";
 export default async function sendMagicLink(email: string, url: string) {
   const { env } = await getCloudflareContext({ async: true });
 
-  if (!process.env.POSTMARK_SERVER_TOKEN) {
-    console.log("could not retrieve env.POSTMARK_SERVER_TOKEN");
-    return;
-  }
-
   const name = await env.data
     ?.prepare("SELECT id, name FROM user WHERE email = ?")
     .bind(email)
     .first("name");
 
   if (!name) {
-    console.log(`could not locate user with email ${email}`);
+    console.log(
+      `User with email ${email} attempted to log in; no such user found`,
+    );
     return;
   }
 
