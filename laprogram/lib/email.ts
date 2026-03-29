@@ -9,6 +9,7 @@ export default async function sendMagicLink(email: string, url: string) {
     ?.prepare("SELECT id, name FROM user WHERE email = ?")
     .bind(email)
     .first("name");
+  console.log("blah1");
 
   if (!name) {
     console.log(
@@ -16,11 +17,13 @@ export default async function sendMagicLink(email: string, url: string) {
     );
     return;
   }
+  console.log("blah2");
 
   if (!process.env.POSTMARK_SERVER_TOKEN) {
     console.log("Could not load process.env.POSTMARK_SERVER_TOKEN");
     return;
   }
+  console.log("blah3");
 
   const response = await fetch(
     "https://api.postmarkapp.com/email/withTemplate",
@@ -28,6 +31,7 @@ export default async function sendMagicLink(email: string, url: string) {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
         "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN,
       },
       body: JSON.stringify({
@@ -41,6 +45,7 @@ export default async function sendMagicLink(email: string, url: string) {
       }),
     },
   );
+  console.log("blah4");
 
-  console.log(response);
+  console.log(response.status);
 }
