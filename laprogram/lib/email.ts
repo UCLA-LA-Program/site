@@ -20,10 +20,11 @@ export default async function sendMagicLink(email: string, url: string) {
 
   const client = new postmark.ServerClient(process.env.POSTMARK_SERVER_TOKEN);
 
-  client.sendEmailWithTemplate({
+  const response = await client.sendEmailWithTemplate({
     TemplateId: 44160184,
     From: "admin@laprogramucla.com",
     To: email,
     TemplateModel: { name: name, action_url: url },
   });
+  console.log(response);
 }
