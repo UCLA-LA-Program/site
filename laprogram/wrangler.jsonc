@@ -3,10 +3,7 @@
   "main": ".open-next/worker.js",
   "name": "laprogram",
   "compatibility_date": "2026-03-12",
-  "compatibility_flags": [
-    "nodejs_compat",
-    "nodejs_compat_populate_process_env",
-  ],
+  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": false,
   "preview_urls": true,
   "assets": {
