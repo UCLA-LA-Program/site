@@ -38,4 +38,10 @@
       "remote": true,
     },
   ],
+  "kv_namespaces": [
+    {
+      "binding": "config",
+      "id": "d46813456a634d51b1a534c00cc2dd7a",
+    },
+  ],
 }
