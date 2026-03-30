@@ -19,7 +19,7 @@ export default async function sendMagicLink(email: string, url: string) {
 
   // just use console for development so we don't hit Postmark API
   if (process.env.NODE_ENV === "development") {
-    console.log(email);
+    console.log(url);
     return;
   }
 

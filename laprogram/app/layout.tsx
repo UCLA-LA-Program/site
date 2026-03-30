@@ -40,6 +40,11 @@ export default async function RootLayout({
             </Link>
             {session ? (
               <nav className="flex items-center gap-2">
+                {session.user.role === "admin" && (
+                  <Button asChild variant="ghost">
+                    <Link href="/admin">Admin</Link>
+                  </Button>
+                )}
                 <FeedbackMenu />
                 <UserMenu name={session.user.name} />
               </nav>
