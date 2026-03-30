@@ -17,7 +17,7 @@ export async function POST(request: Request) {
     baseParams.append("fields[]", "Section");
     baseParams.append("fields[]", "TA Name");
     baseParams.append("fields[]", "TA Email");
-    baseParams.append("filterByFormula", "AND({Section}, {TA Name}, {TA Email})");
+    baseParams.append("filterByFormula", "{Section}");
 
     const allRecords: SectionRecord[] = [];
     let offset: string | undefined;
