@@ -6,15 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Plus, X, CalendarClock, User, Check, Lock } from "lucide-react";
 import { toast } from "sonner";
-import useSWR from "swr";
-import { fetcher } from "@/lib/utils";
-import type { Position } from "@/types/db";
-import { LA_POSITION_OBSERVATION_COUNTS_MAP } from "@/lib/DATES";
-
 // --- Dummy data ---
 
 const CURRENT_WEEK = 5;
 const CURRENT_ROUND = 2; // round 1 = wk 3-4, round 2 = wk 5-6, round 3 = wk 7-8, round 4 = wk 9-10
+const REQUIRED_PER_ROUND = 2;
 
 const DAY_ORDER: Record<string, number> = {
   M: 0,
@@ -185,21 +181,6 @@ function minutesToLabel(minutes: number): string {
 }
 
 export default function SignUp() {
-  const { data: positions } = useSWR<Position[]>("/api/la/self", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
-
-  // Sum required observations across all positions (take the max per course)
-  const requiredPerRound = positions
-    ? Math.max(
-        ...positions.map(
-          (p) => LA_POSITION_OBSERVATION_COUNTS_MAP.get(p.position) ?? 0,
-        ),
-        0,
-      )
-    : 0;
-
   const [planned, setPlanned] = useState<Set<string>>(new Set());
   const [confirmed, setConfirmed] = useState<Set<string>>(new Set());
 
@@ -233,7 +214,7 @@ export default function SignUp() {
   const plannedSlots = DUMMY_SLOTS.filter((s) => planned.has(s.id));
   const confirmedSlots = DUMMY_SLOTS.filter((s) => confirmed.has(s.id));
   const totalSelected = plannedSlots.length + confirmedSlots.length;
-  const remaining = Math.max(0, requiredPerRound - totalSelected);
+  const remaining = Math.max(0, REQUIRED_PER_ROUND - totalSelected);
 
   // Group available slots by week+day, sorted by week then day
   type DayGroup = {
@@ -266,7 +247,7 @@ export default function SignUp() {
       <p className="mb-4 text-sm text-muted-foreground">
         Browse available observation slots and sign up. You need to complete{" "}
         <span className="font-semibold text-foreground">
-          {requiredPerRound} observations
+          {REQUIRED_PER_ROUND} observations
         </span>{" "}
         per round.
       </p>
@@ -342,14 +323,14 @@ export default function SignUp() {
                     Round {CURRENT_ROUND}
                   </span>
                   <span className="font-medium">
-                    {totalSelected} / {requiredPerRound}
+                    {totalSelected} / {REQUIRED_PER_ROUND}
                   </span>
                 </div>
                 <div className="h-2 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full bg-primary transition-all"
                     style={{
-                      width: `${Math.min(100, (totalSelected / requiredPerRound) * 100)}%`,
+                      width: `${Math.min(100, (totalSelected / REQUIRED_PER_ROUND) * 100)}%`,
                     }}
                   />
                 </div>
