@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import Admin from "./Admin";
@@ -15,7 +15,7 @@ export default async function AdminPage() {
   });
 
   if (!session || session.user.role !== "admin") {
-    redirect("/login");
+    notFound();
   }
 
   return <Admin />;
