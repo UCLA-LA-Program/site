@@ -7,10 +7,10 @@ export async function GET() {
   try {
     const auth = await getAuth();
     const session = await auth.api.getSession({
-        headers: await headers(),
+      headers: await headers(),
     });
     if (!session) {
-        return new Response("Unauthenticated user.", { status: 401 });
+      return new Response("Unauthenticated user.", { status: 401 });
     }
     const { env } = await getCloudflareContext({ async: true });
     const result = await env.data
@@ -27,8 +27,10 @@ export async function GET() {
         FROM availability
         JOIN user ON availability.la_id = user.id
         JOIN section ON availability.section_id = section.id
-        WHERE availability.status = 'open'`,
+        WHERE availability.status = 'open' 
+        AND availability.la_id <> ?1`,
       )
+      .bind(session.user.id)
       .all<Availability>();
 
     if (!result) {
