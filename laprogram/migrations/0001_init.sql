@@ -86,3 +86,49 @@ CREATE TABLE IF NOT EXISTS "feedback" (
 );
 
 CREATE INDEX "feedback_recipient" ON "feedback" ("recipientId");
+
+-- Sections
+CREATE TABLE IF NOT EXISTS "section" (
+    "id" text NOT NULL PRIMARY KEY,
+    "course_name" text NOT NULL,
+    "section_name" text NOT NULL,
+    "day" text NOT NULL,
+    "time" text NOT NULL,
+    "location" text NOT NULL,
+    "ta_name" text,
+    "ta_email" text
+);
+
+CREATE INDEX "section_course" ON "section" ("course_name");
+
+-- Section Assignments
+CREATE TABLE IF NOT EXISTS "section_assignment" (
+	"la_id" text NOT NULL,
+	"full_section_name" text NOT NULL,
+	FOREIGN KEY ("la_id") REFERENCES "user" ("id"),
+	FOREIGN KEY ("full_section_name") REFERENCES "section" ("id"),
+	PRIMARY KEY ("la_id", "full_section_name")
+);
+
+-- Availability
+CREATE TABLE IF NOT EXISTS "availability" (
+    "id" text NOT NULL PRIMARY KEY,
+    "la_id" text NOT NULL,
+    "section_id" text NOT NULL,
+    "time" text NOT NULL,
+    "week" text NOT NULL,
+    "status" text NOT NULL CHECK ("status" IN ('open', 'hidden', 'taken')),
+    FOREIGN KEY ("la_id") REFERENCES "user" ("id"),
+	FOREIGN KEY ("section_id") REFERENCES "section" ("id")
+);
+
+-- Observations
+CREATE TABLE IF NOT EXISTS "observation" (
+    "id" text NOT NULL PRIMARY KEY,
+    "observer_id" text NOT NULL,
+    "observee_id" text NOT NULL,
+    "availability_id" text NOT NULL,
+    FOREIGN KEY ("observer_id") REFERENCES "user" ("id"),
+    FOREIGN KEY ("observee_id") REFERENCES "user" ("id"),
+	FOREIGN KEY ("availability_id") REFERENCES "availability" ("id")
+);
