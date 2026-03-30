@@ -14,15 +14,15 @@ export default function ContactPage() {
           <BookOpen className="mb-3 h-6 w-6 text-muted-foreground" />
           <h2 className="mb-2 text-sm font-medium">LA Program Concerns</h2>
           <p className="text-sm text-muted-foreground">
-            If you are an LA with concerns not related to the website, please
-            refer to the{" "}
+            If you are an LA with a concern that is not a website bug/technical
+            problem, please refer to the{" "}
             <a
               className="underline-offset-2 text-primary hover:underline"
               href="https://docs.google.com/document/d/1ynJSRhLkGigDWusufc7HGjG-T-gWBAreWKcoyhlA9Sc/edit?usp=sharing"
             >
               syllabus
             </a>{" "}
-            to find the appropriate email.
+            for the appropriate contact email.
           </p>
         </div>
         <div className="flex flex-1 flex-col items-center rounded-lg border p-6 text-center">
