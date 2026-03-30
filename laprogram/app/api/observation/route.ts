@@ -102,10 +102,13 @@ export async function GET() {
         `SELECT observation.id AS id,
         user.name AS observee_name,
         section.course_name AS course_name,
+        section.section_name AS section_name,
         section.day AS day,
         availability.week AS week,
         availability.time AS time,
-        section.location AS location
+        section.location AS location,
+        section.ta_name AS ta_name,
+        section.ta_email AS ta_email
         FROM observation
         JOIN availability ON observation.availability_id = availability.id
         JOIN section ON availability.section_id = section.id

@@ -5,13 +5,16 @@ import useSWR from "swr";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Plus, X, CalendarClock, User, Check, Lock } from "lucide-react";
+import { Plus, X, CalendarClock, User, Check, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { fetcher } from "@/lib/utils";
 import type { Availability } from "@/types/db";
 
 const CURRENT_ROUND = 2;
 const REQUIRED_PER_ROUND = 2;
+
+// Quarter starts Monday 3/30/2026
+const QUARTER_START = new Date(2026, 2, 30); // month is 0-indexed
 
 const DAY_ORDER: Record<string, number> = {
   Monday: 0,
@@ -21,14 +24,41 @@ const DAY_ORDER: Record<string, number> = {
   Friday: 4,
 };
 
+const MONTH_NAMES = [
+  "Jan",
+  "Feb",
+  "Mar",
+  "Apr",
+  "May",
+  "Jun",
+  "Jul",
+  "Aug",
+  "Sep",
+  "Oct",
+  "Nov",
+  "Dec",
+];
+
+function weekDayToDate(week: string | number, day: string): string {
+  const weekNum = typeof week === "string" ? parseInt(week) : week;
+  const dayOffset = DAY_ORDER[day] ?? 0;
+  // Week 1 starts at QUARTER_START (a Monday)
+  const date = new Date(QUARTER_START);
+  date.setDate(date.getDate() + (weekNum - 1) * 7 + dayOffset);
+  return `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`;
+}
+
 type MyObservation = {
   id: string;
   observee_name: string;
   course_name: string;
+  section_name: string;
   day: string;
   week: string;
   time: string;
   location: string;
+  ta_name: string | null;
+  ta_email: string | null;
 };
 
 function parseTime(timeStr: string): number {
@@ -50,73 +80,100 @@ function timeRangeLabel(time: string): string {
 }
 
 export default function SignUp() {
-  const {
-    data: openSlots,
-    mutate: mutateOpen,
-  } = useSWR<Availability[]>("/api/observation/open", fetcher);
-  const {
-    data: myObservations,
-    mutate: mutateObservations,
-  } = useSWR<MyObservation[]>("/api/observation", fetcher);
+  const { data: openSlots, mutate: mutateOpen } = useSWR<Availability[]>(
+    "/api/observation/open",
+    fetcher,
+  );
+  const { data: myObservations, mutate: mutateObservations } = useSWR<
+    MyObservation[]
+  >("/api/observation", fetcher);
 
-  const [planned, setPlanned] = useState<Set<string>>(new Set());
+  const [pendingAdds, setPendingAdds] = useState<Set<string>>(new Set());
+  const [pendingRemoves, setPendingRemoves] = useState<Set<string>>(new Set());
 
-  const confirmedIds = new Set(myObservations?.map((o) => o.id) ?? []);
+  const hasPendingChanges = pendingAdds.size > 0 || pendingRemoves.size > 0;
 
   function addSlot(id: string) {
-    setPlanned((prev) => new Set(prev).add(id));
+    setPendingAdds((prev) => new Set(prev).add(id));
   }
 
-  function removePlanned(id: string) {
-    setPlanned((prev) => {
+  function undoAdd(id: string) {
+    setPendingAdds((prev) => {
       const next = new Set(prev);
       next.delete(id);
       return next;
     });
   }
 
-  async function removeConfirmed(id: string) {
-    try {
-      const res = await fetch(`/api/observation/${id}`, { method: "DELETE" });
-      if (!res.ok) throw new Error();
-      await Promise.all([mutateObservations(), mutateOpen()]);
-      toast.success("Observation removed.");
-    } catch {
-      toast.error("Failed to remove observation.");
-    }
+  function markForRemoval(id: string) {
+    setPendingRemoves((prev) => new Set(prev).add(id));
   }
 
-  async function confirmSelections() {
-    const ids = [...planned];
-    let success = 0;
-    for (const availabilityId of ids) {
+  function undoRemoval(id: string) {
+    setPendingRemoves((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+  }
+
+  async function confirmChanges() {
+    let addSuccess = 0;
+    let removeSuccess = 0;
+
+    for (const id of pendingRemoves) {
+      try {
+        const res = await fetch(`/api/observation/${id}`, { method: "DELETE" });
+        if (res.ok) removeSuccess++;
+      } catch {
+        // continue
+      }
+    }
+
+    for (const availabilityId of pendingAdds) {
       try {
         const res = await fetch("/api/observation", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ availability_id: availabilityId }),
         });
-        if (res.ok) success++;
+        if (res.ok) addSuccess++;
       } catch {
-        // continue with remaining
+        // continue
       }
     }
-    setPlanned(new Set());
+
+    setPendingAdds(new Set());
+    setPendingRemoves(new Set());
     await Promise.all([mutateObservations(), mutateOpen()]);
-    if (success > 0) {
-      toast.success(`${success} observation${success !== 1 ? "s" : ""} confirmed!`);
+
+    const parts = [];
+    if (addSuccess > 0) parts.push(`${addSuccess} added`);
+    if (removeSuccess > 0) parts.push(`${removeSuccess} removed`);
+    if (parts.length > 0) {
+      toast.success(`Observations updated: ${parts.join(", ")}.`);
     } else {
-      toast.error("Failed to confirm observations.");
+      toast.error("Failed to update observations.");
     }
   }
 
   const loading = !openSlots || !myObservations;
-  const totalSelected = planned.size + (myObservations?.length ?? 0);
-  const remaining = Math.max(0, REQUIRED_PER_ROUND - totalSelected);
 
-  // Filter out slots that are already planned
-  const available = (openSlots ?? []).filter((s) => !planned.has(s.id));
-  const plannedSlots = (openSlots ?? []).filter((s) => planned.has(s.id));
+  const confirmedCount = myObservations?.length ?? 0;
+
+  // Filter available: exclude pending adds
+  const available = (openSlots ?? []).filter((s) => !pendingAdds.has(s.id));
+  const pendingAddSlots = (openSlots ?? []).filter((s) =>
+    pendingAdds.has(s.id),
+  );
+
+  // Confirmed observations minus pending removes
+  const activeConfirmed = (myObservations ?? []).filter(
+    (o) => !pendingRemoves.has(o.id),
+  );
+  const pendingRemoveSlots = (myObservations ?? []).filter((o) =>
+    pendingRemoves.has(o.id),
+  );
 
   // Group available slots by week+day
   type DayGroup = {
@@ -150,23 +207,18 @@ export default function SignUp() {
   return (
     <div className="mx-auto w-full max-w-6xl px-8 py-10">
       <h1 className="mb-2 text-2xl font-bold">Observation Sign-Ups</h1>
-      <p className="mb-4 text-sm text-muted-foreground">
-        Browse available observation slots and sign up. You need to complete{" "}
-        <span className="font-semibold text-foreground">
-          {REQUIRED_PER_ROUND} observations
-        </span>{" "}
-        per round.
-      </p>
-      <p className="mb-8 text-lg">
+      <p className="mb-5 text-lg">
         You are signing up for{" "}
         <span className="font-semibold">Round {CURRENT_ROUND}</span>{" "}
-        observations.
+        observations.{" "}
+        <span className="text-sm text-muted-foreground">
+          ({confirmedCount}/{REQUIRED_PER_ROUND} confirmed)
+        </span>
       </p>
 
       <div className="flex gap-8">
         {/* Left: available slots */}
         <div className="min-w-0 flex-1">
-          <h2 className="mb-4 text-lg font-semibold">Available Slots</h2>
           {dayGroups.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No observation slots are currently available.
@@ -176,25 +228,38 @@ export default function SignUp() {
               {dayGroups.map((group) => (
                 <div key={`${group.week}-${group.day}`}>
                   <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                    {group.day}, Week {group.week}
+                    {weekDayToDate(group.week, group.day)}
                   </h3>
                   <div className="space-y-2">
                     {group.slots.map((slot) => (
                       <div
                         key={slot.id}
-                        className="flex items-center rounded-lg border px-4 py-3 text-sm"
+                        className="flex items-center justify-between rounded-lg border px-4 py-3 text-sm"
                       >
-                        <div className="flex w-36 shrink-0 items-center gap-2">
-                          <User className="size-3.5 text-muted-foreground" />
-                          <span className="font-medium">{slot.la_name}</span>
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-3">
+                            <span className="flex items-center gap-1.5 font-medium">
+                              <User className="size-3.5 text-muted-foreground" />
+                              {slot.la_name}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {slot.course_name} {slot.section_name}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {weekDayToDate(slot.week, slot.day)}
+                            </span>
+                          </div>
+                          <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
+                            <span className="flex items-center gap-1">
+                              <CalendarClock className="size-3" />
+                              {timeRangeLabel(slot.time)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="size-3" />
+                              {slot.location}
+                            </span>
+                          </div>
                         </div>
-                        <span className="w-20 shrink-0 text-muted-foreground">
-                          {slot.course_name}
-                        </span>
-                        <span className="flex flex-1 items-center gap-1.5 text-muted-foreground">
-                          <CalendarClock className="size-3.5" />
-                          {timeRangeLabel(slot.time)}
-                        </span>
                         <Button
                           size="sm"
                           variant="outline"
@@ -213,134 +278,147 @@ export default function SignUp() {
           )}
         </div>
 
-        {/* Right: signed-up sidebar */}
+        {/* Right sidebar */}
         <div className="w-96 shrink-0">
-          <div className="sticky top-24">
+          <div className="sticky top-24 space-y-4">
+            {/* Confirmed box */}
             <Card>
               <CardHeader>
-                <CardTitle>Your Observations</CardTitle>
+                <CardTitle>Confirmed Observations</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
-                {/* Progress */}
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
-                    Round {CURRENT_ROUND}
-                  </span>
-                  <span className="font-medium">
-                    {totalSelected} / {REQUIRED_PER_ROUND}
-                  </span>
-                </div>
-                <div className="h-2 overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{
-                      width: `${Math.min(100, (totalSelected / REQUIRED_PER_ROUND) * 100)}%`,
-                    }}
-                  />
-                </div>
-                {remaining > 0 ? (
+              <CardContent>
+                {activeConfirmed.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
-                    {remaining} more observation{remaining !== 1 && "s"} needed
-                    this round.
+                    No confirmed observations yet.
                   </p>
                 ) : (
-                  <p className="text-xs font-medium text-green-600">
-                    You&rsquo;ve met the requirement for this round!
-                  </p>
+                  <div className="space-y-4">
+                    {activeConfirmed.map((obs) => (
+                      <div
+                        key={obs.id}
+                        className="flex items-start justify-between gap-2"
+                      >
+                        <div className="min-w-0 text-sm">
+                          <p className="font-medium">{obs.observee_name}</p>
+                          <p className="text-muted-foreground">
+                            {obs.course_name} {obs.section_name} &middot;{" "}
+                            {weekDayToDate(obs.week, obs.day)}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            {timeRangeLabel(obs.time)} &middot; {obs.location}
+                          </p>
+                          {obs.ta_name && (
+                            <p className="text-xs text-muted-foreground">
+                              TA: {obs.ta_name}
+                              {obs.ta_email && <span> ({obs.ta_email})</span>}
+                            </p>
+                          )}
+                        </div>
+                        <Button
+                          size="icon-xs"
+                          variant="ghost"
+                          onClick={() => markForRemoval(obs.id)}
+                        >
+                          <X className="size-3.5" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
                 )}
-
-                <Separator />
-
-                {/* Confirmed */}
-                <div>
-                  <h3 className="mb-2 flex items-center gap-1.5 text-sm font-medium">
-                    <Lock className="size-3.5" />
-                    Confirmed
-                  </h3>
-                  {myObservations.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      No confirmed observations yet.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {myObservations.map((obs) => (
-                        <div
-                          key={obs.id}
-                          className="flex items-start justify-between gap-2"
-                        >
-                          <div className="min-w-0 text-sm">
-                            <p className="font-medium">{obs.observee_name}</p>
-                            <p className="text-muted-foreground">
-                              {obs.course_name} &middot; {obs.day}, Week{" "}
-                              {obs.week}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {timeRangeLabel(obs.time)}
-                            </p>
-                          </div>
-                          <Button
-                            size="icon-xs"
-                            variant="ghost"
-                            onClick={() => removeConfirmed(obs.id)}
-                          >
-                            <X className="size-3.5" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-
-                <Separator />
-
-                {/* Planned */}
-                <div>
-                  <h3 className="mb-2 text-sm font-medium">Planned</h3>
-                  {plannedSlots.length === 0 ? (
-                    <p className="text-xs text-muted-foreground">
-                      Add slots from the left to plan your observations.
-                    </p>
-                  ) : (
-                    <div className="space-y-3">
-                      {plannedSlots.map((slot) => (
-                        <div
-                          key={slot.id}
-                          className="flex items-start justify-between gap-2"
-                        >
-                          <div className="min-w-0 text-sm">
-                            <p className="font-medium">{slot.la_name}</p>
-                            <p className="text-muted-foreground">
-                              {slot.course_name} &middot; {slot.day}, Week{" "}
-                              {slot.week}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              {timeRangeLabel(slot.time)}
-                            </p>
-                          </div>
-                          <Button
-                            size="icon-xs"
-                            variant="ghost"
-                            onClick={() => removePlanned(slot.id)}
-                          >
-                            <X className="size-3.5" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                  {plannedSlots.length > 0 && (
-                    <Button
-                      className="mt-2 w-full"
-                      size="sm"
-                      onClick={confirmSelections}
-                    >
-                      <Check className="size-3.5" />
-                      Confirm Selections
-                    </Button>
-                  )}
-                </div>
               </CardContent>
             </Card>
+
+            {/* Pending changes box */}
+            {hasPendingChanges && (
+              <Card className="border-primary/30">
+                <CardHeader>
+                  <CardTitle>Pending Changes</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {/* Pending adds */}
+                  {pendingAddSlots.length > 0 && (
+                    <div>
+                      <h3 className="mb-2 text-xs font-medium text-green-600">
+                        Adding
+                      </h3>
+                      <div className="space-y-3">
+                        {pendingAddSlots.map((slot) => (
+                          <div
+                            key={slot.id}
+                            className="flex items-start justify-between gap-2"
+                          >
+                            <div className="min-w-0 text-sm">
+                              <p className="font-medium">{slot.la_name}</p>
+                              <p className="text-muted-foreground">
+                                {slot.course_name} {slot.section_name} &middot;{" "}
+                                {weekDayToDate(slot.week, slot.day)}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                {timeRangeLabel(slot.time)} &middot;{" "}
+                                {slot.location}
+                              </p>
+                            </div>
+                            <Button
+                              size="icon-xs"
+                              variant="ghost"
+                              onClick={() => undoAdd(slot.id)}
+                            >
+                              <X className="size-3.5" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Pending removes */}
+                  {pendingRemoveSlots.length > 0 && (
+                    <div>
+                      <h3 className="mb-2 text-xs font-medium text-red-600">
+                        Removing
+                      </h3>
+                      <div className="space-y-3">
+                        {pendingRemoveSlots.map((obs) => (
+                          <div
+                            key={obs.id}
+                            className="flex items-start justify-between gap-2"
+                          >
+                            <div className="min-w-0 text-sm">
+                              <p className="font-medium line-through opacity-60">
+                                {obs.observee_name}
+                              </p>
+                              <p className="text-muted-foreground line-through opacity-60">
+                                {obs.course_name} {obs.section_name} &middot;{" "}
+                                {weekDayToDate(obs.week, obs.day)}
+                              </p>
+                              <p className="text-xs text-muted-foreground line-through opacity-60">
+                                {timeRangeLabel(obs.time)} &middot;{" "}
+                                {obs.location}
+                              </p>
+                            </div>
+                            <Button
+                              size="icon-xs"
+                              variant="ghost"
+                              onClick={() => undoRemoval(obs.id)}
+                              title="Undo removal"
+                            >
+                              <Plus className="size-3.5" />
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  <Button className="w-full" size="sm" onClick={confirmChanges}>
+                    <Check className="size-3.5" />
+                    Confirm Changes
+                  </Button>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </div>

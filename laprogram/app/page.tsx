@@ -1,7 +1,12 @@
 "use server";
 import Link from "next/link";
 
-import { ArrowRight } from "lucide-react";
+import {
+  MessageSquarePlus,
+  Eye,
+  CalendarClock,
+  UserPlus,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PageBackground } from "@/components/PageBackground";
 import { getAuth } from "@/lib/auth";
@@ -53,22 +58,40 @@ export default async function Page() {
           )}
 
           <div
-            className="animate-fade-up flex flex-wrap items-center gap-3"
+            className="animate-fade-up flex flex-col gap-3"
             style={{ animationDelay: "140ms" }}
           >
-            <Button asChild size="lg" className="px-7">
-              <Link href="/feedback">
-                Give Feedback
-                <ArrowRight />
-              </Link>
-            </Button>
-            {session && (
-              <Button asChild size="lg" className="px-7" variant="outline">
-                <Link href="/feedback/view">
-                  View Feedback
-                  <ArrowRight />
+            <div className="flex items-center gap-3">
+              <Button asChild size="lg" className="px-7">
+                <Link href="/feedback">
+                  <MessageSquarePlus />
+                  Give Feedback
                 </Link>
               </Button>
+              {session && (
+                <Button asChild size="lg" className="px-7" variant="outline">
+                  <Link href="/feedback/view">
+                    <Eye />
+                    View Feedback
+                  </Link>
+                </Button>
+              )}
+            </div>
+            {session && (
+              <div className="flex items-center gap-3">
+                <Button asChild size="lg" className="px-7">
+                  <Link href="/observations/schedule">
+                    <CalendarClock />
+                    Schedule Observations
+                  </Link>
+                </Button>
+                <Button asChild size="lg" className="px-7" variant="outline">
+                  <Link href="/observations/signup">
+                    <UserPlus />
+                    Observation Sign-Ups
+                  </Link>
+                </Button>
+              </div>
             )}
           </div>
         </section>
