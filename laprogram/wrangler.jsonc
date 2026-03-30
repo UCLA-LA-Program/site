@@ -4,6 +4,7 @@
   "name": "laprogram",
   "compatibility_date": "2026-03-12",
   "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": false,
   "preview_urls": true,
   "assets": {
     "directory": ".open-next/assets",
