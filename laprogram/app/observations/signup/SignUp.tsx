@@ -196,6 +196,15 @@ export default function SignUp() {
     });
   }
 
+  function removeConfirmed(id: string) {
+    setConfirmed((prev) => {
+      const next = new Set(prev);
+      next.delete(id);
+      return next;
+    });
+    // TODO: DELETE to API
+  }
+
   function confirmSelections() {
     setConfirmed((prev) => {
       const next = new Set(prev);
@@ -310,7 +319,7 @@ export default function SignUp() {
         </div>
 
         {/* Right: signed-up sidebar */}
-        <div className="w-80 shrink-0">
+        <div className="w-96 shrink-0">
           <div className="sticky top-24">
             <Card>
               <CardHeader>
@@ -360,16 +369,28 @@ export default function SignUp() {
                   ) : (
                     <div className="space-y-3">
                       {confirmedSlots.map((slot) => (
-                        <div key={slot.id} className="text-sm">
-                          <p className="font-medium">{slot.la_name}</p>
-                          <p className="text-muted-foreground">
-                            {slot.course} &middot; {slot.date}:{" "}
-                            {DAY_FULL[slot.day] ?? slot.day}, Week {slot.week}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {minutesToLabel(slot.start)}–
-                            {minutesToLabel(slot.end)}
-                          </p>
+                        <div
+                          key={slot.id}
+                          className="flex items-start justify-between gap-2"
+                        >
+                          <div className="min-w-0 text-sm">
+                            <p className="font-medium">{slot.la_name}</p>
+                            <p className="text-muted-foreground">
+                              {slot.course} &middot; {slot.date}:{" "}
+                              {DAY_FULL[slot.day] ?? slot.day}, Week {slot.week}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {minutesToLabel(slot.start)}–
+                              {minutesToLabel(slot.end)}
+                            </p>
+                          </div>
+                          <Button
+                            size="icon-xs"
+                            variant="ghost"
+                            onClick={() => removeConfirmed(slot.id)}
+                          >
+                            <X className="size-3.5" />
+                          </Button>
                         </div>
                       ))}
                     </div>
@@ -416,9 +437,6 @@ export default function SignUp() {
                   )}
                   {plannedSlots.length > 0 && (
                     <>
-                      <p className="mt-3 text-xs text-muted-foreground">
-                        Once confirmed, observations cannot be removed.
-                      </p>
                       <Button
                         className="mt-2 w-full"
                         size="sm"
