@@ -5,7 +5,7 @@ import { getAuth } from "@/lib/auth";
 import Schedule from "./Schedule";
 
 export const metadata: Metadata = {
-  title: "Observation Scheduling",
+  title: "Schedule Observations",
 };
 
 export default async function ObservationsPage() {

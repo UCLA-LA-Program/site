@@ -5,7 +5,7 @@ import { getAuth } from "@/lib/auth";
 import SignUp from "./SignUp";
 
 export const metadata: Metadata = {
-  title: "Observation Signup",
+  title: "Observation Sign-Ups",
 };
 
 export default async function ObservationsPage() {

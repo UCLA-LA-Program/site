@@ -6,6 +6,7 @@ import {
   CardHeader,
   CardTitle,
   CardDescription,
+  CardAction,
   CardContent,
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -109,6 +110,8 @@ export default function Schedule() {
   const [schedules, setSchedules] = useState<Map<string, CourseSchedule>>(
     buildInitialSchedules,
   );
+
+  const [showPast, setShowPast] = useState<Set<string>>(new Set());
 
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
     "idle",
@@ -229,9 +232,6 @@ export default function Schedule() {
               You will be able to check/uncheck future weeks if no one has
               signed up to observe that week.
             </li>
-            <li>
-              Previous weeks&rsquo; availability are shown for your reference.
-            </li>
           </ul>
           <p className="text-sm text-muted-foreground">
             If you run into any issues, please refer to the syllabus and/or{" "}
@@ -258,6 +258,11 @@ export default function Schedule() {
         {DUMMY_COURSES.map((course) => {
           const schedule = schedules.get(course.course_name)!;
 
+          const showingPast = showPast.has(course.course_name);
+          const visibleWeeks = WEEKS.filter(
+            (w) => showingPast || w >= CURRENT_WEEK,
+          );
+
           return (
             <Card key={course.course_name}>
               <CardHeader>
@@ -267,6 +272,25 @@ export default function Schedule() {
                   {minutesToLabel(course.section_start)}–
                   {minutesToLabel(course.section_end)}
                 </CardDescription>
+                <CardAction>
+                  <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                    <Checkbox
+                      checked={showingPast}
+                      onCheckedChange={() =>
+                        setShowPast((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(course.course_name)) {
+                            next.delete(course.course_name);
+                          } else {
+                            next.add(course.course_name);
+                          }
+                          return next;
+                        })
+                      }
+                    />
+                    Show previous weeks
+                  </label>
+                </CardAction>
               </CardHeader>
               <CardContent>
                 {(() => {
@@ -315,7 +339,7 @@ export default function Schedule() {
                       )}
 
                       <div className="space-y-1">
-                        {WEEKS.map((week) => {
+                        {visibleWeeks.map((week) => {
                           const slot = schedule.weekSlots.get(week)!;
                           const isPast = week < CURRENT_WEEK;
                           const signups =

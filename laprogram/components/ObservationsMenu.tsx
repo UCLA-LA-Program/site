@@ -26,7 +26,7 @@ export function ObservationsMenu() {
         <DropdownMenuItem asChild>
           <Link href="/observations/signup">
             <UserPlus />
-            Observation Sign-ups
+            Observation Sign-Ups
           </Link>
         </DropdownMenuItem>
       </DropdownMenuContent>
