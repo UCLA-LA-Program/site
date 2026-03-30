@@ -96,8 +96,7 @@ CREATE TABLE IF NOT EXISTS "section" (
     "time" text NOT NULL,
     "location" text NOT NULL,
     "ta_name" text,
-    "ta_email" text,
-    UNIQUE ("course_name", "section_name")
+    "ta_email" text
 );
 
 CREATE INDEX "section_course" ON "section" ("course_name");
