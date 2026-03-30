@@ -6,3 +6,4 @@ export async function POST(request: Request) {
   // TODO
   return new Response("OK");
 }
+
