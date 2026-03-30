@@ -1,176 +1,40 @@
 "use client";
 
 import { useState } from "react";
+import useSWR from "swr";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Plus, X, CalendarClock, User, Check, Lock } from "lucide-react";
 import { toast } from "sonner";
-// --- Dummy data ---
+import { fetcher } from "@/lib/utils";
+import type { Availability } from "@/types/db";
 
-const CURRENT_WEEK = 5;
-const CURRENT_ROUND = 2; // round 1 = wk 3-4, round 2 = wk 5-6, round 3 = wk 7-8, round 4 = wk 9-10
+const CURRENT_ROUND = 2;
 const REQUIRED_PER_ROUND = 2;
 
 const DAY_ORDER: Record<string, number> = {
-  M: 0,
-  T: 1,
-  W: 2,
-  R: 3,
-  F: 4,
+  Monday: 0,
+  Tuesday: 1,
+  Wednesday: 2,
+  Thursday: 3,
+  Friday: 4,
 };
 
-const DAY_FULL: Record<string, string> = {
-  M: "Monday",
-  T: "Tuesday",
-  W: "Wednesday",
-  R: "Thursday",
-  F: "Friday",
-};
-
-type ObservationSlot = {
+type MyObservation = {
   id: string;
-  la_name: string;
-  course: string;
-  week: number;
-  day: string; // single letter: M, T, W, R, F
-  date: string; // e.g. "Apr 28"
-  start: number; // minutes from midnight
-  end: number;
+  observee_name: string;
+  course_name: string;
+  day: string;
+  week: string;
+  time: string;
+  location: string;
 };
 
-const DUMMY_SLOTS: ObservationSlot[] = [
-  {
-    id: "1",
-    la_name: "Alice Chen",
-    course: "CS 31",
-    week: 5,
-    day: "T",
-    date: "Apr 29",
-    start: 630,
-    end: 690,
-  },
-  {
-    id: "2",
-    la_name: "Bob Kim",
-    course: "CS 31",
-    week: 5,
-    day: "T",
-    date: "Apr 29",
-    start: 600,
-    end: 660,
-  },
-  {
-    id: "3",
-    la_name: "Carol Diaz",
-    course: "CS 32",
-    week: 5,
-    day: "R",
-    date: "May 1",
-    start: 810,
-    end: 870,
-  },
-  {
-    id: "4",
-    la_name: "David Park",
-    course: "CS 35L",
-    week: 5,
-    day: "M",
-    date: "Apr 28",
-    start: 570,
-    end: 630,
-  },
-  {
-    id: "5",
-    la_name: "Alice Chen",
-    course: "CS 31",
-    week: 6,
-    day: "T",
-    date: "May 6",
-    start: 630,
-    end: 690,
-  },
-  {
-    id: "6",
-    la_name: "David Park",
-    course: "CS 35L",
-    week: 6,
-    day: "M",
-    date: "May 5",
-    start: 570,
-    end: 630,
-  },
-  {
-    id: "7",
-    la_name: "Eve Johnson",
-    course: "CS 32",
-    week: 6,
-    day: "R",
-    date: "May 8",
-    start: 780,
-    end: 840,
-  },
-  {
-    id: "8",
-    la_name: "Bob Kim",
-    course: "CS 31",
-    week: 6,
-    day: "T",
-    date: "May 6",
-    start: 600,
-    end: 660,
-  },
-  {
-    id: "9",
-    la_name: "Carol Diaz",
-    course: "CS 32",
-    week: 7,
-    day: "R",
-    date: "May 15",
-    start: 810,
-    end: 870,
-  },
-  {
-    id: "10",
-    la_name: "David Park",
-    course: "CS 35L",
-    week: 7,
-    day: "M",
-    date: "May 12",
-    start: 540,
-    end: 600,
-  },
-  {
-    id: "11",
-    la_name: "Bob Kim",
-    course: "CS 31",
-    week: 7,
-    day: "T",
-    date: "May 13",
-    start: 600,
-    end: 660,
-  },
-  {
-    id: "12",
-    la_name: "Eve Johnson",
-    course: "CS 32",
-    week: 8,
-    day: "R",
-    date: "May 22",
-    start: 780,
-    end: 840,
-  },
-  {
-    id: "13",
-    la_name: "Alice Chen",
-    course: "CS 31",
-    week: 8,
-    day: "T",
-    date: "May 20",
-    start: 630,
-    end: 690,
-  },
-];
+function parseTime(timeStr: string): number {
+  const [h, m] = timeStr.split(":").map(Number);
+  return h * 60 + m;
+}
 
 function minutesToLabel(minutes: number): string {
   const h = Math.floor(minutes / 60);
@@ -180,9 +44,24 @@ function minutesToLabel(minutes: number): string {
   return `${displayH}:${m.toString().padStart(2, "0")} ${period}`;
 }
 
+function timeRangeLabel(time: string): string {
+  const [start, end] = time.split("-");
+  return `${minutesToLabel(parseTime(start))}–${minutesToLabel(parseTime(end))}`;
+}
+
 export default function SignUp() {
+  const {
+    data: openSlots,
+    mutate: mutateOpen,
+  } = useSWR<Availability[]>("/api/observation/open", fetcher);
+  const {
+    data: myObservations,
+    mutate: mutateObservations,
+  } = useSWR<MyObservation[]>("/api/observation", fetcher);
+
   const [planned, setPlanned] = useState<Set<string>>(new Set());
-  const [confirmed, setConfirmed] = useState<Set<string>>(new Set());
+
+  const confirmedIds = new Set(myObservations?.map((o) => o.id) ?? []);
 
   function addSlot(id: string) {
     setPlanned((prev) => new Set(prev).add(id));
@@ -196,59 +75,77 @@ export default function SignUp() {
     });
   }
 
-  function removeConfirmed(id: string) {
-    setConfirmed((prev) => {
-      const next = new Set(prev);
-      next.delete(id);
-      return next;
-    });
-    // TODO: DELETE to API
+  async function removeConfirmed(id: string) {
+    try {
+      const res = await fetch(`/api/observation/${id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      await Promise.all([mutateObservations(), mutateOpen()]);
+      toast.success("Observation removed.");
+    } catch {
+      toast.error("Failed to remove observation.");
+    }
   }
 
-  function confirmSelections() {
-    setConfirmed((prev) => {
-      const next = new Set(prev);
-      for (const id of planned) next.add(id);
-      return next;
-    });
+  async function confirmSelections() {
+    const ids = [...planned];
+    let success = 0;
+    for (const availabilityId of ids) {
+      try {
+        const res = await fetch("/api/observation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ availability_id: availabilityId }),
+        });
+        if (res.ok) success++;
+      } catch {
+        // continue with remaining
+      }
+    }
     setPlanned(new Set());
-    // TODO: POST to API
-    toast.success("Observations confirmed!");
+    await Promise.all([mutateObservations(), mutateOpen()]);
+    if (success > 0) {
+      toast.success(`${success} observation${success !== 1 ? "s" : ""} confirmed!`);
+    } else {
+      toast.error("Failed to confirm observations.");
+    }
   }
 
-  const takenIds = new Set([...planned, ...confirmed]);
-  const available = DUMMY_SLOTS.filter(
-    (s) => !takenIds.has(s.id) && s.week >= CURRENT_WEEK,
-  );
-  const plannedSlots = DUMMY_SLOTS.filter((s) => planned.has(s.id));
-  const confirmedSlots = DUMMY_SLOTS.filter((s) => confirmed.has(s.id));
-  const totalSelected = plannedSlots.length + confirmedSlots.length;
+  const loading = !openSlots || !myObservations;
+  const totalSelected = planned.size + (myObservations?.length ?? 0);
   const remaining = Math.max(0, REQUIRED_PER_ROUND - totalSelected);
 
-  // Group available slots by week+day, sorted by week then day
+  // Filter out slots that are already planned
+  const available = (openSlots ?? []).filter((s) => !planned.has(s.id));
+  const plannedSlots = (openSlots ?? []).filter((s) => planned.has(s.id));
+
+  // Group available slots by week+day
   type DayGroup = {
-    week: number;
+    week: string;
     day: string;
-    date: string;
-    slots: ObservationSlot[];
+    slots: Availability[];
   };
   const groupMap = new Map<string, DayGroup>();
   for (const slot of available) {
     const key = `${slot.week}-${slot.day}`;
     if (!groupMap.has(key)) {
-      groupMap.set(key, {
-        week: slot.week,
-        day: slot.day,
-        date: slot.date,
-        slots: [],
-      });
+      groupMap.set(key, { week: slot.week, day: slot.day, slots: [] });
     }
     groupMap.get(key)!.slots.push(slot);
   }
   const dayGroups = [...groupMap.values()].sort((a, b) => {
-    if (a.week !== b.week) return a.week - b.week;
+    const weekDiff = parseInt(a.week) - parseInt(b.week);
+    if (weekDiff !== 0) return weekDiff;
     return (DAY_ORDER[a.day] ?? 9) - (DAY_ORDER[b.day] ?? 9);
   });
+
+  if (loading) {
+    return (
+      <div className="mx-auto w-full max-w-6xl px-8 py-10">
+        <h1 className="mb-2 text-2xl font-bold">Observation Sign-Ups</h1>
+        <p className="text-sm text-muted-foreground">Loading slots...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="mx-auto w-full max-w-6xl px-8 py-10">
@@ -268,7 +165,7 @@ export default function SignUp() {
 
       <div className="flex gap-8">
         {/* Left: available slots */}
-        <div className="flex-1 min-w-0">
+        <div className="min-w-0 flex-1">
           <h2 className="mb-4 text-lg font-semibold">Available Slots</h2>
           {dayGroups.length === 0 ? (
             <p className="text-sm text-muted-foreground">
@@ -279,8 +176,7 @@ export default function SignUp() {
               {dayGroups.map((group) => (
                 <div key={`${group.week}-${group.day}`}>
                   <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                    {group.date}: {DAY_FULL[group.day] ?? group.day}, Week{" "}
-                    {group.week}
+                    {group.day}, Week {group.week}
                   </h3>
                   <div className="space-y-2">
                     {group.slots.map((slot) => (
@@ -292,18 +188,17 @@ export default function SignUp() {
                           <User className="size-3.5 text-muted-foreground" />
                           <span className="font-medium">{slot.la_name}</span>
                         </div>
-                        <span className="w-16 shrink-0 text-muted-foreground">
-                          {slot.course}
+                        <span className="w-20 shrink-0 text-muted-foreground">
+                          {slot.course_name}
                         </span>
                         <span className="flex flex-1 items-center gap-1.5 text-muted-foreground">
                           <CalendarClock className="size-3.5" />
-                          {minutesToLabel(slot.start)}–
-                          {minutesToLabel(slot.end)}
+                          {timeRangeLabel(slot.time)}
                         </span>
                         <Button
                           size="sm"
                           variant="outline"
-                          className="shrink-0 ml-4"
+                          className="ml-4 shrink-0"
                           onClick={() => addSlot(slot.id)}
                         >
                           <Plus className="size-3.5" />
@@ -362,32 +257,31 @@ export default function SignUp() {
                     <Lock className="size-3.5" />
                     Confirmed
                   </h3>
-                  {confirmedSlots.length === 0 ? (
+                  {myObservations.length === 0 ? (
                     <p className="text-xs text-muted-foreground">
                       No confirmed observations yet.
                     </p>
                   ) : (
                     <div className="space-y-3">
-                      {confirmedSlots.map((slot) => (
+                      {myObservations.map((obs) => (
                         <div
-                          key={slot.id}
+                          key={obs.id}
                           className="flex items-start justify-between gap-2"
                         >
                           <div className="min-w-0 text-sm">
-                            <p className="font-medium">{slot.la_name}</p>
+                            <p className="font-medium">{obs.observee_name}</p>
                             <p className="text-muted-foreground">
-                              {slot.course} &middot; {slot.date}:{" "}
-                              {DAY_FULL[slot.day] ?? slot.day}, Week {slot.week}
+                              {obs.course_name} &middot; {obs.day}, Week{" "}
+                              {obs.week}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {minutesToLabel(slot.start)}–
-                              {minutesToLabel(slot.end)}
+                              {timeRangeLabel(obs.time)}
                             </p>
                           </div>
                           <Button
                             size="icon-xs"
                             variant="ghost"
-                            onClick={() => removeConfirmed(slot.id)}
+                            onClick={() => removeConfirmed(obs.id)}
                           >
                             <X className="size-3.5" />
                           </Button>
@@ -416,12 +310,11 @@ export default function SignUp() {
                           <div className="min-w-0 text-sm">
                             <p className="font-medium">{slot.la_name}</p>
                             <p className="text-muted-foreground">
-                              {slot.course} &middot; {slot.date}:{" "}
-                              {DAY_FULL[slot.day] ?? slot.day}, Week {slot.week}
+                              {slot.course_name} &middot; {slot.day}, Week{" "}
+                              {slot.week}
                             </p>
                             <p className="text-xs text-muted-foreground">
-                              {minutesToLabel(slot.start)}–
-                              {minutesToLabel(slot.end)}
+                              {timeRangeLabel(slot.time)}
                             </p>
                           </div>
                           <Button
@@ -436,16 +329,14 @@ export default function SignUp() {
                     </div>
                   )}
                   {plannedSlots.length > 0 && (
-                    <>
-                      <Button
-                        className="mt-2 w-full"
-                        size="sm"
-                        onClick={confirmSelections}
-                      >
-                        <Check className="size-3.5" />
-                        Confirm Selections
-                      </Button>
-                    </>
+                    <Button
+                      className="mt-2 w-full"
+                      size="sm"
+                      onClick={confirmSelections}
+                    >
+                      <Check className="size-3.5" />
+                      Confirm Selections
+                    </Button>
                   )}
                 </div>
               </CardContent>
