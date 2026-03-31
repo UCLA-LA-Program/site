@@ -16,14 +16,14 @@ INSERT INTO user (id, name, email, emailVerified, createdAt, updatedAt) VALUES
 -- Course assignments: 3 users per course
 INSERT INTO course (userId, course_name, position) VALUES
   ('user_1', 'CS 31',      'new'),
-  ('user_2', 'CS 31',      'returner'),
-  ('user_3', 'CS 31',      'returner'),
+  ('user_2', 'CS 31',      'ret'),
+  ('user_3', 'CS 31',      'ret'),
   ('user_9', 'CS 31',      'lcc'),
   ('user_4', 'MATH 61',    'new'),
-  ('user_5', 'MATH 61',    'returner_lcc'),
+  ('user_5', 'MATH 61',    'ret_lcc'),
   ('user_6', 'MATH 61',    'ped'),
   ('user_7', 'PHYSICS 1A', 'new'),
-  ('user_8', 'PHYSICS 1A', 'returner'),
+  ('user_8', 'PHYSICS 1A', 'ret'),
   ('user_9', 'PHYSICS 1A', 'ped_lcc');
 
 -- Sections
