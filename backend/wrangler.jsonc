@@ -11,8 +11,7 @@
   },
 
   "vars": {
-    "APP_URL": "NEED TO FIX LATER" // Production app URL
+    "APP_URL": "https://www.laprogram.com" // Production app URL
   }
 
-  // CRON_SECRET should be set via: wrangler secret put CRON_SECRET
 }
