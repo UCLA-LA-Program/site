@@ -23,6 +23,11 @@ export default async function sendMagicLink(email: string, url: string) {
     return;
   }
 
+  if (!process.env.POSTMARK_SERVER_TOKEN) {
+    console.log("Could not load process.env.POSTMARK_SERVER_TOKEN");
+    return;
+  }
+
   await fetch("https://api.postmarkapp.com/email/withTemplate", {
     method: "POST",
     headers: {
