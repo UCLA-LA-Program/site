@@ -5,14 +5,9 @@
 
   "triggers": {
     "crons": [
-      "0 8 * * *",     // once a day, 12/1AM PST - all init api calls
-      "0 8 * * 1",     // once a week, 12/1AM PST - process withdraws
-      "*/30 * * * *"   // every 30 minutes - database backup
-    ]
+      "0 8 * * *", // once a day, 12/1AM PST - all init api calls
+      "0 8 * * 1", // once a week, 12/1AM PST - process withdraws
+      "*/30 * * * *", // every 30 minutes - database backup
+    ],
   },
-
-  "vars": {
-    "APP_URL": "https://www.laprogram.com" // Production app URL
-  }
-
 }
