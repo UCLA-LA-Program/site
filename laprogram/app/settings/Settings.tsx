@@ -75,7 +75,7 @@ export default function Settings() {
             ))}
           </ul>
         ) : (
-          <span className="mt-1">No courses listed.</span>
+          <p className="mt-1">No courses listed.</p>
         )}
         <p className="text-xs text-muted-foreground mt-3">
           <Link
