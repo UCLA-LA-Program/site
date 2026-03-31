@@ -16,7 +16,7 @@ import { useState, useEffect, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function Login() {
+export default function Login({ callbackURL }: { callbackURL?: string }) {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [cooldown, setCooldown] = useState(0);
@@ -29,7 +29,10 @@ export default function Login() {
 
   function sendLink(email: string) {
     startTransition(async () => {
-      const { error } = await authClient.signIn.magicLink({ email });
+      const { error } = await authClient.signIn.magicLink({
+        email,
+        callbackURL: callbackURL ?? "/",
+      });
       if (error) {
         toast.error(error.message ?? "Something went wrong. Please try again.");
         return;

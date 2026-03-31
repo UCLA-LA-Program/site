@@ -15,7 +15,7 @@ export default async function SettingsPage() {
   });
 
   if (!session) {
-    redirect("/login");
+    redirect("/login?redirect=/settings");
   }
 
   return <Settings />;

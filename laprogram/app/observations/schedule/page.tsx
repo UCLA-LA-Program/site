@@ -16,7 +16,7 @@ export default async function ObservationsPage() {
   });
 
   if (!session) {
-    redirect("/login");
+    redirect("/login?redirect=/observations/schedule");
   }
 
   const { env } = await getCloudflareContext({ async: true });

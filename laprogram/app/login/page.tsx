@@ -8,15 +8,24 @@ export const metadata: Metadata = {
   title: "Login",
 };
 
-export default async function LoginPage() {
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ redirect?: string }>;
+}) {
   const auth = await getAuth();
   const session = await auth.api.getSession({
     headers: await headers(),
   });
 
-  if (session) {
-    redirect("/");
+  let { redirect: redirectTo } = await searchParams;
+  if (redirectTo && redirectTo[0] !== "/") {
+    redirectTo = "/";
   }
 
-  return <Login />;
+  if (session) {
+    redirect(redirectTo ?? "/");
+  }
+
+  return <Login callbackURL={redirectTo} />;
 }
