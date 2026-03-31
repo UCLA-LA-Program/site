@@ -32,10 +32,13 @@
   ],
   "r2_buckets": [
     {
-      
       "bucket_name": "storage",
       "binding": "storage",
       "remote": true,
+    },
+    {
+      "bucket_name": "db-backups",
+      "binding": "db_backups",
     },
   ],
   "kv_namespaces": [

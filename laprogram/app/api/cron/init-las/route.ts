@@ -4,6 +4,7 @@ import {
   fetchPositionCoursePairs,
   type AirtableRecord,
 } from "@/lib/airtable";
+import { backupDatabase } from "@/lib/backup";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 
@@ -20,6 +21,8 @@ export async function POST(request: Request) {
         return new Response("Unauthorized", { status: 401 });
       }
     }
+
+    await backupDatabase();
 
     const formula =
       "AND(OR(FIND('New',{Position}),FIND('PED',{Position}),FIND('LCC',{Position}),FIND('Returner',{Position})),{Course},{Email})";

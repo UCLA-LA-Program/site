@@ -1,4 +1,5 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { backupDatabase } from "@/lib/backup";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 
@@ -20,6 +21,8 @@ export async function POST(request: Request) {
         return new Response("Unauthorized", { status: 401 });
       }
     }
+
+    await backupDatabase();
 
     const baseParams = new URLSearchParams();
     baseParams.append("fields[]", "Section");

@@ -5,14 +5,9 @@
 
   "triggers": {
     "crons": [
-      "0 8 * * *",     // once a day, 12/1AM PST
-      "0 8 * * 1"      // once a week, 12/1AM PST
-    ]
+      "0 8 * * *", // once a day, 12/1AM PST - all init api calls
+      "0 8 * * 1", // once a week, 12/1AM PST - process withdraws
+      "*/30 * * * *", // every 30 minutes - database backup
+    ],
   },
-
-  "vars": {
-    "APP_URL": "NEED TO FIX LATER" // Production app URL
-  }
-
-  // CRON_SECRET should be set via: wrangler secret put CRON_SECRET
 }

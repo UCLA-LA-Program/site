@@ -2,6 +2,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import type { AirtableRecord } from "@/lib/airtable";
+import { backupDatabase } from "@/lib/backup";
 
 export async function POST(request: Request) {
   try {
@@ -16,6 +17,8 @@ export async function POST(request: Request) {
         return new Response("Unauthorized", { status: 401 });
       }
     }
+
+    await backupDatabase();
 
     const formula =
       "AND(OR(FIND('New',{Position}),FIND('PED',{Position}),FIND('Returner',{Position})),{Email},{Assigned Sections (click or mouseover to see all info)})";
@@ -63,8 +66,10 @@ export async function POST(request: Request) {
     }
 
     const db = env.data;
-    const stmts: D1PreparedStatement[] = [];
+    const insertStmts: D1PreparedStatement[] = [];
+    const deleteStmts: D1PreparedStatement[] = [];
     const errors: string[] = [];
+    let staleCount = 0;
 
     for (const record of allRecords) {
       const email = (
@@ -95,12 +100,22 @@ export async function POST(request: Request) {
         continue;
       }
 
-      const sections = sectionsStr
+      const existing = await db
+        .prepare(
+          "SELECT full_section_name FROM section_assignment WHERE la_id = ?",
+        )
+        .bind(user.id)
+        .all<{ full_section_name: string }>();
+      const dbSections = new Set(
+        existing.results.map((r) => r.full_section_name),
+      );
+
+      const airtableSections = sectionsStr
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
 
-      for (const sectionId of sections) {
+      for (const sectionId of airtableSections) {
         const section = await db
           .prepare("SELECT id FROM section WHERE id = ?")
           .bind(sectionId)
@@ -113,22 +128,37 @@ export async function POST(request: Request) {
           continue;
         }
 
-        stmts.push(
+        if (dbSections.has(sectionId)) {
+          dbSections.delete(sectionId);
+        } else {
+          insertStmts.push(
+            db
+              .prepare(
+                `INSERT OR IGNORE INTO section_assignment (la_id, full_section_name) VALUES (?, ?)`,
+              )
+              .bind(user.id, sectionId),
+          );
+        }
+      }
+
+      for (const staleSectionId of dbSections) {
+        staleCount++;
+        deleteStmts.push(
           db
             .prepare(
-              `INSERT OR IGNORE INTO section_assignment (la_id, full_section_name) VALUES (?, ?)`,
+              `DELETE FROM section_assignment WHERE la_id = ? AND full_section_name = ?`,
             )
-            .bind(user.id, sectionId),
+            .bind(user.id, staleSectionId),
         );
       }
     }
 
-    if (stmts.length > 0) {
-      await db.batch(stmts);
+    if (insertStmts.length > 0 || deleteStmts.length > 0) {
+      await db.batch([...insertStmts, ...deleteStmts]);
     }
 
     const summary =
-      `Processed ${allRecords.length} records. Assignments: ${stmts.length}` +
+      `Processed ${allRecords.length} records. Added: ${insertStmts.length}, Removed stale: ${staleCount}` +
       (errors.length > 0 ? `\nErrors:\n${errors.join("\n")}` : "");
 
     return new Response(summary, { status: 200 });
