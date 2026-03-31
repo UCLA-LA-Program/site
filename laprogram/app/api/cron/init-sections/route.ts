@@ -1,4 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { headers } from "next/headers";
+import { getAuth } from "@/lib/auth";
 
 interface SectionRecord {
   id: string;
@@ -9,8 +11,13 @@ export async function POST(request: Request) {
   try {
     const { env } = await getCloudflareContext({ async: true });
 
-    if (request.headers.get("x-cron-secret") !== process.env.CRON_SECRET) {
-      return new Response("Unauthorized", { status: 401 });
+    const hasCronSecret = request.headers.get("x-cron-secret") === process.env.CRON_SECRET;
+    if (!hasCronSecret) {
+      const auth = await getAuth();
+      const session = await auth.api.getSession({ headers: await headers() });
+      if (!session || session.user.role !== "admin") {
+        return new Response("Unauthorized", { status: 401 });
+      }
     }
 
     const baseParams = new URLSearchParams();

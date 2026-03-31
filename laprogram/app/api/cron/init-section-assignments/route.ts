@@ -1,12 +1,19 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { headers } from "next/headers";
+import { getAuth } from "@/lib/auth";
 import type { AirtableRecord } from "@/lib/airtable";
 
 export async function POST(request: Request) {
   try {
     const { env } = await getCloudflareContext({ async: true });
 
-    if (request.headers.get("x-cron-secret") !== process.env.CRON_SECRET) {
-      return new Response("Unauthorized", { status: 401 });
+    const hasCronSecret = request.headers.get("x-cron-secret") === process.env.CRON_SECRET;
+    if (!hasCronSecret) {
+      const auth = await getAuth();
+      const session = await auth.api.getSession({ headers: await headers() });
+      if (!session || session.user.role !== "admin") {
+        return new Response("Unauthorized", { status: 401 });
+      }
     }
 
     const formula = "AND(OR(FIND('New',{Position}),FIND('PED',{Position}),FIND('Returner',{Position})),{Email},{Assigned Sections (click or mouseover to see all info)})";
