@@ -42,7 +42,7 @@ export async function POST(request: Request) {
 
     if (!transformedImage) throw Error();
 
-    const fileName = `avatars/${process.env.NODE_ENV === "development" && "development/"}${session.user.id}/${uuidv7()}.webp`;
+    const fileName = `avatars/${process.env.NODE_ENV === "development" ? "development/" : ""}${session.user.id}/${uuidv7()}.webp`;
     await env.storage?.put(fileName, await transformedImage.blob(), {
       httpMetadata: { contentType: "image/webp" },
     });
