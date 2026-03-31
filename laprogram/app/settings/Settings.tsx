@@ -10,7 +10,6 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import type { Position } from "@/types/db";
 import { LA_POSITION_MAP } from "@/app/feedback/constants";
-import Link from "next/link";
 import ContactUs from "@/components/ContactUs";
 
 export default function Settings() {
