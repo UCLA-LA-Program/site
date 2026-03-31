@@ -78,9 +78,13 @@ export async function POST(request: Request) {
 
     for (const record of allRecords) {
       const name = record.fields.Name;
-      const email = Array.isArray(record.fields.Email)
-        ? record.fields.Email[0]
-        : record.fields.Email;
+      const email = (
+        Array.isArray(record.fields.Email)
+          ? record.fields.Email[0]
+          : record.fields.Email
+      )
+        .trim()
+        .toLowerCase();
       const courses = record.fields.Course;
       const positions = record.fields.Position;
       const assignedSections = Array.isArray(

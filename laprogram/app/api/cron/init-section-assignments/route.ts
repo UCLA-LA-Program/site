@@ -67,9 +67,13 @@ export async function POST(request: Request) {
     const errors: string[] = [];
 
     for (const record of allRecords) {
-      const email = Array.isArray(record.fields.Email)
-        ? record.fields.Email[0]
-        : record.fields.Email;
+      const email = (
+        Array.isArray(record.fields.Email)
+          ? record.fields.Email[0]
+          : record.fields.Email
+      )
+        .trim()
+        .toLowerCase();
       const rawSections =
         record.fields["Assigned Sections (click or mouseover to see all info)"];
       const sectionsStr = Array.isArray(rawSections)

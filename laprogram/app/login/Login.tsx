@@ -30,7 +30,7 @@ export default function Login({ callbackURL }: { callbackURL?: string }) {
   function sendLink(email: string) {
     startTransition(async () => {
       const { error } = await authClient.signIn.magicLink({
-        email,
+        email: email.trim().toLowerCase(),
         callbackURL: callbackURL ?? "/",
       });
       if (error) {
