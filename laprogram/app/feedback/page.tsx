@@ -22,7 +22,7 @@ export default function FeedbackPage() {
           <p className="mt-2 text-sm text-muted-foreground italic">
             If you do not have an LA (or if your LA is a volunteer), but you
             still want to receive credit from your instructor for filling out
-            this form, you can select &quot;No LA&quot; as the LA you are
+            this form, you can select &ldquo;No LA&rdquo; as the LA you are
             providing feedback to.
           </p>
         </div>

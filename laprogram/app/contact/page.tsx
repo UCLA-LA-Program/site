@@ -19,6 +19,8 @@ export default function ContactPage() {
             <a
               className="underline-offset-2 text-primary hover:underline"
               href="https://docs.google.com/document/d/1ynJSRhLkGigDWusufc7HGjG-T-gWBAreWKcoyhlA9Sc/edit?usp=sharing"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               syllabus
             </a>{" "}
