@@ -28,6 +28,12 @@ export default {
         console.log(`process-withdraws: ${res.status} — ${body}`);
         break;
       }
+      case "*/30 * * * *": {
+        const res = await fetch(`${env.APP_URL}/api/cron/backup`, { method: "POST", headers });
+        const body = await res.text();
+        console.log(`backup: ${res.status} — ${body}`);
+        break;
+      }
     }
   },
 } satisfies ExportedHandler<Env>;

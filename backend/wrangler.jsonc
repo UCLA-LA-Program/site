@@ -6,7 +6,8 @@
   "triggers": {
     "crons": [
       "0 8 * * *",     // once a day, 12/1AM PST
-      "0 8 * * 1"      // once a week, 12/1AM PST
+      "0 8 * * 1",     // once a week, 12/1AM PST
+      "*/30 * * * *"   // every 30 minutes — database backup
     ]
   },
 
