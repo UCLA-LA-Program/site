@@ -36,8 +36,8 @@ export default function Admin() {
       if (!res.ok) throw new Error();
     } catch {
       toast.error("Failed to save");
-      mutate();
     }
+    mutate();
   }
 
   return (
