@@ -36,7 +36,7 @@ export async function POST(request: Request) {
     baseParams.append("fields[]", "Name");
     baseParams.append("filterByFormula", formula);
 
-    const allRecords: WithdrawnRecord[] = [];
+    const withdrawnLARecords: WithdrawnRecord[] = [];
     let offset: string | undefined;
 
     do {
@@ -62,11 +62,11 @@ export async function POST(request: Request) {
         offset?: string;
       };
       if (!data.records) break;
-      allRecords.push(...data.records);
+      withdrawnLARecords.push(...data.records);
       offset = data.offset;
     } while (offset);
 
-    if (allRecords.length === 0) {
+    if (withdrawnLARecords.length === 0) {
       return new Response("No withdrawn LAs found", { status: 200 });
     }
 
@@ -74,14 +74,14 @@ export async function POST(request: Request) {
     const affectedObservers: Map<string, string[]> = new Map();
     let removedCount = 0;
 
-    for (const record of allRecords) {
-      const email = Array.isArray(record.fields.Email)
-        ? record.fields.Email[0]
-        : record.fields.Email;
-      const name = record.fields.Name;
+    for (const withdrawnLARecord of withdrawnLARecords) {
+      const email = Array.isArray(withdrawnLARecord.fields.Email)
+        ? withdrawnLARecord.fields.Email[0]
+        : withdrawnLARecord.fields.Email;
+      const name = withdrawnLARecord.fields.Name;
 
       if (!email) {
-        errors.push(`Skipping record ${record.id}: missing email`);
+        errors.push(`Skipping record ${withdrawnLARecord.id}: missing email`);
         continue;
       }
 
@@ -166,28 +166,28 @@ export async function POST(request: Request) {
     }
 
     if (affectedObservers.size > 0 && process.env.POSTMARK_SERVER_TOKEN) {
-      const messages = Array.from(affectedObservers.entries()).map(
-        ([observerEmail, withdrawnNames]) => ({
-          From: "admin@laprogramucla.com",
-          To: observerEmail,
-          Subject: "Observation Sign-Up Cancelled",
-          TextBody: `Hi,\n\nThe following LA(s) you signed up to observe have withdrawn from the program:\n\n${withdrawnNames.map((n) => `- ${n}`).join("\n")}\n\nPlease sign up for a new observation slot at your earliest convenience.\n\nBest,\nLA Program`,
-        }),
-      );
-
-      await fetch("https://api.postmarkapp.com/email/batch", {
+      await fetch("https://api.postmarkapp.com/email/batchWithTemplates", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
           "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN,
         },
-        body: JSON.stringify(messages),
+        body: JSON.stringify(
+          [...affectedObservers].map(([key, value]) => ({
+            From: "admin@laprogramucla.com",
+            To: key,
+            TemplateId: 44230508,
+            TemplateModel: {
+              la_name: value.join(", "),
+            },
+          })),
+        ),
       });
     }
 
     const summary =
-      `Processed ${allRecords.length} withdrawn LAs. Removed: ${removedCount}. Notified: ${affectedObservers.size} observers.` +
+      `Processed ${withdrawnLARecords.length} withdrawn LAs. Removed: ${removedCount}. Notified: ${affectedObservers.size} observers.` +
       (errors.length > 0 ? `\nErrors:\n${errors.join("\n")}` : "");
 
     return new Response(summary, { status: 200 });
