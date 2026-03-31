@@ -18,12 +18,7 @@ import { MidQuarterSection } from "./sections/MidQuarterSection";
 import { TASection } from "./sections/TASection";
 import { LAHeadLASection } from "./sections/LAHeadLASection";
 import { ObservationSection } from "./sections/ObservationSection";
-import {
-  FEEDBACK_TYPE_OPTIONS,
-  LA_FEEDBACK_TYPE_OPTIONS,
-  LA_POSITION_MAP,
-  ROLE_OPTIONS,
-} from "../constants";
+import { LA_POSITION_MAP } from "../constants";
 
 import { useAppForm } from "../form";
 import { defaultValues, feedbackFormSchema } from "../schema";
@@ -44,46 +39,23 @@ import { UserRound, LogIn } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 
-export function FeedbackForm() {
+type Option = { value: string; label: string };
+
+type FeedbackFormProps = {
+  roleOptions: Option[];
+  feedbackTypeOptions: Option[];
+  laFeedbackTypeOptions: Option[];
+};
+
+export function FeedbackForm({
+  roleOptions,
+  feedbackTypeOptions,
+  laFeedbackTypeOptions,
+}: FeedbackFormProps) {
   const { data: session } = authClient.useSession();
   const { data: las } = useSWR<LA[]>("/api/la", fetcher, {
     suspense: true,
     fallbackData: [],
-  });
-  const { data: config } = useSWR<Record<string, string>>(
-    "/api/config",
-    fetcher,
-  );
-
-  const on = (key: string) => config?.[key] === "true";
-
-  const roleOptions = ROLE_OPTIONS.filter((o) => {
-    switch (o.value) {
-      case "student":
-        return on("MID_QUARTER_FEEDBACK") || on("END_OF_QUARTER_FEEDBACK");
-      case "la":
-        return on("OBSERVATION_FEEDBACK") || on("HEAD_LA_FEEDBACK");
-      case "ta":
-        return on("TA_FEEDBACK");
-    }
-  });
-
-  const feedbackTypeOptions = FEEDBACK_TYPE_OPTIONS.filter((o) => {
-    switch (o.value) {
-      case "mid_quarter":
-        return on("MID_QUARTER_FEEDBACK");
-      case "end_of_quarter":
-        return on("END_OF_QUARTER_FEEDBACK");
-    }
-  });
-
-  const laFeedbackTypeOptions = LA_FEEDBACK_TYPE_OPTIONS.filter((o) => {
-    switch (o.value) {
-      case "la_observation":
-        return on("OBSERVATION_FEEDBACK");
-      case "la_head_la":
-        return on("HEAD_LA_FEEDBACK");
-    }
   });
 
   const form = useAppForm({
@@ -113,13 +85,6 @@ export function FeedbackForm() {
 
   if (!las) return <></>;
 
-  if (roleOptions.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">
-        The LA feedback form is not yet open. Please check back later.
-      </p>
-    );
-  }
 
   return (
     <form
