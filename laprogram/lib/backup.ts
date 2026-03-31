@@ -26,7 +26,7 @@ export async function backupDatabase() {
   const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
   const key = `backups/${timestamp}.json`;
 
-  await env.backups.put(key, JSON.stringify(backup, null, 2), {
+  await env.db_backups.put(key, JSON.stringify(backup, null, 2), {
     httpMetadata: { contentType: "application/json" },
   });
 

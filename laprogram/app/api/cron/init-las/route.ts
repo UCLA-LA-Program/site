@@ -1,5 +1,6 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { fetchPositionCoursePairs, type AirtableRecord } from "@/lib/airtable";
+import { backupDatabase } from "@/lib/backup";
 
 
 export async function POST(request: Request) {
@@ -9,6 +10,8 @@ export async function POST(request: Request) {
     if (request.headers.get("x-cron-secret") !== process.env.CRON_SECRET) {
       return new Response("Unauthorized", { status: 401 });
     }
+
+    await backupDatabase();
 
     const formula = "AND(OR(FIND('New',{Position}),FIND('PED',{Position}),FIND('LCC',{Position}),FIND('Returner',{Position})),{Course},{Email})";
 

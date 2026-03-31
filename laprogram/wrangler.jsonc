@@ -1,47 +1,52 @@
 {
-  "$schema": "node_modules/wrangler/config-schema.json",
-  "main": ".open-next/worker.js",
-  "name": "laprogram",
-  "compatibility_date": "2026-03-12",
-  "compatibility_flags": ["nodejs_compat"],
-  "workers_dev": false,
-  "preview_urls": true,
-  "assets": {
-    "directory": ".open-next/assets",
-    "binding": "ASSETS",
-  },
-  "services": [
-    {
-      "binding": "WORKER_SELF_REFERENCE",
-      "service": "laprogram",
-    },
-  ],
-  "images": {
-    "binding": "IMAGES",
-  },
-  "observability": {
-    "enabled": true,
-  },
-  "d1_databases": [
-    {
-      "binding": "data",
-      "database_name": "data",
-      "database_id": "0287e49c-415b-4e64-9cb4-51d18e58cdd9",
-      "migrations_dir": "./migrations",
-    },
-  ],
-  "r2_buckets": [
-    {
-      
-      "bucket_name": "storage",
-      "binding": "storage",
-      "remote": true,
-    },
-  ],
-  "kv_namespaces": [
-    {
-      "binding": "config",
-      "id": "d46813456a634d51b1a534c00cc2dd7a",
-    },
-  ],
+	"$schema": "node_modules/wrangler/config-schema.json",
+	"main": ".open-next/worker.js",
+	"name": "laprogram",
+	"compatibility_date": "2026-03-12",
+	"compatibility_flags": [
+		"nodejs_compat"
+	],
+	"workers_dev": false,
+	"preview_urls": true,
+	"assets": {
+		"directory": ".open-next/assets",
+		"binding": "ASSETS",
+	},
+	"services": [
+		{
+			"binding": "WORKER_SELF_REFERENCE",
+			"service": "laprogram",
+		},
+	],
+	"images": {
+		"binding": "IMAGES",
+	},
+	"observability": {
+		"enabled": true,
+	},
+	"d1_databases": [
+		{
+			"binding": "data",
+			"database_name": "data",
+			"database_id": "0287e49c-415b-4e64-9cb4-51d18e58cdd9",
+			"migrations_dir": "./migrations",
+		},
+	],
+	"r2_buckets": [
+		{
+			"bucket_name": "storage",
+			"binding": "storage",
+			"remote": true,
+		},
+		{
+			"bucket_name": "db-backups",
+			"binding": "db_backups",
+		},
+	],
+	"kv_namespaces": [
+		{
+			"binding": "config",
+			"id": "d46813456a634d51b1a534c00cc2dd7a",
+		},
+	],
 }

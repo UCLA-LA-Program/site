@@ -1,4 +1,5 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { backupDatabase } from "@/lib/backup";
 
 interface SectionRecord {
   id: string;
@@ -12,6 +13,8 @@ export async function POST(request: Request) {
     if (request.headers.get("x-cron-secret") !== process.env.CRON_SECRET) {
       return new Response("Unauthorized", { status: 401 });
     }
+
+    await backupDatabase();
 
     const baseParams = new URLSearchParams();
     baseParams.append("fields[]", "Section");
