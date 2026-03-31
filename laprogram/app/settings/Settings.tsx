@@ -11,6 +11,7 @@ import { fetcher } from "@/lib/utils";
 import type { Position } from "@/types/db";
 import { LA_POSITION_MAP } from "@/app/feedback/constants";
 import Link from "next/link";
+import ContactUs from "@/components/ContactUs";
 
 export default function Settings() {
   const { data: session, isPending } = authClient.useSession();
@@ -78,13 +79,8 @@ export default function Settings() {
           <p className="mt-1">No courses listed.</p>
         )}
         <p className="text-xs text-muted-foreground mt-3">
-          <Link
-            href="/contact"
-            className="underline-offset-2 hover:underline text-primary"
-          >
-            Contact us
-          </Link>{" "}
-          if inaccurate information has not resolved itself within 24 hours.
+          Please <ContactUs /> if inaccurate information has not resolved itself
+          within 24 hours.
         </p>
       </div>
 

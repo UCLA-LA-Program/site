@@ -71,7 +71,7 @@ CREATE TABLE IF NOT EXISTS "course" (
 	"userId" text NOT NULL,
 	"course_name" text NOT NULL,
 	"position" text NOT NULL,
-	PRIMARY KEY ("userId", "course_name", "position"),
+	PRIMARY KEY ("userId", "course_name"),
 	FOREIGN KEY ("userId") REFERENCES "user" ("id")
 );
 

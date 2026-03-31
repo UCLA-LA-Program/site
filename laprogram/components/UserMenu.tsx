@@ -34,6 +34,7 @@ export function UserMenu({ name }: { name: string }) {
           variant="destructive"
           onClick={async () => {
             await authClient.signOut();
+            router.push("/");
             router.refresh();
           }}
         >

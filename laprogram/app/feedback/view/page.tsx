@@ -15,7 +15,7 @@ export default async function FeedbackViewPage() {
   });
 
   if (!session) {
-    redirect("/login");
+    redirect("/login?redirect=/feedback/view");
   }
 
   return <FeedbackView />;

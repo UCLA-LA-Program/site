@@ -10,6 +10,8 @@ import { FeedbackMenu } from "@/components/FeedbackMenu";
 import { UserMenu } from "@/components/UserMenu";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { ObservationsMenu } from "@/components/ObservationsMenu";
+import ContactUs from "@/components/ContactUs";
 
 export const metadata: Metadata = {
   title: {
@@ -45,6 +47,7 @@ export default async function RootLayout({
                     <Link href="/admin">Admin</Link>
                   </Button>
                 )}
+                <ObservationsMenu />
                 <FeedbackMenu />
                 <UserMenu name={session.user.name} />
               </nav>
@@ -67,12 +70,7 @@ export default async function RootLayout({
             <p className="text-center text-xs text-muted-foreground/50">
               made with &lt;3 by the LA Program PDT
               <span className="mx-1.5">&middot;</span>
-              <Link
-                href="/contact"
-                className="underline-offset-2 hover:underline text-primary"
-              >
-                contact us here
-              </Link>
+              <ContactUs />
             </p>
           </div>
         </footer>
