@@ -50,6 +50,41 @@ export function FeedbackForm() {
     suspense: true,
     fallbackData: [],
   });
+  const { data: config } = useSWR<Record<string, string>>(
+    "/api/config",
+    fetcher,
+  );
+
+  const on = (key: string) => config?.[key] === "true";
+
+  const roleOptions = ROLE_OPTIONS.filter((o) => {
+    switch (o.value) {
+      case "student":
+        return on("MID_QUARTER_FEEDBACK") || on("END_OF_QUARTER_FEEDBACK");
+      case "la":
+        return on("OBSERVATION_FEEDBACK") || on("HEAD_LA_FEEDBACK");
+      case "ta":
+        return on("TA_FEEDBACK");
+    }
+  });
+
+  const feedbackTypeOptions = FEEDBACK_TYPE_OPTIONS.filter((o) => {
+    switch (o.value) {
+      case "mid_quarter":
+        return on("MID_QUARTER_FEEDBACK");
+      case "end_of_quarter":
+        return on("END_OF_QUARTER_FEEDBACK");
+    }
+  });
+
+  const laFeedbackTypeOptions = LA_FEEDBACK_TYPE_OPTIONS.filter((o) => {
+    switch (o.value) {
+      case "la_observation":
+        return on("OBSERVATION_FEEDBACK");
+      case "la_head_la":
+        return on("HEAD_LA_FEEDBACK");
+    }
+  });
 
   const form = useAppForm({
     defaultValues,
@@ -77,6 +112,14 @@ export function FeedbackForm() {
   });
 
   if (!las) return <></>;
+
+  if (roleOptions.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        The LA feedback form is not yet open. Please check back later.
+      </p>
+    );
+  }
 
   return (
     <form
@@ -163,7 +206,7 @@ export function FeedbackForm() {
                   onValueChange={(v) => field.handleChange(v)}
                   onBlur={field.handleBlur}
                 >
-                  {ROLE_OPTIONS.map(({ value, label }) => (
+                  {roleOptions.map(({ value, label }) => (
                     <div key={value} className="flex items-center gap-2">
                       <RadioGroupItem
                         id={`role-${value}`}
@@ -350,7 +393,7 @@ export function FeedbackForm() {
                         }}
                         onBlur={field.handleBlur}
                       >
-                        {FEEDBACK_TYPE_OPTIONS.map(({ value, label }) => (
+                        {feedbackTypeOptions.map(({ value, label }) => (
                           <div key={value} className="flex items-center gap-2">
                             <RadioGroupItem
                               id={`type-${value}`}
@@ -400,7 +443,7 @@ export function FeedbackForm() {
                         onValueChange={(v) => field.handleChange(v)}
                         onBlur={field.handleBlur}
                       >
-                        {LA_FEEDBACK_TYPE_OPTIONS.map(({ value, label }) => (
+                        {laFeedbackTypeOptions.map(({ value, label }) => (
                           <div key={value} className="flex items-center gap-2">
                             <RadioGroupItem
                               id={`type-${value}`}
