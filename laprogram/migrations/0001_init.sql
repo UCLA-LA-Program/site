@@ -105,8 +105,8 @@ CREATE INDEX "section_course" ON "section" ("course_name");
 CREATE TABLE IF NOT EXISTS "section_assignment" (
 	"la_id" text NOT NULL,
 	"full_section_name" text NOT NULL,
-	FOREIGN KEY ("la_id") REFERENCES "user" ("id") ON DELETE CASCADE,
-	FOREIGN KEY ("full_section_name") REFERENCES "section" ("id") ON DELETE CASCADE,
+	FOREIGN KEY ("la_id") REFERENCES "user" ("id"),
+	FOREIGN KEY ("full_section_name") REFERENCES "section" ("id"),
 	PRIMARY KEY ("la_id", "full_section_name")
 );
 
@@ -118,7 +118,8 @@ CREATE TABLE IF NOT EXISTS "availability" (
     "time" text NOT NULL,
     "week" text NOT NULL,
     "status" text NOT NULL CHECK ("status" IN ('open', 'hidden', 'taken')),
-    FOREIGN KEY ("la_id", "section_id") REFERENCES "section_assignment" ("la_id", "full_section_name") ON DELETE CASCADE
+    FOREIGN KEY ("la_id") REFERENCES "user" ("id"),
+	FOREIGN KEY ("section_id") REFERENCES "section" ("id")
 );
 
 -- Observations
@@ -127,7 +128,7 @@ CREATE TABLE IF NOT EXISTS "observation" (
     "observer_id" text NOT NULL,
     "observee_id" text NOT NULL,
     "availability_id" text NOT NULL,
-    FOREIGN KEY ("observer_id") REFERENCES "user" ("id") ON DELETE CASCADE,
-    FOREIGN KEY ("observee_id") REFERENCES "user" ("id") ON DELETE CASCADE,
-	FOREIGN KEY ("availability_id") REFERENCES "availability" ("id") ON DELETE CASCADE
+    FOREIGN KEY ("observer_id") REFERENCES "user" ("id"),
+    FOREIGN KEY ("observee_id") REFERENCES "user" ("id"),
+	FOREIGN KEY ("availability_id") REFERENCES "availability" ("id")
 );
