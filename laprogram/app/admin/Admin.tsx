@@ -29,10 +29,9 @@ export default function Admin() {
   async function setValue(key: string, value: string) {
     mutate({ ...data!, [key]: value }, { revalidate: false });
     try {
-      const res = await fetch("/api/admin/setflag", {
+      const res = await fetch(`/api/admin/flag/${encodeURIComponent(key)}`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ key, value }),
+        body: value,
       });
       if (!res.ok) throw new Error();
     } catch {
