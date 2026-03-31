@@ -11,7 +11,8 @@ export async function POST(request: Request) {
   try {
     const { env } = await getCloudflareContext({ async: true });
 
-    const hasCronSecret = request.headers.get("x-cron-secret") === process.env.CRON_SECRET;
+    const hasCronSecret =
+      request.headers.get("x-cron-secret") === process.env.CRON_SECRET;
     if (!hasCronSecret) {
       const auth = await getAuth();
       const session = await auth.api.getSession({ headers: await headers() });
@@ -35,28 +36,39 @@ export async function POST(request: Request) {
 
       const response = await fetch(
         `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/List of Sections?${params}`,
-        { headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` } }
+        {
+          headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` },
+        },
       );
 
       if (!response.ok) {
         return new Response(
           `Failed to fetch sections from Airtable: ${response.status} ${response.statusText}`,
-          { status: 502 }
+          { status: 502 },
         );
       }
 
-      const data = await response.json() as { records: SectionRecord[]; offset?: string };
+      const data = (await response.json()) as {
+        records: SectionRecord[];
+        offset?: string;
+      };
       if (!data.records) break;
       allRecords.push(...data.records);
       offset = data.offset;
     } while (offset);
 
     if (allRecords.length === 0) {
-      return new Response("No records found in List of Sections", { status: 404 });
+      return new Response("No records found in List of Sections", {
+        status: 404,
+      });
     }
 
     const dayMap: Record<string, string> = {
-      M: "Monday", T: "Tuesday", W: "Wednesday", R: "Thursday", F: "Friday",
+      M: "Monday",
+      T: "Tuesday",
+      W: "Wednesday",
+      R: "Thursday",
+      F: "Friday",
     };
 
     function to24(hour: number, period: string): number {
@@ -70,7 +82,7 @@ export async function POST(request: Request) {
         .replace(/\s*-\s*/g, "-")
         .replace(/\s+(am|pm|a|p)\b/gi, "$1");
 
-      const parts = cleaned.split("-").map(part => {
+      const parts = cleaned.split("-").map((part) => {
         const m = part.trim().match(/^(\d+)(?::(\d+))?(am|pm|a|p)?$/i);
         if (!m) return { text: part.trim(), hour: 0, mins: "00", period: "" };
         const [, hours, minutes, period] = m;
@@ -78,7 +90,11 @@ export async function POST(request: Request) {
           text: part.trim(),
           hour: parseInt(hours),
           mins: minutes ?? "00",
-          period: period ? (period.toLowerCase().startsWith("a") ? "am" : "pm") : "",
+          period: period
+            ? period.toLowerCase().startsWith("a")
+              ? "am"
+              : "pm"
+            : "",
         };
       });
 
@@ -88,10 +104,11 @@ export async function POST(request: Request) {
         const start24 = to24(parts[0].hour, endPeriod);
         const end24 = to24(parts[1].hour, endPeriod);
         // If assuming same period makes start > end, flip to opposite
-        parts[0].period = start24 <= end24 ? endPeriod : (endPeriod === "am" ? "pm" : "am");
+        parts[0].period =
+          start24 <= end24 ? endPeriod : endPeriod === "am" ? "pm" : "am";
       }
 
-      return parts.map(p => `${p.hour}:${p.mins}${p.period}`).join("-");
+      return parts.map((p) => `${p.hour}:${p.mins}${p.period}`).join("-");
     }
 
     const db = env.data;
@@ -100,10 +117,12 @@ export async function POST(request: Request) {
 
     for (const record of allRecords) {
       const raw = record.fields["Section"];
-      const taName = record.fields["TA Name"];
-      const taEmail = record.fields["TA Email"];
+      const taName = record.fields["TA Name"] ?? "";
+      const taEmail = record.fields["TA Email"] ?? "";
 
-      const match = raw.match(/^(.+?):\s*([MTWRF]);?\s+(.*)\(([^)]+)\)\s+(.+)$/);
+      const match = raw.match(
+        /^(.+?):\s*([MTWRF]);?\s+(.*)\(([^)]+)\)\s+(.+)$/,
+      );
       if (!match) {
         errors.push(`Failed to parse section: ${raw}`);
         continue;
@@ -115,16 +134,27 @@ export async function POST(request: Request) {
       const id = raw;
 
       stmts.push(
-        db.prepare(
-          `INSERT INTO section (id, course_name, section_name, day, time, location, ta_name, ta_email)
+        db
+          .prepare(
+            `INSERT INTO section (id, course_name, section_name, day, time, location, ta_name, ta_email)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT (id) DO UPDATE SET
             day = excluded.day,
             time = excluded.time,
             location = excluded.location,
             ta_name = excluded.ta_name,
-            ta_email = excluded.ta_email`
-        ).bind(id, courseName.trim(), sectionName.trim(), day, time, location.trim(), taName, taEmail)
+            ta_email = excluded.ta_email`,
+          )
+          .bind(
+            id,
+            courseName.trim(),
+            sectionName.trim(),
+            day,
+            time,
+            location.trim(),
+            taName,
+            taEmail,
+          ),
       );
     }
 
@@ -132,7 +162,8 @@ export async function POST(request: Request) {
       await db.batch(stmts);
     }
 
-    const summary = `Processed ${allRecords.length} records. Sections: ${stmts.length}` +
+    const summary =
+      `Processed ${allRecords.length} records. Sections: ${stmts.length}` +
       (errors.length > 0 ? `\nErrors:\n${errors.join("\n")}` : "");
 
     return new Response(summary, { status: 200 });
