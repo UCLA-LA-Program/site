@@ -72,59 +72,65 @@ export async function POST(request: Request) {
 
     const errors: string[] = [];
     const affectedObservers: Map<string, string[]> = new Map();
+    const observerNames: Map<string, string> = new Map();
     let removedCount = 0;
 
     for (const withdrawnLARecord of withdrawnLARecords) {
-      const email = Array.isArray(withdrawnLARecord.fields.Email)
+      const withdrawnLAEmail = Array.isArray(withdrawnLARecord.fields.Email)
         ? withdrawnLARecord.fields.Email[0]
         : withdrawnLARecord.fields.Email;
-      const name = withdrawnLARecord.fields.Name;
+      const withdrawnLAName = withdrawnLARecord.fields.Name;
 
-      if (!email) {
+      if (!withdrawnLAEmail) {
         errors.push(`Skipping record ${withdrawnLARecord.id}: missing email`);
         continue;
       }
 
-      const user = await db
+      const withdrawnUser = await db
         .prepare("SELECT id FROM user WHERE email = ?")
-        .bind(email)
+        .bind(withdrawnLAEmail)
         .first<{ id: string }>();
 
-      if (!user) {
-        errors.push(`Skipping ${email}: user not found in DB`);
+      if (!withdrawnUser) {
+        errors.push(`Skipping ${withdrawnLAEmail}: user not found in DB`);
         continue;
       }
 
-      const observations = await db
+      // withdrawn user is the observee
+      const observeeObs = await db
         .prepare(
           `SELECT observation.id AS obs_id,
           observation.observer_id,
           observation.availability_id,
-          user.email AS observer_email
+          user.email AS observer_email,
+          user.name AS observer_name
           FROM observation
           JOIN user ON observation.observer_id = user.id
           WHERE observation.observee_id = ?`,
         )
-        .bind(user.id)
+        .bind(withdrawnUser.id)
         .all<{
           obs_id: string;
           observer_id: string;
           availability_id: string;
           observer_email: string;
+          observer_name: string;
         }>();
 
-      for (const obs of observations.results) {
+      for (const obs of observeeObs.results) {
         const existing = affectedObservers.get(obs.observer_email) ?? [];
-        existing.push(name);
+        existing.push(withdrawnLAName);
+
         affectedObservers.set(obs.observer_email, existing);
+        observerNames.set(obs.observer_email, obs.observer_name);
       }
 
-      // Revert availability for observees this LA was signed up to observe
+      // withdrawn user is the observer (revert availability for those sections)
       const observerObs = await db
         .prepare(
           "SELECT availability_id, observee_id FROM observation WHERE observer_id = ?",
         )
-        .bind(user.id)
+        .bind(withdrawnUser.id)
         .all<{ availability_id: string; observee_id: string }>();
 
       const revertStmts: D1PreparedStatement[] = [];
@@ -147,19 +153,29 @@ export async function POST(request: Request) {
       await db.batch([
         db
           .prepare("DELETE FROM observation WHERE observee_id = ?")
-          .bind(user.id),
+          .bind(withdrawnUser.id),
         db
           .prepare("DELETE FROM observation WHERE observer_id = ?")
-          .bind(user.id),
-        db.prepare("DELETE FROM availability WHERE la_id = ?").bind(user.id),
+          .bind(withdrawnUser.id),
+        db
+          .prepare("DELETE FROM availability WHERE la_id = ?")
+          .bind(withdrawnUser.id),
         db
           .prepare("DELETE FROM section_assignment WHERE la_id = ?")
-          .bind(user.id),
-        db.prepare("DELETE FROM course WHERE userId = ?").bind(user.id),
-        db.prepare("DELETE FROM feedback WHERE recipientId = ?").bind(user.id),
-        db.prepare("DELETE FROM session WHERE userId = ?").bind(user.id),
-        db.prepare("DELETE FROM account WHERE userId = ?").bind(user.id),
-        db.prepare("DELETE FROM user WHERE id = ?").bind(user.id),
+          .bind(withdrawnUser.id),
+        db
+          .prepare("DELETE FROM course WHERE userId = ?")
+          .bind(withdrawnUser.id),
+        db
+          .prepare("DELETE FROM feedback WHERE recipientId = ?")
+          .bind(withdrawnUser.id),
+        db
+          .prepare("DELETE FROM session WHERE userId = ?")
+          .bind(withdrawnUser.id),
+        db
+          .prepare("DELETE FROM account WHERE userId = ?")
+          .bind(withdrawnUser.id),
+        db.prepare("DELETE FROM user WHERE id = ?").bind(withdrawnUser.id),
       ]);
 
       removedCount++;
@@ -174,12 +190,13 @@ export async function POST(request: Request) {
           "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN,
         },
         body: JSON.stringify(
-          [...affectedObservers].map(([key, value]) => ({
+          [...affectedObservers].map(([email, withdrawnNames]) => ({
             From: "admin@laprogramucla.com",
-            To: key,
+            To: email,
             TemplateId: 44230508,
             TemplateModel: {
-              la_name: value.join(", "),
+              name: observerNames.get(email),
+              la_name: withdrawnNames.join(", "),
             },
           })),
         ),
