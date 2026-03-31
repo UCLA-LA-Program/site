@@ -18,6 +18,8 @@ export async function POST(request: Request) {
       }
     }
 
+    await backupDatabase();
+
     const formula =
       "AND(OR(FIND('New',{Position}),FIND('PED',{Position}),FIND('Returner',{Position})),{Email},{Assigned Sections (click or mouseover to see all info)})";
 

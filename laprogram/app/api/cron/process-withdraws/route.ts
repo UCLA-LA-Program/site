@@ -36,13 +36,15 @@ export async function POST(request: Request) {
 
       const response = await fetch(
         `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/LA Roster?${params}`,
-        { headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` } }
+        {
+          headers: { Authorization: `Bearer ${process.env.AIRTABLE_API_KEY}` },
+        },
       );
 
       if (!response.ok) {
         return new Response(
           `Failed to fetch LA Roster: ${response.status} ${response.statusText}`,
-          { status: 502 }
+          { status: 502 },
         );
       }
 
@@ -92,7 +94,7 @@ export async function POST(request: Request) {
           user.email AS observer_email
           FROM observation
           JOIN user ON observation.observer_id = user.id
-          WHERE observation.observee_id = ?`
+          WHERE observation.observee_id = ?`,
         )
         .bind(user.id)
         .all<{
@@ -111,7 +113,7 @@ export async function POST(request: Request) {
       // Revert availability for observees this LA was signed up to observe
       const observerObs = await db
         .prepare(
-          "SELECT availability_id, observee_id FROM observation WHERE observer_id = ?"
+          "SELECT availability_id, observee_id FROM observation WHERE observer_id = ?",
         )
         .bind(user.id)
         .all<{ availability_id: string; observee_id: string }>();
@@ -119,8 +121,14 @@ export async function POST(request: Request) {
       const revertStmts: D1PreparedStatement[] = [];
       for (const obs of observerObs.results) {
         revertStmts.push(
-          db.prepare("UPDATE availability SET status = 'open' WHERE id = ?").bind(obs.availability_id),
-          db.prepare("UPDATE availability SET status = 'open' WHERE la_id = ? AND status = 'hidden'").bind(obs.observee_id),
+          db
+            .prepare("UPDATE availability SET status = 'open' WHERE id = ?")
+            .bind(obs.availability_id),
+          db
+            .prepare(
+              "UPDATE availability SET status = 'open' WHERE la_id = ? AND status = 'hidden'",
+            )
+            .bind(obs.observee_id),
         );
       }
       if (revertStmts.length > 0) {
@@ -128,10 +136,16 @@ export async function POST(request: Request) {
       }
 
       await db.batch([
-        db.prepare("DELETE FROM observation WHERE observee_id = ?").bind(user.id),
-        db.prepare("DELETE FROM observation WHERE observer_id = ?").bind(user.id),
+        db
+          .prepare("DELETE FROM observation WHERE observee_id = ?")
+          .bind(user.id),
+        db
+          .prepare("DELETE FROM observation WHERE observer_id = ?")
+          .bind(user.id),
         db.prepare("DELETE FROM availability WHERE la_id = ?").bind(user.id),
-        db.prepare("DELETE FROM section_assignment WHERE la_id = ?").bind(user.id),
+        db
+          .prepare("DELETE FROM section_assignment WHERE la_id = ?")
+          .bind(user.id),
         db.prepare("DELETE FROM course WHERE userId = ?").bind(user.id),
         db.prepare("DELETE FROM feedback WHERE recipientId = ?").bind(user.id),
         db.prepare("DELETE FROM session WHERE userId = ?").bind(user.id),
@@ -149,7 +163,7 @@ export async function POST(request: Request) {
           To: observerEmail,
           Subject: "Observation Sign-Up Cancelled",
           TextBody: `Hi,\n\nThe following LA(s) you signed up to observe have withdrawn from the program:\n\n${withdrawnNames.map((n) => `- ${n}`).join("\n")}\n\nPlease sign up for a new observation slot at your earliest convenience.\n\nBest,\nLA Program`,
-        })
+        }),
       );
 
       await fetch("https://api.postmarkapp.com/email/batch", {
@@ -170,6 +184,8 @@ export async function POST(request: Request) {
     return new Response(summary, { status: 200 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
-    return new Response(`process-withdraws failed: ${message}`, { status: 500 });
+    return new Response(`process-withdraws failed: ${message}`, {
+      status: 500,
+    });
   }
 }
