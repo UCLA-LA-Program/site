@@ -99,8 +99,7 @@ function buildSchedules(
 
     const weekSlots = new Map<number, WeekSlot>();
     // Default time range from first future available slot, or section midpoint
-    let defaultStart =
-      sectionStart + Math.floor((sectionEnd - sectionStart) / 3);
+    let defaultStart = sectionEnd - 30;
     let defaultEnd = sectionEnd;
 
     // Check if there's existing availability to derive default range
