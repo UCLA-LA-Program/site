@@ -93,9 +93,8 @@ export default function Login() {
                 Enter your email and we&apos;ll send you a login link.
                 <p className="mt-2 text-xs text-muted-foreground">
                   If you are a S&apos;26 LA, we&apos;ve created an account for
-                  you using the email you used to apply to the LA program!
-                  Don&apos;t know which email is associated with your account?
-                  Check the{" "}
+                  you using the email you used to apply to the LA Program!
+                  Don&apos;t remember which email that is? Check the{" "}
                   <a
                     href="https://airtable.com/appboW9PSW85WiaBG/shri8amfLacrzmO1u/tblIB5cYh8jdQinds"
                     className="underline-offset-2 hover:underline text-primary"
