@@ -85,7 +85,6 @@ export function FeedbackForm({
 
   if (!las) return <></>;
 
-
   return (
     <form
       noValidate
@@ -236,7 +235,7 @@ export function FeedbackForm({
                         autoHighlight
                         onValueChange={(v) => field.handleChange(v as string)}
                         value={field.state.value}
-                        items={[...new Set(las.map((la) => la.course))]}
+                        items={[...new Set(las.map((la) => la.course))].sort()}
                       >
                         <ComboboxInput
                           id={field.name}
@@ -280,7 +279,7 @@ export function FeedbackForm({
                         autoHighlight
                         onValueChange={(v) => field.handleChange(v as string)}
                         value={field.state.value}
-                        items={las.filter((la) => la.course === course)}
+                        items={las.filter((la) => la.course === course).sort()}
                       >
                         <ComboboxInput
                           id={field.name}
