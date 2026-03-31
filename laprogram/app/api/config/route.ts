@@ -3,6 +3,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import {
   FEATURE_FLAGS,
   OBSERVATION_COUNT_PREFIX,
+  QUARTER_START_KEY,
 } from "@/lib/constants";
 import { LA_POSITION_OPTIONS } from "@/app/feedback/constants";
 
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
   const key = searchParams.get("key");
 
   if (key) {
-    const value = await env.config.get(key);
+    const value = (await env.config.get(key)) ?? "";
     return NextResponse.json({ key, value });
   }
 
@@ -43,5 +44,7 @@ export async function GET(request: NextRequest) {
     observationCounts[k] = v !== null ? parseInt(v, 10) : 0;
   }
 
-  return NextResponse.json({ flags, observationCounts });
+  const quarterStart = (await env.config.get(QUARTER_START_KEY)) ?? "";
+
+  return NextResponse.json({ flags, observationCounts, quarterStart });
 }

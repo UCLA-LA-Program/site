@@ -12,3 +12,5 @@ export const FEATURE_FLAGS = [
 export type FlagKey = (typeof FEATURE_FLAGS)[number]["key"];
 
 export const OBSERVATION_COUNT_PREFIX = "OBSERVATION_COUNT_";
+
+export const QUARTER_START_KEY = "QUARTER_START";

@@ -16,15 +16,17 @@ import {
   FEATURE_FLAGS,
   type FlagKey,
   OBSERVATION_COUNT_PREFIX,
+  QUARTER_START_KEY,
 } from "@/lib/constants";
 import { fetcher } from "@/lib/utils";
 
 type ConfigData = {
   flags: Record<string, boolean>;
   observationCounts: Record<string, number>;
+  quarterStart: string | null;
 };
 
-async function setFlag(key: string, value: boolean | number) {
+async function setConfigValue(key: string, value: boolean | number | string) {
   const res = await fetch("/api/admin/setflag", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -41,6 +43,7 @@ export default function Admin() {
 
   const flags = data?.flags ?? {};
   const observationCounts = data?.observationCounts ?? {};
+  const quarterStart = data?.quarterStart ?? "";
 
   async function toggleFlag(key: FlagKey) {
     const newValue = !flags[key];
@@ -49,7 +52,7 @@ export default function Admin() {
       { revalidate: false },
     );
     try {
-      await setFlag(key, newValue);
+      await setConfigValue(key, newValue);
     } catch {
       toast.error("Failed to save flag");
       mutate();
@@ -67,9 +70,22 @@ export default function Admin() {
       { revalidate: false },
     );
     try {
-      await setFlag(`${OBSERVATION_COUNT_PREFIX}${position}`, num);
+      await setConfigValue(`${OBSERVATION_COUNT_PREFIX}${position}`, num);
     } catch {
       toast.error("Failed to save count");
+      mutate();
+    }
+  }
+
+  async function setQuarterStart(value: string) {
+    mutate(
+      { ...data!, quarterStart: value },
+      { revalidate: false },
+    );
+    try {
+      await setConfigValue(QUARTER_START_KEY, value);
+    } catch {
+      toast.error("Failed to save quarter start date");
       mutate();
     }
   }
@@ -88,6 +104,34 @@ export default function Admin() {
       <h1 className="mb-3 text-2xl font-bold">Admin Panel</h1>
 
       <div className="space-y-3">
+        {/* Quarter start date */}
+        <Card size="sm">
+          <CardHeader>
+            <CardTitle>Quarter Settings</CardTitle>
+            <CardDescription>
+              First Monday of the quarter. Used to calculate calendar dates from
+              week numbers.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center gap-2 px-1 py-1">
+              <label
+                htmlFor="quarter-start"
+                className="flex-1 text-sm font-medium"
+              >
+                Start of Quarter
+              </label>
+              <Input
+                id="quarter-start"
+                type="date"
+                className="w-40"
+                value={quarterStart}
+                onChange={(e) => setQuarterStart(e.target.value)}
+              />
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Feature flags */}
         <Card size="sm">
           <CardHeader>
