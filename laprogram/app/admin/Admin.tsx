@@ -14,89 +14,31 @@ import { toast } from "sonner";
 import { LA_POSITION_OPTIONS } from "@/app/feedback/constants";
 import {
   FEATURE_FLAGS,
-  type FlagKey,
   OBSERVATION_COUNT_PREFIX,
   QUARTER_START_KEY,
 } from "@/lib/constants";
 import { fetcher } from "@/lib/utils";
 
-type ConfigData = {
-  flags: Record<string, boolean>;
-  observationCounts: Record<string, number>;
-  quarterStart: string | null;
-};
-
-async function setConfigValue(key: string, value: boolean | number | string) {
-  const res = await fetch("/api/admin/setflag", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ key, value }),
-  });
-  if (!res.ok) throw new Error("Failed to save");
-}
+type ConfigData = Record<string, string>;
 
 export default function Admin() {
-  const { data, mutate, isLoading } = useSWR<ConfigData>(
-    "/api/config",
-    fetcher,
-  );
+  const { data, mutate } = useSWR<ConfigData>("/api/config", fetcher);
 
-  const flags = data?.flags ?? {};
-  const observationCounts = data?.observationCounts ?? {};
-  const quarterStart = data?.quarterStart ?? "";
+  if (data === undefined) return <></>;
 
-  async function toggleFlag(key: FlagKey) {
-    const newValue = !flags[key];
-    mutate(
-      { ...data!, flags: { ...flags, [key]: newValue } },
-      { revalidate: false },
-    );
+  async function setValue(key: string, value: string) {
+    mutate({ ...data!, [key]: value }, { revalidate: false });
     try {
-      await setConfigValue(key, newValue);
+      const res = await fetch("/api/admin/setflag", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value }),
+      });
+      if (!res.ok) throw new Error();
     } catch {
-      toast.error("Failed to save flag");
+      toast.error("Failed to save");
       mutate();
     }
-  }
-
-  async function setCount(position: string, value: string) {
-    const num = parseInt(value, 10);
-    if (isNaN(num) || num < 0) return;
-    mutate(
-      {
-        ...data!,
-        observationCounts: { ...observationCounts, [position]: num },
-      },
-      { revalidate: false },
-    );
-    try {
-      await setConfigValue(`${OBSERVATION_COUNT_PREFIX}${position}`, num);
-    } catch {
-      toast.error("Failed to save count");
-      mutate();
-    }
-  }
-
-  async function setQuarterStart(value: string) {
-    mutate(
-      { ...data!, quarterStart: value },
-      { revalidate: false },
-    );
-    try {
-      await setConfigValue(QUARTER_START_KEY, value);
-    } catch {
-      toast.error("Failed to save quarter start date");
-      mutate();
-    }
-  }
-
-  if (isLoading) {
-    return (
-      <div className="mx-auto w-full max-w-2xl px-8 py-4">
-        <h1 className="mb-3 text-2xl font-bold">Admin Panel</h1>
-        <p className="text-sm text-muted-foreground">Loading settings...</p>
-      </div>
-    );
   }
 
   return (
@@ -125,8 +67,8 @@ export default function Admin() {
                 id="quarter-start"
                 type="date"
                 className="w-40"
-                value={quarterStart}
-                onChange={(e) => setQuarterStart(e.target.value)}
+                value={data[QUARTER_START_KEY] ?? ""}
+                onChange={(e) => setValue(QUARTER_START_KEY, e.target.value)}
               />
             </div>
           </CardContent>
@@ -148,8 +90,13 @@ export default function Admin() {
                   className="flex cursor-pointer items-center gap-2 rounded-md px-1 py-1 text-sm hover:bg-muted/30"
                 >
                   <Checkbox
-                    checked={flags[flag.key] ?? false}
-                    onCheckedChange={() => toggleFlag(flag.key)}
+                    checked={data[flag.key] === "true"}
+                    onCheckedChange={() =>
+                      setValue(
+                        flag.key,
+                        data[flag.key] === "true" ? "false" : "true",
+                      )
+                    }
                   />
                   <div>
                     <span className="font-medium">{flag.label}</span>
@@ -173,30 +120,36 @@ export default function Admin() {
           </CardHeader>
           <CardContent>
             <div className="-space-y-0.5">
-              {LA_POSITION_OPTIONS.map((pos) => (
-                <div
-                  key={pos.value}
-                  className="flex items-center gap-2 rounded-md px-1 py-1"
-                >
-                  <label
-                    htmlFor={`obs-${pos.value}`}
-                    className="flex-1 text-sm font-medium"
+              {LA_POSITION_OPTIONS.map((pos) => {
+                const key = `${OBSERVATION_COUNT_PREFIX}${pos.value}`;
+                return (
+                  <div
+                    key={pos.value}
+                    className="flex items-center gap-2 rounded-md px-1 py-1"
                   >
-                    {pos.label}
-                    <span className="ml-2 font-mono text-xs text-muted-foreground">
-                      {pos.value}
-                    </span>
-                  </label>
-                  <Input
-                    id={`obs-${pos.value}`}
-                    type="number"
-                    min={0}
-                    className="w-20"
-                    value={observationCounts[pos.value] ?? 0}
-                    onChange={(e) => setCount(pos.value, e.target.value)}
-                  />
-                </div>
-              ))}
+                    <label
+                      htmlFor={`obs-${pos.value}`}
+                      className="flex-1 text-sm font-medium"
+                    >
+                      {pos.label}
+                      <span className="ml-2 font-mono text-xs text-muted-foreground">
+                        {pos.value}
+                      </span>
+                    </label>
+                    <Input
+                      id={`obs-${pos.value}`}
+                      type="number"
+                      min={0}
+                      className="w-20"
+                      value={data[key] ?? "0"}
+                      onChange={(e) => {
+                        const num = parseInt(e.target.value, 10);
+                        if (!isNaN(num) && num >= 0) setValue(key, String(num));
+                      }}
+                    />
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>
