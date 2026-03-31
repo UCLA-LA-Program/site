@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useState, useRef, useEffect } from "react";
 import useSWR from "swr";
 import {
   Card,
@@ -15,9 +15,9 @@ import { Slider } from "@/components/ui/slider";
 import { Check, Loader2, Lock, Users } from "lucide-react";
 import ContactUs from "@/components/ContactUs";
 import { fetcher } from "@/lib/utils";
+import { QUARTER_START_KEY } from "@/lib/constants";
 
 const WEEKS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
-const CURRENT_WEEK = 5; // TODO: derive from date
 const STEP = 10; // minutes
 const MIN_RANGE = 30; // minutes
 
@@ -55,7 +55,13 @@ type CourseSchedule = {
 };
 
 function parseTime(timeStr: string): number {
-  const [h, m] = timeStr.split(":").map(Number);
+  const match = timeStr.match(/^(\d+):(\d+)(am|pm)?$/i);
+  if (!match) return 0;
+  let h = parseInt(match[1]);
+  const m = parseInt(match[2]);
+  const period = match[3]?.toLowerCase();
+  if (period === "pm" && h !== 12) h += 12;
+  if (period === "am" && h === 12) h = 0;
   return h * 60 + m;
 }
 
@@ -81,6 +87,7 @@ function minutesToTimeStr(minutes: number): string {
 function buildSchedules(
   sections: SectionData[],
   availability: AvailabilityRow[],
+  currentWeek: number,
 ): Map<string, CourseSchedule> {
   const map = new Map<string, CourseSchedule>();
 
@@ -92,12 +99,13 @@ function buildSchedules(
 
     const weekSlots = new Map<number, WeekSlot>();
     // Default time range from first future available slot, or section midpoint
-    let defaultStart = sectionStart + Math.floor((sectionEnd - sectionStart) / 3);
+    let defaultStart =
+      sectionStart + Math.floor((sectionEnd - sectionStart) / 3);
     let defaultEnd = sectionEnd;
 
     // Check if there's existing availability to derive default range
     const futureAvail = sectionAvail.find(
-      (a) => parseInt(a.week) >= CURRENT_WEEK,
+      (a) => parseInt(a.week) >= currentWeek,
     );
     if (futureAvail) {
       const [s, e] = futureAvail.time.split("-").map(parseTime);
@@ -148,67 +156,44 @@ function signupCountsFromAvailability(
   return counts;
 }
 
-export default function Schedule() {
-  const { data: sections } = useSWR<SectionData[]>("/api/sections", fetcher);
-  const {
-    data: availability,
-    mutate: mutateAvailability,
-  } = useSWR<AvailabilityRow[]>("/api/availability", fetcher);
+function getCurrentWeek(quarterStart: string | undefined): number {
+  if (!quarterStart) return 1;
+  const start = new Date(quarterStart + "T00:00:00");
+  const now = new Date();
+  const diff = now.getTime() - start.getTime();
+  return Math.max(1, Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1);
+}
 
-  const [schedules, setSchedules] = useState<Map<string, CourseSchedule> | null>(
-    null,
+export default function Schedule() {
+  const { data: config } = useSWR<Record<string, string>>(
+    "/api/config",
+    fetcher,
   );
+  const currentWeek = getCurrentWeek(config?.[QUARTER_START_KEY]);
+  const { data: sections } = useSWR<SectionData[]>("/api/sections", fetcher);
+  const { data: availability, mutate: mutateAvailability } = useSWR<
+    AvailabilityRow[]
+  >("/api/availability", fetcher);
+
+  const [schedules, setSchedules] = useState<Map<
+    string,
+    CourseSchedule
+  > | null>(null);
   const [showPast, setShowPast] = useState<Set<string>>(new Set());
   const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
     "idle",
   );
   const saveTimeout = useRef<ReturnType<typeof setTimeout>>(null);
   const resetTimeout = useRef<ReturnType<typeof setTimeout>>(null);
-  const initialized = useRef(false);
 
   // Build schedules once data loads
-  useEffect(() => {
-    if (sections && availability && !initialized.current) {
-      initialized.current = true;
-      setSchedules(buildSchedules(sections, availability));
-    }
-  }, [sections, availability]);
+  if (sections && availability && !schedules) {
+    setSchedules(buildSchedules(sections, availability, currentWeek));
+  }
 
   const signupCounts = availability
     ? signupCountsFromAvailability(availability)
     : new Map<string, Map<number, number>>();
-
-  const saveSection = useCallback(
-    (sectionId: string, schedule: CourseSchedule) => {
-      if (saveTimeout.current) clearTimeout(saveTimeout.current);
-      if (resetTimeout.current) clearTimeout(resetTimeout.current);
-
-      setSaveState("saving");
-      saveTimeout.current = setTimeout(async () => {
-        const weeks: { week: string; time: string }[] = [];
-        for (const [week, slot] of schedule.weekSlots) {
-          if (slot.selected) {
-            const timeStr = `${minutesToTimeStr(slot.timeRange[0])}-${minutesToTimeStr(slot.timeRange[1])}`;
-            weeks.push({ week: String(week), time: timeStr });
-          }
-        }
-
-        try {
-          await fetch("/api/availability", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ section_id: sectionId, weeks }),
-          });
-          await mutateAvailability();
-          setSaveState("saved");
-          resetTimeout.current = setTimeout(() => setSaveState("idle"), 2000);
-        } catch {
-          setSaveState("idle");
-        }
-      }, 500);
-    },
-    [mutateAvailability],
-  );
 
   useEffect(() => {
     return () => {
@@ -217,69 +202,89 @@ export default function Schedule() {
     };
   }, []);
 
-  const toggleWeek = useCallback(
-    (sectionId: string, week: number) => {
-      setSchedules((prev) => {
-        if (!prev) return prev;
-        const next = new Map(prev);
-        const entry = { ...next.get(sectionId)! };
-        const weekSlots = new Map(entry.weekSlots);
-        const slot = weekSlots.get(week)!;
-        weekSlots.set(week, { ...slot, selected: !slot.selected });
-        entry.weekSlots = weekSlots;
-        next.set(sectionId, entry);
-        saveSection(sectionId, entry);
-        return next;
-      });
-    },
-    [saveSection],
-  );
+  function saveSection(sectionId: string, schedule: CourseSchedule) {
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    if (resetTimeout.current) clearTimeout(resetTimeout.current);
 
-  const setTimeRange = useCallback(
-    (sectionId: string, value: number[]) => {
-      setSchedules((prev) => {
-        if (!prev) return prev;
-        const next = new Map(prev);
-        const entry = { ...next.get(sectionId)! };
-        let [start, end] = value;
-
-        if (end - start < MIN_RANGE) {
-          if (end - MIN_RANGE >= entry.sectionStart) {
-            start = end - MIN_RANGE;
-          } else {
-            end = start + MIN_RANGE;
-          }
+    setSaveState("saving");
+    saveTimeout.current = setTimeout(async () => {
+      const weeks: { week: string; time: string }[] = [];
+      for (const [week, slot] of schedule.weekSlots) {
+        if (slot.selected) {
+          const timeStr = `${minutesToTimeStr(slot.timeRange[0])}-${minutesToTimeStr(slot.timeRange[1])}`;
+          weeks.push({ week: String(week), time: timeStr });
         }
+      }
 
-        entry.timeRange = [start, end];
+      try {
+        await fetch("/api/availability", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ section_id: sectionId, weeks }),
+        });
+        await mutateAvailability();
+        setSaveState("saved");
+        resetTimeout.current = setTimeout(() => setSaveState("idle"), 2000);
+      } catch {
+        setSaveState("idle");
+      }
+    }, 500);
+  }
 
-        const weekSlots = new Map(entry.weekSlots);
-        for (const week of WEEKS) {
-          if (week >= CURRENT_WEEK) {
-            const slot = weekSlots.get(week)!;
-            weekSlots.set(week, { ...slot, timeRange: [start, end] });
-          }
+  function toggleWeek(sectionId: string, week: number) {
+    setSchedules((prev) => {
+      if (!prev) return prev;
+      const next = new Map(prev);
+      const entry = { ...next.get(sectionId)! };
+      const weekSlots = new Map(entry.weekSlots);
+      const slot = weekSlots.get(week)!;
+      weekSlots.set(week, { ...slot, selected: !slot.selected });
+      entry.weekSlots = weekSlots;
+      next.set(sectionId, entry);
+      saveSection(sectionId, entry);
+      return next;
+    });
+  }
+
+  function setTimeRange(sectionId: string, value: number[]) {
+    setSchedules((prev) => {
+      if (!prev) return prev;
+      const next = new Map(prev);
+      const entry = { ...next.get(sectionId)! };
+      let [start, end] = value;
+
+      if (end - start < MIN_RANGE) {
+        if (end - MIN_RANGE >= entry.sectionStart) {
+          start = end - MIN_RANGE;
+        } else {
+          end = start + MIN_RANGE;
         }
-        entry.weekSlots = weekSlots;
-        next.set(sectionId, entry);
-        return next;
-      });
-    },
-    [],
-  );
+      }
 
-  const commitTimeRange = useCallback(
-    (sectionId: string, value: number[]) => {
-      setTimeRange(sectionId, value);
-      setSchedules((prev) => {
-        if (!prev) return prev;
-        const entry = prev.get(sectionId)!;
-        saveSection(sectionId, entry);
-        return prev;
-      });
-    },
-    [setTimeRange, saveSection],
-  );
+      entry.timeRange = [start, end];
+
+      const weekSlots = new Map(entry.weekSlots);
+      for (const week of WEEKS) {
+        if (week >= currentWeek) {
+          const slot = weekSlots.get(week)!;
+          weekSlots.set(week, { ...slot, timeRange: [start, end] });
+        }
+      }
+      entry.weekSlots = weekSlots;
+      next.set(sectionId, entry);
+      return next;
+    });
+  }
+
+  function commitTimeRange(sectionId: string, value: number[]) {
+    setTimeRange(sectionId, value);
+    setSchedules((prev) => {
+      if (!prev) return prev;
+      const entry = prev.get(sectionId)!;
+      saveSection(sectionId, entry);
+      return prev;
+    });
+  }
 
   if (!sections || !availability || !schedules) {
     return (
@@ -329,7 +334,7 @@ export default function Schedule() {
             <ContactUs /> for technical problems.
           </p>
         </div>
-        <div className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
+        <div className="mt-1 flex w-20 shrink-0 items-center justify-end gap-1.5 text-xs text-muted-foreground">
           {saveState === "saving" && (
             <>
               <Loader2 className="size-3.5 animate-spin" />
@@ -360,20 +365,18 @@ export default function Schedule() {
             const sectionSignups = signupCounts.get(key);
             const showingPast = showPast.has(key);
             const visibleWeeks = WEEKS.filter(
-              (w) => showingPast || w >= CURRENT_WEEK,
+              (w) => showingPast || w >= currentWeek,
             );
 
             const hasAnyFutureSignups = WEEKS.some(
-              (w) =>
-                w >= CURRENT_WEEK &&
-                (sectionSignups?.get(w) ?? 0) > 0,
+              (w) => w >= currentWeek && (sectionSignups?.get(w) ?? 0) > 0,
             );
 
             return (
               <Card key={key}>
                 <CardHeader>
                   <CardTitle>
-                    {section.course_name} — {section.section_name}
+                    {section.course_name} {section.section_name}
                   </CardTitle>
                   <CardDescription>
                     {section.day} &middot;{" "}
@@ -406,8 +409,8 @@ export default function Schedule() {
                   {hasAnyFutureSignups ? (
                     <p className="mb-4 px-3 text-sm text-muted-foreground">
                       <Lock className="mr-1.5 inline size-3.5 -translate-y-px" />
-                      Timeslot cannot be changed while a present or future
-                      week has observation sign-ups.
+                      Timeslot cannot be changed while a present or future week
+                      has observation sign-ups.
                     </p>
                   ) : (
                     <div className="mb-4 flex items-center gap-3 px-3">
@@ -437,7 +440,7 @@ export default function Schedule() {
                   <div className="space-y-1">
                     {visibleWeeks.map((week) => {
                       const slot = schedule.weekSlots.get(week)!;
-                      const isPast = week < CURRENT_WEEK;
+                      const isPast = week < currentWeek;
                       const signups = sectionSignups?.get(week) ?? 0;
                       const hasSignups = signups > 0;
                       const isLocked = isPast || hasSignups;

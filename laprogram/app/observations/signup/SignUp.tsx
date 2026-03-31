@@ -8,13 +8,11 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, X, CalendarClock, User, Check, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { fetcher } from "@/lib/utils";
+import { QUARTER_START_KEY } from "@/lib/constants";
 import type { Availability } from "@/types/db";
 
 const CURRENT_ROUND = 2;
 const REQUIRED_PER_ROUND = 2;
-
-// Quarter starts Monday 3/30/2026
-const QUARTER_START = new Date(2026, 2, 30); // month is 0-indexed
 
 const DAY_ORDER: Record<string, number> = {
   Monday: 0,
@@ -39,11 +37,14 @@ const MONTH_NAMES = [
   "Dec",
 ];
 
-function weekDayToDate(week: string | number, day: string): string {
+function weekDayToDate(
+  week: string | number,
+  day: string,
+  quarterStart: Date,
+): string {
   const weekNum = typeof week === "string" ? parseInt(week) : week;
   const dayOffset = DAY_ORDER[day] ?? 0;
-  // Week 1 starts at QUARTER_START (a Monday)
-  const date = new Date(QUARTER_START);
+  const date = new Date(quarterStart);
   date.setDate(date.getDate() + (weekNum - 1) * 7 + dayOffset);
   return `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`;
 }
@@ -80,6 +81,16 @@ function timeRangeLabel(time: string): string {
 }
 
 export default function SignUp() {
+  const { data: config } = useSWR<Record<string, string>>(
+    "/api/config",
+    fetcher,
+  );
+  const quarterStart = config?.[QUARTER_START_KEY]
+    ? new Date(config[QUARTER_START_KEY] + "T00:00:00")
+    : new Date();
+  const toDate = (week: string | number, day: string) =>
+    weekDayToDate(week, day, quarterStart);
+
   const { data: openSlots, mutate: mutateOpen } = useSWR<Availability[]>(
     "/api/observation/open",
     fetcher,
@@ -228,7 +239,7 @@ export default function SignUp() {
               {dayGroups.map((group) => (
                 <div key={`${group.week}-${group.day}`}>
                   <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                    {weekDayToDate(group.week, group.day)}
+                    {toDate(group.week, group.day)}
                   </h3>
                   <div className="space-y-2">
                     {group.slots.map((slot) => (
@@ -246,7 +257,7 @@ export default function SignUp() {
                               {slot.course_name} {slot.section_name}
                             </span>
                             <span className="text-muted-foreground">
-                              {weekDayToDate(slot.week, slot.day)}
+                              {toDate(slot.week, slot.day)}
                             </span>
                           </div>
                           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
@@ -302,7 +313,7 @@ export default function SignUp() {
                           <p className="font-medium">{obs.observee_name}</p>
                           <p className="text-muted-foreground">
                             {obs.course_name} {obs.section_name} &middot;{" "}
-                            {weekDayToDate(obs.week, obs.day)}
+                            {toDate(obs.week, obs.day)}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             {timeRangeLabel(obs.time)} &middot; {obs.location}
@@ -351,7 +362,7 @@ export default function SignUp() {
                               <p className="font-medium">{slot.la_name}</p>
                               <p className="text-muted-foreground">
                                 {slot.course_name} {slot.section_name} &middot;{" "}
-                                {weekDayToDate(slot.week, slot.day)}
+                                {toDate(slot.week, slot.day)}
                               </p>
                               <p className="text-xs text-muted-foreground">
                                 {timeRangeLabel(slot.time)} &middot;{" "}
@@ -389,7 +400,7 @@ export default function SignUp() {
                               </p>
                               <p className="text-muted-foreground line-through opacity-60">
                                 {obs.course_name} {obs.section_name} &middot;{" "}
-                                {weekDayToDate(obs.week, obs.day)}
+                                {toDate(obs.week, obs.day)}
                               </p>
                               <p className="text-xs text-muted-foreground line-through opacity-60">
                                 {timeRangeLabel(obs.time)} &middot;{" "}
