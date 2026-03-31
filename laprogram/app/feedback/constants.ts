@@ -1,9 +1,9 @@
 export const LA_POSITION_OPTIONS = [
   { value: "new", label: "New LA" },
-  { value: "returner", label: "Returning LA" },
+  { value: "ret", label: "Returning LA" },
   { value: "ped", label: "Pedagogy Head LA" },
   { value: "lcc", label: "LA Course Coordinator (LCC)" },
-  { value: "returner_lcc", label: "Returner + LCC" },
+  { value: "ret_lcc", label: "Returner + LCC" },
   { value: "ped_lcc", label: "Pedagogy Head + LCC" },
 ];
 

@@ -18,12 +18,7 @@ import { MidQuarterSection } from "./sections/MidQuarterSection";
 import { TASection } from "./sections/TASection";
 import { LAHeadLASection } from "./sections/LAHeadLASection";
 import { ObservationSection } from "./sections/ObservationSection";
-import {
-  FEEDBACK_TYPE_OPTIONS,
-  LA_FEEDBACK_TYPE_OPTIONS,
-  LA_POSITION_MAP,
-  ROLE_OPTIONS,
-} from "../constants";
+import { LA_POSITION_MAP } from "../constants";
 
 import { useAppForm } from "../form";
 import { defaultValues, feedbackFormSchema } from "../schema";
@@ -44,7 +39,19 @@ import { UserRound, LogIn } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 
-export function FeedbackForm() {
+type Option = { value: string; label: string };
+
+type FeedbackFormProps = {
+  roleOptions: Option[];
+  feedbackTypeOptions: Option[];
+  laFeedbackTypeOptions: Option[];
+};
+
+export function FeedbackForm({
+  roleOptions,
+  feedbackTypeOptions,
+  laFeedbackTypeOptions,
+}: FeedbackFormProps) {
   const { data: session } = authClient.useSession();
   const { data: las } = useSWR<LA[]>("/api/la", fetcher, {
     suspense: true,
@@ -163,7 +170,7 @@ export function FeedbackForm() {
                   onValueChange={(v) => field.handleChange(v)}
                   onBlur={field.handleBlur}
                 >
-                  {ROLE_OPTIONS.map(({ value, label }) => (
+                  {roleOptions.map(({ value, label }) => (
                     <div key={value} className="flex items-center gap-2">
                       <RadioGroupItem
                         id={`role-${value}`}
@@ -228,7 +235,7 @@ export function FeedbackForm() {
                         autoHighlight
                         onValueChange={(v) => field.handleChange(v as string)}
                         value={field.state.value}
-                        items={[...new Set(las.map((la) => la.course))]}
+                        items={[...new Set(las.map((la) => la.course))].sort()}
                       >
                         <ComboboxInput
                           id={field.name}
@@ -272,7 +279,7 @@ export function FeedbackForm() {
                         autoHighlight
                         onValueChange={(v) => field.handleChange(v as string)}
                         value={field.state.value}
-                        items={las.filter((la) => la.course === course)}
+                        items={las.filter((la) => la.course === course).sort()}
                       >
                         <ComboboxInput
                           id={field.name}
@@ -350,7 +357,7 @@ export function FeedbackForm() {
                         }}
                         onBlur={field.handleBlur}
                       >
-                        {FEEDBACK_TYPE_OPTIONS.map(({ value, label }) => (
+                        {feedbackTypeOptions.map(({ value, label }) => (
                           <div key={value} className="flex items-center gap-2">
                             <RadioGroupItem
                               id={`type-${value}`}
@@ -400,7 +407,7 @@ export function FeedbackForm() {
                         onValueChange={(v) => field.handleChange(v)}
                         onBlur={field.handleBlur}
                       >
-                        {LA_FEEDBACK_TYPE_OPTIONS.map(({ value, label }) => (
+                        {laFeedbackTypeOptions.map(({ value, label }) => (
                           <div key={value} className="flex items-center gap-2">
                             <RadioGroupItem
                               id={`type-${value}`}

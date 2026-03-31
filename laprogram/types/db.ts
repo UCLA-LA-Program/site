@@ -15,6 +15,7 @@ export type Position = {
 };
 
 export type Availability = {
+  id: string;
   la_name: string;
   la_email: string;
   course_name: string;
@@ -23,4 +24,4 @@ export type Availability = {
   week: string;
   day: string;
   time: string;
-}
+};
