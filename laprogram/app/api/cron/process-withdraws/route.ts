@@ -3,7 +3,7 @@ import { backupDatabase } from "@/lib/backup";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 
-interface WithdrawnRecord {
+interface WithdrewRecord {
   id: string;
   fields: {
     Email: string | string[];
@@ -29,14 +29,14 @@ export async function POST(request: Request) {
 
     const db = env.data;
 
-    const formula = "FIND('Withdrawn',{Position})";
+    const formula = "FIND('Withdrew',{Position})";
 
     const baseParams = new URLSearchParams();
     baseParams.append("fields[]", "Email");
     baseParams.append("fields[]", "Name");
     baseParams.append("filterByFormula", formula);
 
-    const withdrawnLARecords: WithdrawnRecord[] = [];
+    const withdrewLARecords: WithdrewRecord[] = [];
     let offset: string | undefined;
 
     do {
@@ -58,15 +58,15 @@ export async function POST(request: Request) {
       }
 
       const data = (await response.json()) as {
-        records: WithdrawnRecord[];
+        records: WithdrewRecord[];
         offset?: string;
       };
       if (!data.records) break;
-      withdrawnLARecords.push(...data.records);
+      withdrewLARecords.push(...data.records);
       offset = data.offset;
     } while (offset);
 
-    if (withdrawnLARecords.length === 0) {
+    if (withdrewLARecords.length === 0) {
       return new Response("No withdrawn LAs found", { status: 200 });
     }
 
@@ -75,24 +75,24 @@ export async function POST(request: Request) {
     const observerNames: Map<string, string> = new Map();
     let removedCount = 0;
 
-    for (const withdrawnLARecord of withdrawnLARecords) {
-      const withdrawnLAEmail = Array.isArray(withdrawnLARecord.fields.Email)
-        ? withdrawnLARecord.fields.Email[0]
-        : withdrawnLARecord.fields.Email;
-      const withdrawnLAName = withdrawnLARecord.fields.Name;
+    for (const withdrewLARecord of withdrewLARecords) {
+      const withdrewLAEmail = Array.isArray(withdrewLARecord.fields.Email)
+        ? withdrewLARecord.fields.Email[0]
+        : withdrewLARecord.fields.Email;
+      const withdrewLAName = withdrewLARecord.fields.Name;
 
-      if (!withdrawnLAEmail) {
-        errors.push(`Skipping record ${withdrawnLARecord.id}: missing email`);
+      if (!withdrewLAEmail) {
+        errors.push(`Skipping record ${withdrewLARecord.id}: missing email`);
         continue;
       }
 
-      const withdrawnUser = await db
+      const withdrewUser = await db
         .prepare("SELECT id FROM user WHERE email = ?")
-        .bind(withdrawnLAEmail)
+        .bind(withdrewLAEmail)
         .first<{ id: string }>();
 
-      if (!withdrawnUser) {
-        errors.push(`Skipping ${withdrawnLAEmail}: user not found in DB`);
+      if (!withdrewUser) {
+        errors.push(`Skipping ${withdrewLAEmail}: user not found in DB`);
         continue;
       }
 
@@ -108,7 +108,7 @@ export async function POST(request: Request) {
           JOIN user ON observation.observer_id = user.id
           WHERE observation.observee_id = ?`,
         )
-        .bind(withdrawnUser.id)
+        .bind(withdrewUser.id)
         .all<{
           obs_id: string;
           observer_id: string;
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
 
       for (const obs of observeeObs.results) {
         const existing = affectedObservers.get(obs.observer_email) ?? [];
-        existing.push(withdrawnLAName);
+        existing.push(withdrewLAName);
 
         affectedObservers.set(obs.observer_email, existing);
         observerNames.set(obs.observer_email, obs.observer_name);
@@ -130,7 +130,7 @@ export async function POST(request: Request) {
         .prepare(
           "SELECT availability_id, observee_id FROM observation WHERE observer_id = ?",
         )
-        .bind(withdrawnUser.id)
+        .bind(withdrewUser.id)
         .all<{ availability_id: string; observee_id: string }>();
 
       const revertStmts: D1PreparedStatement[] = [];
@@ -153,29 +153,27 @@ export async function POST(request: Request) {
       await db.batch([
         db
           .prepare("DELETE FROM observation WHERE observee_id = ?")
-          .bind(withdrawnUser.id),
+          .bind(withdrewUser.id),
         db
           .prepare("DELETE FROM observation WHERE observer_id = ?")
-          .bind(withdrawnUser.id),
+          .bind(withdrewUser.id),
         db
           .prepare("DELETE FROM availability WHERE la_id = ?")
-          .bind(withdrawnUser.id),
+          .bind(withdrewUser.id),
         db
           .prepare("DELETE FROM section_assignment WHERE la_id = ?")
-          .bind(withdrawnUser.id),
-        db
-          .prepare("DELETE FROM course WHERE userId = ?")
-          .bind(withdrawnUser.id),
+          .bind(withdrewUser.id),
+        db.prepare("DELETE FROM course WHERE userId = ?").bind(withdrewUser.id),
         db
           .prepare("DELETE FROM feedback WHERE recipientId = ?")
-          .bind(withdrawnUser.id),
+          .bind(withdrewUser.id),
         db
           .prepare("DELETE FROM session WHERE userId = ?")
-          .bind(withdrawnUser.id),
+          .bind(withdrewUser.id),
         db
           .prepare("DELETE FROM account WHERE userId = ?")
-          .bind(withdrawnUser.id),
-        db.prepare("DELETE FROM user WHERE id = ?").bind(withdrawnUser.id),
+          .bind(withdrewUser.id),
+        db.prepare("DELETE FROM user WHERE id = ?").bind(withdrewUser.id),
       ]);
 
       removedCount++;
@@ -189,8 +187,8 @@ export async function POST(request: Request) {
           Accept: "application/json",
           "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN,
         },
-        body: JSON.stringify(
-          [...affectedObservers].map(([email, withdrawnNames]) => ({
+        body: JSON.stringify({
+          Messages: [...affectedObservers].map(([email, withdrawnNames]) => ({
             From: "admin@laprogramucla.com",
             To: email,
             TemplateId: 44230508,
@@ -199,12 +197,12 @@ export async function POST(request: Request) {
               la_name: withdrawnNames.join(", "),
             },
           })),
-        ),
+        }),
       });
     }
 
     const summary =
-      `Processed ${withdrawnLARecords.length} withdrawn LAs. Removed: ${removedCount}. Notified: ${affectedObservers.size} observers.` +
+      `Processed ${withdrewLARecords.length} withdrawn LAs. Removed: ${removedCount}. Notified: ${affectedObservers.size} observers.` +
       (errors.length > 0 ? `\nErrors:\n${errors.join("\n")}` : "");
 
     return new Response(summary, { status: 200 });
