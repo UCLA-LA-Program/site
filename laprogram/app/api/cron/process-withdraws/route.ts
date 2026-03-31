@@ -1,5 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { backupDatabase } from "@/lib/backup";
+import { headers } from "next/headers";
+import { getAuth } from "@/lib/auth";
 
 interface WithdrawnRecord {
   id: string;
@@ -11,13 +13,20 @@ interface WithdrawnRecord {
 
 export async function POST(request: Request) {
   try {
-    if (request.headers.get("x-cron-secret") !== process.env.CRON_SECRET) {
-      return new Response("Unauthorized", { status: 401 });
+    const { env } = await getCloudflareContext({ async: true });
+
+    const hasCronSecret =
+      request.headers.get("x-cron-secret") === process.env.CRON_SECRET;
+    if (!hasCronSecret) {
+      const auth = await getAuth();
+      const session = await auth.api.getSession({ headers: await headers() });
+      if (!session || session.user.role !== "admin") {
+        return new Response("Unauthorized", { status: 401 });
+      }
     }
 
     await backupDatabase();
 
-    const { env } = await getCloudflareContext({ async: true });
     const db = env.data;
 
     const formula = "FIND('Withdrawn',{Position})";
