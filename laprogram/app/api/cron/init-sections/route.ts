@@ -116,7 +116,7 @@ export async function POST(request: Request) {
     const errors: string[] = [];
 
     for (const record of allRecords) {
-      const raw = record.fields["Section"];
+      const raw = record.fields["Section"].trim();
       const taName = record.fields["TA Name"] ?? "";
       const taEmail = record.fields["TA Email"] ?? "";
 
