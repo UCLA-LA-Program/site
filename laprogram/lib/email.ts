@@ -17,6 +17,12 @@ export default async function sendMagicLink(email: string, url: string) {
     return;
   }
 
+  // just use console for development so we don't hit Postmark API
+  if (process.env.NODE_ENV === "development") {
+    console.log(url);
+    return;
+  }
+
   if (!process.env.POSTMARK_SERVER_TOKEN) {
     console.log("Could not load process.env.POSTMARK_SERVER_TOKEN");
     return;
