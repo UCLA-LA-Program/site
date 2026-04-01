@@ -1,5 +1,13 @@
 -- Migration number: 0002 	 2026-04-01T21:36:38.586Z
 
+-- Add raw column to section (stores the original full section name string)
+ALTER TABLE "section" ADD COLUMN "raw" text NOT NULL DEFAULT '';
+
+-- Populate raw with the current id (which is the full section name)
+UPDATE "section" SET "raw" = "id";
+
+CREATE INDEX "section_raw" ON "section" ("raw");
+
 -- Recreate section_assignment: rename full_section_name -> section_id, add ON UPDATE CASCADE
 CREATE TABLE "section_assignment_new" (
     "la_id" text NOT NULL,

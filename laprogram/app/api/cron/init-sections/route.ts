@@ -122,11 +122,12 @@ export async function POST(request: Request) {
       const raw = record.fields["Section"].trim();
       const taName = record.fields["TA Name"] ?? "";
       const taEmail = record.fields["TA Email"] ?? "";
+      const id = record.fields["ID"] ?? "";
 
       const match = raw.match(
         /^(.+?):\s*([MTWRF]);?\s+(.*)\(([^)]+)\)\s+(.+)$/,
       );
-      if (!match) {
+      if (!match || !id) {
         errors.push(`Failed to parse section: ${raw}`);
         continue;
       }
@@ -134,14 +135,16 @@ export async function POST(request: Request) {
       const [, courseName, dayAbbr, rawTime, sectionName, location] = match;
       const day = dayMap[dayAbbr] ?? dayAbbr;
       const time = standardizeTime(rawTime.replace(/\([^)]*\)/g, "").trim());
-      const id = raw;
 
       stmts.push(
         db
           .prepare(
-            `INSERT INTO section (id, course_name, section_name, day, time, location, ta_name, ta_email)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            `INSERT INTO section (id, raw, course_name, section_name, day, time, location, ta_name, ta_email)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
            ON CONFLICT (id) DO UPDATE SET
+            raw = excluded.raw,
+            course_name = excluded.course_name,
+            section_name = excluded.section_name
             day = excluded.day,
             time = excluded.time,
             location = excluded.location,
@@ -150,6 +153,7 @@ export async function POST(request: Request) {
           )
           .bind(
             id,
+            raw,
             courseName.trim(),
             sectionName.trim(),
             day,

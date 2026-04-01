@@ -101,42 +101,38 @@ export async function POST(request: Request) {
       }
 
       const existing = await db
-        .prepare(
-          "SELECT full_section_name FROM section_assignment WHERE la_id = ?",
-        )
+        .prepare("SELECT section_id FROM section_assignment WHERE la_id = ?")
         .bind(user.id)
-        .all<{ full_section_name: string }>();
-      const dbSections = new Set(
-        existing.results.map((r) => r.full_section_name),
-      );
+        .all<{ section_id: string }>();
+      const dbSections = new Set(existing.results.map((r) => r.section_id));
 
       const airtableSections = sectionsStr
         .split(",")
         .map((s) => s.trim())
         .filter(Boolean);
 
-      for (const sectionId of airtableSections) {
+      for (const rawName of airtableSections) {
         const section = await db
-          .prepare("SELECT id FROM section WHERE id = ?")
-          .bind(sectionId)
+          .prepare("SELECT id FROM section WHERE raw = ?")
+          .bind(rawName)
           .first<{ id: string }>();
 
         if (!section) {
           errors.push(
-            `Skipping section for ${email}: section not found: "${sectionId}"`,
+            `Skipping section for ${email}: section not found: "${rawName}"`,
           );
           continue;
         }
 
-        if (dbSections.has(sectionId)) {
-          dbSections.delete(sectionId);
+        if (dbSections.has(section.id)) {
+          dbSections.delete(section.id);
         } else {
           insertStmts.push(
             db
               .prepare(
-                `INSERT OR IGNORE INTO section_assignment (la_id, full_section_name) VALUES (?, ?)`,
+                `INSERT OR IGNORE INTO section_assignment (la_id, section_id) VALUES (?, ?)`,
               )
-              .bind(user.id, sectionId),
+              .bind(user.id, section.id),
           );
         }
       }
@@ -146,7 +142,7 @@ export async function POST(request: Request) {
         deleteStmts.push(
           db
             .prepare(
-              `DELETE FROM section_assignment WHERE la_id = ? AND full_section_name = ?`,
+              `DELETE FROM section_assignment WHERE la_id = ? AND section_id = ?`,
             )
             .bind(user.id, staleSectionId),
         );
