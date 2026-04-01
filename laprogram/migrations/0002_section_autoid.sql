@@ -31,7 +31,7 @@ CREATE TABLE "availability_new" (
     "time" text NOT NULL,
     "week" text NOT NULL,
     "status" text NOT NULL CHECK ("status" IN ('open', 'hidden', 'taken')),
-    FOREIGN KEY ("la_id", "section_id") REFERENCES "section_assignment" ("la_id", "section_id") ON UPDATE CASCADE
+    FOREIGN KEY ("la_id", "section_id") REFERENCES "section_assignment" ("la_id", "section_id") ON UPDATE CASCADE ON DELETE CASCADE
 );
 
 INSERT INTO "availability_new" ("id", "la_id", "section_id", "time", "week", "status")
@@ -39,3 +39,20 @@ SELECT "id", "la_id", "section_id", "time", "week", "status" FROM "availability"
 
 DROP TABLE "availability";
 ALTER TABLE "availability_new" RENAME TO "availability";
+
+-- Recreate observation: add ON DELETE CASCADE for availability_id FK
+CREATE TABLE "observation_new" (
+    "id" text NOT NULL PRIMARY KEY,
+    "observer_id" text NOT NULL,
+    "observee_id" text NOT NULL,
+    "availability_id" text NOT NULL,
+    FOREIGN KEY ("observer_id") REFERENCES "user" ("id"),
+    FOREIGN KEY ("observee_id") REFERENCES "user" ("id"),
+    FOREIGN KEY ("availability_id") REFERENCES "availability" ("id") ON DELETE CASCADE
+);
+
+INSERT INTO "observation_new" ("id", "observer_id", "observee_id", "availability_id")
+SELECT "id", "observer_id", "observee_id", "availability_id" FROM "observation";
+
+DROP TABLE "observation";
+ALTER TABLE "observation_new" RENAME TO "observation";

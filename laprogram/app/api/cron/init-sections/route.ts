@@ -4,7 +4,6 @@ import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 
 interface SectionRecord {
-  id: string;
   fields: Record<string, string>;
 }
 
@@ -28,6 +27,7 @@ export async function POST(request: Request) {
     baseParams.append("fields[]", "Section");
     baseParams.append("fields[]", "TA Name");
     baseParams.append("fields[]", "TA Email");
+    baseParams.append("fields[]", "ID");
     baseParams.append("filterByFormula", "{Section}");
 
     const allRecords: SectionRecord[] = [];
@@ -122,7 +122,9 @@ export async function POST(request: Request) {
       const raw = record.fields["Section"].trim();
       const taName = record.fields["TA Name"] ?? "";
       const taEmail = record.fields["TA Email"] ?? "";
-      const id = record.fields["ID"] ?? "";
+      const id = record.fields["ID"]
+        ? parseInt(record.fields["ID"]).toString()
+        : null;
 
       const match = raw.match(
         /^(.+?):\s*([MTWRF]);?\s+(.*)\(([^)]+)\)\s+(.+)$/,
@@ -144,7 +146,7 @@ export async function POST(request: Request) {
            ON CONFLICT (id) DO UPDATE SET
             raw = excluded.raw,
             course_name = excluded.course_name,
-            section_name = excluded.section_name
+            section_name = excluded.section_name,
             day = excluded.day,
             time = excluded.time,
             location = excluded.location,

@@ -69,6 +69,7 @@ export async function POST(request: Request) {
     const insertStmts: D1PreparedStatement[] = [];
     const deleteStmts: D1PreparedStatement[] = [];
     const errors: string[] = [];
+    let message = "";
     let staleCount = 0;
 
     for (const record of allRecords) {
@@ -134,6 +135,7 @@ export async function POST(request: Request) {
               )
               .bind(user.id, section.id),
           );
+          message += `adding ${email} ${section.id}\n`;
         }
       }
 
@@ -146,6 +148,7 @@ export async function POST(request: Request) {
             )
             .bind(user.id, staleSectionId),
         );
+        message += `deleting ${email} ${staleSectionId}\n`;
       }
     }
 
@@ -154,7 +157,7 @@ export async function POST(request: Request) {
     }
 
     const summary =
-      `Processed ${allRecords.length} records. Added: ${insertStmts.length}, Removed stale: ${staleCount}` +
+      `Processed ${allRecords.length} records. Added: ${insertStmts.length}, Removed stale: ${staleCount}\n${message}` +
       (errors.length > 0 ? `\nErrors:\n${errors.join("\n")}` : "");
 
     return new Response(summary, { status: 200 });
