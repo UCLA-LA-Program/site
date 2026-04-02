@@ -1,19 +1,5 @@
 import { AGREEMENT_OPTIONS, FieldEntry } from "./options";
 
-export const TA_NONSENSITIVE_TEXT_FIELDS = [
-  {
-    value: "ta_strengths",
-    label: "What are the LA's strengths currently?",
-    required: true,
-  },
-  {
-    value: "ta_improve",
-    label: "What can the LA improve currently?",
-    required: true,
-  },
-  { value: "ta_comments", label: "Any additional comments?", required: false },
-] as const;
-
 export const TA_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
   {
     value: "ta_comfortable",
@@ -83,4 +69,18 @@ export const TA_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
     required: true,
     options: AGREEMENT_OPTIONS,
   },
+] as const;
+
+export const TA_NONSENSITIVE_TEXT_FIELDS = [
+  {
+    value: "ta_strengths",
+    label: "What are the LA's strengths currently?",
+    required: true,
+  },
+  {
+    value: "ta_improve",
+    label: "What can the LA improve currently?",
+    required: true,
+  },
+  { value: "ta_comments", label: "Any additional comments?", required: false },
 ] as const;

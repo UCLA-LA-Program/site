@@ -1,14 +1,5 @@
 import { FieldEntry, IMPROVEMENT_OPTIONS, AGREEMENT_OPTIONS } from "./options";
 
-export const EQ_NONSENSITIVE_TEXT_FIELDS = [
-  {
-    value: "eq_comments",
-    label:
-      "Are there any final comments you'd like to share with your LA now that the quarter is coming to an end?",
-    required: true,
-  },
-] as const;
-
 export const EQ_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
   {
     value: "eq_approachability",
@@ -81,5 +72,14 @@ export const EQ_SENSITIVE_QUESTIONS: FieldEntry[] = [
       "My group in discussion section helped me feel more like I can rely on other students for academic support.",
     required: true,
     options: AGREEMENT_OPTIONS,
+  },
+] as const;
+
+export const EQ_NONSENSITIVE_TEXT_FIELDS = [
+  {
+    value: "eq_comments",
+    label:
+      "Are there any final comments you'd like to share with your LA now that the quarter is coming to an end?",
+    required: true,
   },
 ] as const;

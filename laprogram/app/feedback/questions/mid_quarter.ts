@@ -1,33 +1,5 @@
 import { FieldEntry, AGREEMENT_OPTIONS } from "./options";
 
-export const MQ_NONSENSITIVE_TEXT_FIELDS = [
-  {
-    value: "mq_strengths",
-    label: "What are your LA's strengths?",
-    required: true,
-  },
-  {
-    value: "mq_improve",
-    label: "How can your LA improve to help you learn more?",
-    required: true,
-  },
-] as const;
-
-export const MQ_SENSITIVE_TEXT_FIELDS = [
-  {
-    value: "mq_course_change",
-    label:
-      "What would you change about this course to improve how LAs help you learn?",
-    required: true,
-  },
-  {
-    value: "mq_study_habits",
-    label:
-      "Is there anything you want to change about your own learning or study habits to improve your learning in this course?",
-    required: false,
-  },
-] as const;
-
 export const MQ_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
   {
     value: "mq_approachable",
@@ -93,5 +65,33 @@ export const MQ_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
       "This course allows LAs to facilitate learning by having students work in small groups.",
     required: true,
     options: AGREEMENT_OPTIONS,
+  },
+] as const;
+
+export const MQ_NONSENSITIVE_TEXT_FIELDS = [
+  {
+    value: "mq_strengths",
+    label: "What are your LA's strengths?",
+    required: true,
+  },
+  {
+    value: "mq_improve",
+    label: "How can your LA improve to help you learn more?",
+    required: true,
+  },
+] as const;
+
+export const MQ_SENSITIVE_TEXT_FIELDS = [
+  {
+    value: "mq_course_change",
+    label:
+      "What would you change about this course to improve how LAs help you learn?",
+    required: true,
+  },
+  {
+    value: "mq_study_habits",
+    label:
+      "Is there anything you want to change about your own learning or study habits to improve your learning in this course?",
+    required: false,
   },
 ] as const;
