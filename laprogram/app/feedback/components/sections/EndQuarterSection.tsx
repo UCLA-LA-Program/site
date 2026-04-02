@@ -15,7 +15,7 @@ import {
   EQ_NONSENSITIVE_TEXT_FIELDS,
 } from "../../questions/end_quarter";
 
-export const EndOfQuarterSection = withForm({
+export const EndQuarterSection = withForm({
   defaultValues,
   validators: { onSubmit: feedbackFormSchema },
   render: ({ form }) => (

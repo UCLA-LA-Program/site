@@ -48,7 +48,7 @@ function buildDateTabs(
   return tabs;
 }
 
-export default function SignUp({
+export function SignUp({
   activeRound,
   quarterStart,
   roundWeeks,

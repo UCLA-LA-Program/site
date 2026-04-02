@@ -2,7 +2,7 @@ import "server-only";
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
-export default async function sendMagicLink(email: string, url: string) {
+export async function sendMagicLink(email: string, url: string) {
   const { env } = await getCloudflareContext({ async: true });
 
   const name = await env.data

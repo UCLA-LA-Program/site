@@ -50,7 +50,7 @@ const CRON_JOBS = [
 
 type JobStatus = "idle" | "running" | "success" | "error";
 
-export default function Admin() {
+export function Admin() {
   const { data, mutate } = useSWR<ConfigData>("/api/config", fetcher);
   const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher);
   const [jobStatuses, setJobStatuses] = useState<Record<string, JobStatus>>({});

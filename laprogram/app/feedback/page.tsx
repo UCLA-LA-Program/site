@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { FeedbackForm } from "./components/FeedbackForm";
-import ContactUs from "@/components/ContactUs";
+import { ContactUs } from "@/components/ContactUs";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import {
   ROLE_OPTIONS,

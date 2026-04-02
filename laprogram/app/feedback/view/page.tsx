@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
-import FeedbackView from "./FeedbackView";
+import { FeedbackView } from "./FeedbackView";
 
 export const metadata: Metadata = {
   title: "View Feedback",

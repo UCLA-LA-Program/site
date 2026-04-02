@@ -8,7 +8,7 @@ import {
   OBSERVATION_ROUND_WEEKS_PREFIX,
   QUARTER_START_KEY,
 } from "@/lib/constants";
-import SignUp from "./SignUp";
+import { SignUp } from "./SignUp";
 
 export const metadata: Metadata = {
   title: "Observation Sign-Ups",
@@ -43,9 +43,8 @@ export default async function ObservationsPage() {
 
   const quarterStart = (await env.config.get(QUARTER_START_KEY)) ?? "";
   const roundWeeksRaw =
-    (await env.config.get(
-      `${OBSERVATION_ROUND_WEEKS_PREFIX}${activeRound}`,
-    )) ?? "";
+    (await env.config.get(`${OBSERVATION_ROUND_WEEKS_PREFIX}${activeRound}`)) ??
+    "";
   const roundWeeks = roundWeeksRaw
     .split(",")
     .map((w) => w.trim())

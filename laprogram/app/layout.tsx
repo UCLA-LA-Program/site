@@ -11,7 +11,7 @@ import { UserMenu } from "@/components/UserMenu";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { ObservationsMenu } from "@/components/ObservationsMenu";
-import ContactUs from "@/components/ContactUs";
+import { ContactUs } from "@/components/ContactUs";
 import { ThemeProvider } from "@/components/ThemeProvider";
 
 export const metadata: Metadata = {

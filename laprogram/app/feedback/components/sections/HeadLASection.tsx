@@ -19,7 +19,7 @@ import {
 } from "../../questions/head_la";
 import { LA_HEAD_TYPE_OPTIONS } from "../../questions/options";
 
-export const LAHeadLASection = withForm({
+export const HeadLASection = withForm({
   defaultValues,
   validators: { onSubmit: feedbackFormSchema },
   render: ({ form }) => (

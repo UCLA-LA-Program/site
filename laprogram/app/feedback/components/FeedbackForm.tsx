@@ -13,10 +13,10 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { ClosingSection } from "./sections/ClosingSection";
-import { EndOfQuarterSection } from "./sections/EndOfQuarterSection";
+import { EndQuarterSection } from "./sections/EndQuarterSection";
 import { MidQuarterSection } from "./sections/MidQuarterSection";
 import { TASection } from "./sections/TASection";
-import { LAHeadLASection } from "./sections/LAHeadLASection";
+import { HeadLASection } from "./sections/HeadLASection";
 import { ObservationSection } from "./sections/ObservationSection";
 
 import { useAppForm } from "../form";
@@ -450,9 +450,7 @@ export function FeedbackForm({
                 {feedbackType === "la_observation" && (
                   <ObservationSection form={form} />
                 )}
-                {feedbackType === "la_head_la" && (
-                  <LAHeadLASection form={form} />
-                )}
+                {feedbackType === "la_head_la" && <HeadLASection form={form} />}
               </>
             )
           }
@@ -476,7 +474,7 @@ export function FeedbackForm({
                   <MidQuarterSection form={form} />
                 )}
                 {feedbackType === "end_of_quarter" && (
-                  <EndOfQuarterSection form={form} />
+                  <EndQuarterSection form={form} />
                 )}
                 <FieldSeparator />
                 <ClosingSection form={form} />

@@ -85,7 +85,7 @@ function buildTables(positions: Position[]): TableDef[] {
   return tables;
 }
 
-export default function FeedbackView() {
+export function FeedbackView() {
   const { data: feedback } = useSWR<AnonFeedback[]>("/api/feedback", fetcher, {
     suspense: true,
     fallbackData: [],

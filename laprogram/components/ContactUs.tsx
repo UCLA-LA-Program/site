@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export default function ContactUs() {
+export function ContactUs() {
   return (
     <Link
       href="/contact"

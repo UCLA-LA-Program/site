@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
-import Login from "./Login";
+import { Login } from "./Login";
 
 export const metadata: Metadata = {
   title: "Login",

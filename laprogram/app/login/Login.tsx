@@ -16,7 +16,7 @@ import { useState, useEffect, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-export default function Login({ callbackURL }: { callbackURL?: string }) {
+export function Login({ callbackURL }: { callbackURL?: string }) {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [cooldown, setCooldown] = useState(0);
