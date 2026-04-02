@@ -85,6 +85,10 @@ export default function Settings() {
 
       <div className="space-y-4">
         <label className="font-medium text-lg">Headshot</label>
+        <p className="text-xs text-muted-foreground">
+          This image will be used to help identify you for
+          observations/feedback. Please choose a professional headshot.
+        </p>
         <div className="flex items-center gap-6">
           <button
             type="button"
@@ -129,7 +133,9 @@ export default function Settings() {
           </div>
         </div>
         <p className="text-xs text-muted-foreground">
-          JPEG, PNG, or WebP. Max 2 MB.
+          JPEG, PNG, or WebP. Max 2 MB. The site will automatically crop/zoom
+          your upload for you, but a square image is the easiest way to get it
+          right!
         </p>
       </div>
     </div>
