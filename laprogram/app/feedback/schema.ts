@@ -1,22 +1,30 @@
 import { z } from "zod";
 import { isValid as luhnIsValid } from "luhn-js";
 import {
-  type FieldEntry,
-  OBSERVATION_NONSENSITIVE_QUESTIONS,
-  MID_QUARTER_NONSENSITIVE_QUESTIONS,
-  END_OF_QUARTER_NONSENSITIVE_QUESTIONS,
+  EQ_NONSENSITIVE_QUESTIONS,
   EQ_SENSITIVE_QUESTIONS,
-  TA_NONSENSITIVE_QUESTIONS,
+  EQ_NONSENSITIVE_TEXT_FIELDS,
+} from "./questions/end_quarter";
+import {
   LA_PED_NONSENSITIVE_QUESTIONS,
   LA_LCC_NONSENSITIVE_QUESTIONS,
-  OBS_NONSENSITIVE_TEXT_FIELDS,
-  OBS_SENSITIVE_TEXT_FIELDS,
+  LA_HEAD_NONSENSITIVE_TEXT_FIELDS,
+} from "./questions/head_la";
+import {
+  MQ_NONSENSITIVE_QUESTIONS,
   MQ_NONSENSITIVE_TEXT_FIELDS,
   MQ_SENSITIVE_TEXT_FIELDS,
-  EQ_NONSENSITIVE_TEXT_FIELDS,
+} from "./questions/mid_quarter";
+import {
+  OBS_NONSENSITIVE_QUESTIONS,
+  OBS_NONSENSITIVE_TEXT_FIELDS,
+  OBS_SENSITIVE_TEXT_FIELDS,
+} from "./questions/observation";
+import { FieldEntry } from "./questions/options";
+import {
+  TA_NONSENSITIVE_QUESTIONS,
   TA_NONSENSITIVE_TEXT_FIELDS,
-  LA_HEAD_NONSENSITIVE_TEXT_FIELDS,
-} from "./constants";
+} from "./questions/ta";
 
 const required = (msg: string) => z.string().min(1, msg);
 
@@ -76,13 +84,13 @@ const studentSharedFields = {
 };
 
 const mqFields = {
-  ...zodFromFields(MID_QUARTER_NONSENSITIVE_QUESTIONS),
+  ...zodFromFields(MQ_NONSENSITIVE_QUESTIONS),
   ...zodFromFields(MQ_NONSENSITIVE_TEXT_FIELDS),
   ...zodFromFields(MQ_SENSITIVE_TEXT_FIELDS),
 };
 
 const eqFields = {
-  ...zodFromFields(END_OF_QUARTER_NONSENSITIVE_QUESTIONS),
+  ...zodFromFields(EQ_NONSENSITIVE_QUESTIONS),
   ...zodFromFields(EQ_SENSITIVE_QUESTIONS),
   ...zodFromFields(EQ_NONSENSITIVE_TEXT_FIELDS),
 };
@@ -104,7 +112,7 @@ const obsFields = {
   obs_round: required("Please select a round"),
   obs_section: required("Please describe the observed section"),
   obs_la_position: required("Please select an LA position"),
-  ...zodFromFields(OBSERVATION_NONSENSITIVE_QUESTIONS),
+  ...zodFromFields(OBS_NONSENSITIVE_QUESTIONS),
   ...zodFromFields(OBS_NONSENSITIVE_TEXT_FIELDS),
   ...zodFromFields(OBS_SENSITIVE_TEXT_FIELDS),
 };

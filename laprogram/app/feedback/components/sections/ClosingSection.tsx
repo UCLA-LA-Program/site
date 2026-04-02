@@ -11,11 +11,6 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import {
-  BECOME_LA_OPTIONS,
-  GENDER_OPTIONS,
-  GROUP_OPTIONS,
-} from "../../constants";
-import {
   Combobox,
   ComboboxChip,
   ComboboxChips,
@@ -38,6 +33,11 @@ import {
   SelectValue,
   SelectGroup,
 } from "@/components/ui/select";
+import {
+  BECOME_LA_OPTIONS,
+  GENDER_OPTIONS,
+  GROUP_OPTIONS,
+} from "../../questions/options";
 
 export const ClosingSection = withForm({
   defaultValues,

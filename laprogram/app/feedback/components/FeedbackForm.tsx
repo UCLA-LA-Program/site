@@ -18,7 +18,6 @@ import { MidQuarterSection } from "./sections/MidQuarterSection";
 import { TASection } from "./sections/TASection";
 import { LAHeadLASection } from "./sections/LAHeadLASection";
 import { ObservationSection } from "./sections/ObservationSection";
-import { LA_POSITION_MAP } from "../constants";
 
 import { useAppForm } from "../form";
 import { defaultValues, feedbackFormSchema } from "../schema";
@@ -39,6 +38,7 @@ import { UserRound, LogIn } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
 import { IMAGE_SIZE } from "@/lib/constants";
+import { LA_POSITION_MAP } from "@/lib/constants";
 
 type Option = { value: string; label: string };
 

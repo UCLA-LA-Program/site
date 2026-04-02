@@ -3,10 +3,10 @@ import { FeedbackForm } from "./components/FeedbackForm";
 import ContactUs from "@/components/ContactUs";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import {
+  ROLE_OPTIONS,
   FEEDBACK_TYPE_OPTIONS,
   LA_FEEDBACK_TYPE_OPTIONS,
-  ROLE_OPTIONS,
-} from "./constants";
+} from "./questions/options";
 
 export const metadata: Metadata = {
   title: "Feedback",
@@ -67,11 +67,11 @@ export default async function FeedbackPage() {
             </p>
           ) : (
             <>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-2">
                 Thanks for providing feedback to LAs! If you have any issues
                 with this form, please <ContactUs />.
               </p>
-              <p className="mt-2 text-sm text-muted-foreground italic">
+              <p className="text-sm text-muted-foreground italic mb-5">
                 If you do not have an LA (or if your LA is a volunteer), but you
                 still want to receive credit from your instructor for filling
                 out this form, you can select &ldquo;No LA&rdquo; as the LA you

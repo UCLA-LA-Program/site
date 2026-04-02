@@ -7,9 +7,9 @@ import {
   FieldGroup,
   FieldLabel,
 } from "@/components/ui/field";
-import { ACTIVITIES } from "../../constants";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";
+import { ACTIVITY_OPTIONS } from "../../questions/options";
 
 export const ActivitiesField = withForm({
   defaultValues,
@@ -27,7 +27,7 @@ export const ActivitiesField = withForm({
             </FieldLabel>
             <FieldDescription>Check all that apply.</FieldDescription>
             <FieldGroup className="gap-2.5">
-              {ACTIVITIES.map(({ value, label }) => (
+              {ACTIVITY_OPTIONS.map(({ value, label }) => (
                 <Field key={value} orientation="horizontal">
                   <Checkbox
                     id={value}

@@ -1,12 +1,6 @@
 "use client";
 
 import type { FeedbackFormValues } from "../../schema";
-import {
-  LA_HEAD_TYPE_OPTIONS,
-  LA_LCC_NONSENSITIVE_QUESTIONS,
-  LA_PED_NONSENSITIVE_QUESTIONS,
-  LA_HEAD_NONSENSITIVE_TEXT_FIELDS,
-} from "../../constants";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Field,
@@ -18,6 +12,12 @@ import { LikertField } from "../fields/LikertField";
 import { TextareaFormField } from "../fields/TextareaFormField";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";
+import {
+  LA_PED_NONSENSITIVE_QUESTIONS,
+  LA_LCC_NONSENSITIVE_QUESTIONS,
+  LA_HEAD_NONSENSITIVE_TEXT_FIELDS,
+} from "../../questions/head_la";
+import { LA_HEAD_TYPE_OPTIONS } from "../../questions/options";
 
 export const LAHeadLASection = withForm({
   defaultValues,
