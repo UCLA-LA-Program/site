@@ -1,4 +1,7 @@
+export const MAINTENANCE_KEY = "MAINTENANCE_MODE";
+
 export const FEATURE_FLAGS = [
+  { key: MAINTENANCE_KEY, label: "Under Maintenance" },
   { key: "OBSERVATION_AVAILABILITY", label: "Observation Availability" },
   { key: "OBSERVATION_ROUND1_SIGNUP", label: "Observation Round 1 Sign-up" },
   { key: "OBSERVATION_ROUND2_SIGNUP", label: "Observation Round 2 Sign-up" },

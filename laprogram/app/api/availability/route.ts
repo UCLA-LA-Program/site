@@ -36,7 +36,7 @@ export async function POST(request: Request) {
 
     const assignment = await db
       .prepare(
-        "SELECT la_id FROM section_assignment WHERE la_id = ? AND full_section_name = ?"
+        "SELECT la_id FROM section_assignment WHERE la_id = ? AND section_id = ?",
       )
       .bind(userId, section_id)
       .first();
@@ -47,7 +47,7 @@ export async function POST(request: Request) {
 
     await db
       .prepare(
-        "DELETE FROM availability WHERE la_id = ? AND section_id = ? AND status = 'open'"
+        "DELETE FROM availability WHERE la_id = ? AND section_id = ? AND status = 'open'",
       )
       .bind(userId, section_id)
       .run();
@@ -56,9 +56,9 @@ export async function POST(request: Request) {
       const stmts = weeks.map((w) =>
         db
           .prepare(
-            "INSERT INTO availability (id, la_id, section_id, time, week, status) VALUES (?, ?, ?, ?, ?, 'open')"
+            "INSERT INTO availability (id, la_id, section_id, time, week, status) VALUES (?, ?, ?, ?, ?, 'open')",
           )
-          .bind(crypto.randomUUID(), userId, section_id, w.time, w.week)
+          .bind(crypto.randomUUID(), userId, section_id, w.time, w.week),
       );
       await db.batch(stmts);
     }
@@ -94,14 +94,14 @@ export async function GET(request: Request) {
     if (sectionId) {
       result = await db
         .prepare(
-          "SELECT id, section_id, time, week, status FROM availability WHERE la_id = ? AND section_id = ?"
+          "SELECT id, section_id, time, week, status FROM availability WHERE la_id = ? AND section_id = ?",
         )
         .bind(userId, sectionId)
         .all();
     } else {
       result = await db
         .prepare(
-          "SELECT id, section_id, time, week, status FROM availability WHERE la_id = ?"
+          "SELECT id, section_id, time, week, status FROM availability WHERE la_id = ?",
         )
         .bind(userId)
         .all();
