@@ -5,6 +5,43 @@ export type FieldEntry = {
   options?: readonly { value: string; label: string }[];
 };
 
+export const ROLE_OPTIONS = [
+  { value: "la", label: "an LA." },
+  { value: "student", label: "a student in an LA-supported course." },
+  { value: "ta", label: "a TA who interacts with an LA." },
+] as const;
+
+export const STUDENT_FEEDBACK_TYPE_OPTIONS = [
+  { value: "mid_quarter", label: "Student to LA Mid-Quarter Feedback" },
+  { value: "end_of_quarter", label: "Student to LA End-of-Quarter Feedback" },
+] as const;
+
+export const LA_FEEDBACK_TYPE_OPTIONS = [
+  { value: "la_observation", label: "LA Observation Feedback" },
+  { value: "la_head_la", label: "LA to Head LA Feedback" },
+] as const;
+
+export const LA_HEAD_TYPE_OPTIONS = [
+  { value: "ped_head", label: "Pedagogy Head LA" },
+  { value: "lcc", label: "LA Course Coordinator (LCC)" },
+  { value: "ped_lcc", label: "Both Ped Head and LCC" },
+] as const;
+
+export const OBSERVATION_ROUND_OPTIONS = [
+  { value: "round_1", label: "Observations Round 1 (Weeks 3-4)" },
+  { value: "round_2", label: "Observations Round 2 (Weeks 7-8)" },
+] as const;
+
+export const ACTIVITY_OPTIONS = [
+  { value: "discussion", label: "Discussion/Lab Section" },
+  {
+    value: "lecture",
+    label: "Lecture",
+  },
+  { value: "office_hours", label: "Office Hours" },
+  { value: "study_session", label: "Review/Study Session" },
+] as const;
+
 export const IMPROVEMENT_OPTIONS = [
   { value: "na", label: "N/A" },
   { value: "no_change", label: "No change, but still room to improve" },
@@ -39,28 +76,6 @@ export const OBSERVATION_OPTIONS = [
       "Most of the time (because the instructor was talking >50% of the time)",
   },
   { value: "always", label: "Always" },
-] as const;
-
-export const ROLE_OPTIONS = [
-  { value: "la", label: "an LA." },
-  { value: "student", label: "a student in an LA-supported course." },
-  { value: "ta", label: "a TA who interacts with an LA." },
-] as const;
-
-export const STUDENT_FEEDBACK_TYPE_OPTIONS = [
-  { value: "mid_quarter", label: "Student to LA Mid-Quarter Feedback" },
-  { value: "end_of_quarter", label: "Student to LA End-of-Quarter Feedback" },
-] as const;
-
-export const LA_FEEDBACK_TYPE_OPTIONS = [
-  { value: "la_observation", label: "LA Observation Feedback" },
-  { value: "la_head_la", label: "LA to Head LA Feedback" },
-] as const;
-
-export const LA_HEAD_TYPE_OPTIONS = [
-  { value: "ped_head", label: "Pedagogy Head LA" },
-  { value: "lcc", label: "LA Course Coordinator (LCC)" },
-  { value: "ped_lcc", label: "Both Ped Head and LCC" },
 ] as const;
 
 export const BECOME_LA_OPTIONS = [
@@ -116,19 +131,4 @@ export const GROUP_OPTIONS = [
   { value: "other_white", label: "Other White" },
   { value: "other", label: "Other (specify below)" },
   { value: "prefer_not_to_say", label: "Prefer not to say" },
-] as const;
-
-export const ACTIVITY_OPTIONS = [
-  { value: "discussion", label: "Discussion/Lab Section" },
-  {
-    value: "lecture",
-    label: "Lecture",
-  },
-  { value: "office_hours", label: "Office Hours" },
-  { value: "study_session", label: "Review/Study Session" },
-] as const;
-
-export const OBSERVATION_ROUND_OPTIONS = [
-  { value: "round_1", label: "Observations Round 1 (Weeks 3-4)" },
-  { value: "round_2", label: "Observations Round 2 (Weeks 7-8)" },
 ] as const;
