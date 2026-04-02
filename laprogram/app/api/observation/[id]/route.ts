@@ -4,9 +4,11 @@ import { headers } from "next/headers";
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> },
 ) {
   try {
+    const { env } = await getCloudflareContext({ async: true });
+
     const auth = await getAuth();
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -17,12 +19,11 @@ export async function DELETE(
     }
 
     const { id } = await params;
-    const { env } = await getCloudflareContext({ async: true });
     const db = env.data;
 
     const observation = await db
       .prepare(
-        "SELECT id, observer_id, observee_id, availability_id FROM observation WHERE id = ?"
+        "SELECT id, observer_id, observee_id, availability_id FROM observation WHERE id = ?",
       )
       .bind(id)
       .first<{
@@ -49,7 +50,7 @@ export async function DELETE(
         .bind(observation.availability_id),
       db
         .prepare(
-          "UPDATE availability SET status = 'open' WHERE la_id = ? AND status = 'hidden'"
+          "UPDATE availability SET status = 'open' WHERE la_id = ? AND status = 'hidden'",
         )
         .bind(observation.observee_id),
     ]);

@@ -7,32 +7,32 @@ const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
 const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 
 export async function POST(request: Request) {
-  const auth = await getAuth();
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return new Response("Unauthenticated user.", { status: 401 });
-  }
-
-  const formData = await request.formData();
-  const file = formData.get("file");
-
-  if (!(file instanceof File)) {
-    return new Response("No file provided.", { status: 400 });
-  }
-
-  if (!ALLOWED_TYPES.has(file.type)) {
-    return new Response("File must be JPEG, PNG, or WebP.", { status: 400 });
-  }
-
-  if (file.size > MAX_SIZE) {
-    return new Response("File must be under 2 MB.", { status: 400 });
-  }
-
   try {
     const { env } = getCloudflareContext();
+
+    const auth = await getAuth();
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      return new Response("Unauthenticated user.", { status: 401 });
+    }
+
+    const formData = await request.formData();
+    const file = formData.get("file");
+
+    if (!(file instanceof File)) {
+      return new Response("No file provided.", { status: 400 });
+    }
+
+    if (!ALLOWED_TYPES.has(file.type)) {
+      return new Response("File must be JPEG, PNG, or WebP.", { status: 400 });
+    }
+
+    if (file.size > MAX_SIZE) {
+      return new Response("File must be under 2 MB.", { status: 400 });
+    }
 
     const transformedImage = (
       await env.IMAGES?.input(file.stream())
