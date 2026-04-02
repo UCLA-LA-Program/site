@@ -94,4 +94,4 @@ export const MQ_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
     required: true,
     options: AGREEMENT_OPTIONS,
   },
-];
+] as const;

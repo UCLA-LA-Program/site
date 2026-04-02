@@ -65,7 +65,7 @@ export const EQ_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
     required: true,
     options: IMPROVEMENT_OPTIONS,
   },
-];
+] as const;
 
 export const EQ_SENSITIVE_QUESTIONS: FieldEntry[] = [
   {
@@ -82,4 +82,4 @@ export const EQ_SENSITIVE_QUESTIONS: FieldEntry[] = [
     required: true,
     options: AGREEMENT_OPTIONS,
   },
-];
+] as const;

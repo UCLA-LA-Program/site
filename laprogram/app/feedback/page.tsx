@@ -4,7 +4,7 @@ import ContactUs from "@/components/ContactUs";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import {
   ROLE_OPTIONS,
-  FEEDBACK_TYPE_OPTIONS,
+  STUDENT_FEEDBACK_TYPE_OPTIONS,
   LA_FEEDBACK_TYPE_OPTIONS,
 } from "./questions/options";
 
@@ -36,7 +36,7 @@ export default async function FeedbackPage() {
     }
   });
 
-  const feedbackTypeOptions = FEEDBACK_TYPE_OPTIONS.filter((o) => {
+  const feedbackTypeOptions = STUDENT_FEEDBACK_TYPE_OPTIONS.filter((o) => {
     switch (o.value) {
       case "mid_quarter":
         return on(mq);

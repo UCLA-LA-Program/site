@@ -83,4 +83,4 @@ export const TA_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
     required: true,
     options: AGREEMENT_OPTIONS,
   },
-];
+] as const;

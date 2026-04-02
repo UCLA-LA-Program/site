@@ -53,7 +53,14 @@ const activitiesColumn: Column = {
   header: "LA-Supported Activities",
   render: (val) => {
     if (!Array.isArray(val)) return val as React.ReactNode;
-    return val.map((v: string) => activityMap.get(v) ?? v).join(", ");
+    return val
+      .map(
+        (v: string) =>
+          activityMap.get(
+            v as "discussion" | "lecture" | "office_hours" | "study_session",
+          ) ?? v,
+      )
+      .join(", ");
   },
 };
 

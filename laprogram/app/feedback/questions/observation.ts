@@ -75,7 +75,7 @@ export const OBS_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
     required: true,
     options: OBSERVATION_OPTIONS,
   },
-];
+] as const;
 
 export const OBS_NONSENSITIVE_TEXT_FIELDS = [
   {

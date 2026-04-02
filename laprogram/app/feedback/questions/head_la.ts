@@ -1,19 +1,5 @@
 import { FieldEntry, AGREEMENT_OPTIONS } from "./options";
 
-export const LA_HEAD_NONSENSITIVE_TEXT_FIELDS = [
-  {
-    value: "la_strengths",
-    label: "What are some of your Head LA's strengths?",
-    required: true,
-  },
-  {
-    value: "la_improve",
-    label:
-      "What can your Head LA improve upon or do differently to better support you?",
-    required: true,
-  },
-] as const;
-
 export const LA_PED_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
   {
     value: "la_ped_seminars",
@@ -49,7 +35,7 @@ export const LA_PED_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
     required: true,
     options: AGREEMENT_OPTIONS,
   },
-];
+] as const;
 
 export const LA_LCC_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
   {
@@ -86,4 +72,18 @@ export const LA_LCC_NONSENSITIVE_QUESTIONS: FieldEntry[] = [
     required: true,
     options: AGREEMENT_OPTIONS,
   },
-];
+] as const;
+
+export const LA_HEAD_NONSENSITIVE_TEXT_FIELDS = [
+  {
+    value: "la_head_strengths",
+    label: "What are some of your Head LA's strengths?",
+    required: true,
+  },
+  {
+    value: "la_head_improve",
+    label:
+      "What can your Head LA improve upon or do differently to better support you?",
+    required: true,
+  },
+] as const;
