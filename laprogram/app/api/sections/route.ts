@@ -26,7 +26,7 @@ export async function GET() {
         section.location,
         course.position
         FROM section_assignment
-        JOIN section ON section_assignment.full_section_name = section.id
+        JOIN section ON section_assignment.section_id = section.id
         JOIN course ON course.userId = section_assignment.la_id
           AND course.course_name = section.course_name
         WHERE section_assignment.la_id = ?`,

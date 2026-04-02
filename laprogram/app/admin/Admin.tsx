@@ -23,7 +23,8 @@ const CRON_JOBS = [
   {
     key: "init-las",
     label: "Sync LAs",
-    description: "Fetch LA roster from Airtable and sync users + course assignments.",
+    description:
+      "Fetch LA roster from Airtable and sync users + course assignments.",
   },
   {
     key: "init-sections",
@@ -33,7 +34,8 @@ const CRON_JOBS = [
   {
     key: "init-section-assignments",
     label: "Sync Section Assignments",
-    description: "Link LAs to their assigned sections. Run after syncing LAs and sections.",
+    description:
+      "Link LAs to their assigned sections. Run after syncing LAs and sections.",
   },
   {
     key: "process-withdraws",
@@ -202,6 +204,9 @@ export default function Admin() {
           <p className="text-sm text-muted-foreground">
             Trigger Airtable sync jobs manually. Run them in order: LAs first,
             then sections, then section assignments.
+          </p>
+          <p className="text-2xl font-bold">
+            DO NOT TOUCH THESE UNLESS YOU WANT THINGS TO BREAK
           </p>
           {CRON_JOBS.map((job) => {
             const status = jobStatuses[job.key] ?? "idle";
