@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 
 export async function POST(request: Request) {
   try {
+    const { env } = await getCloudflareContext({ async: true });
+
     const auth = await getAuth();
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -13,7 +15,6 @@ export async function POST(request: Request) {
       return new Response("Unauthenticated user.", { status: 401 });
     }
 
-    const { env } = await getCloudflareContext({ async: true });
     const db = env.data;
     const observerId = session.user.id;
 
@@ -27,10 +28,16 @@ export async function POST(request: Request) {
 
     const slot = await db
       .prepare(
-        "SELECT id, la_id, section_id, time, week FROM availability WHERE id = ? AND status = 'open'"
+        "SELECT id, la_id, section_id, time, week FROM availability WHERE id = ? AND status = 'open'",
       )
       .bind(availability_id)
-      .first<{ id: string; la_id: string; section_id: string; time: string; week: string }>();
+      .first<{
+        id: string;
+        la_id: string;
+        section_id: string;
+        time: string;
+        week: string;
+      }>();
 
     if (!slot) {
       return new Response("Slot not found or not available", { status: 404 });
@@ -45,7 +52,7 @@ export async function POST(request: Request) {
     await db.batch([
       db
         .prepare(
-          "INSERT INTO observation (id, observer_id, observee_id, availability_id) VALUES (?, ?, ?, ?)"
+          "INSERT INTO observation (id, observer_id, observee_id, availability_id) VALUES (?, ?, ?, ?)",
         )
         .bind(observationId, observerId, slot.la_id, availability_id),
       db
@@ -53,14 +60,14 @@ export async function POST(request: Request) {
         .bind(availability_id),
       db
         .prepare(
-          "UPDATE availability SET status = 'hidden' WHERE la_id = ? AND status = 'open'"
+          "UPDATE availability SET status = 'hidden' WHERE la_id = ? AND status = 'open'",
         )
         .bind(slot.la_id),
     ]);
 
     const openCount = await db
       .prepare(
-        "SELECT COUNT(*) as count FROM availability WHERE la_id = ? AND status = 'open'"
+        "SELECT COUNT(*) as count FROM availability WHERE la_id = ? AND status = 'open'",
       )
       .bind(slot.la_id)
       .first<{ count: number }>();
@@ -68,7 +75,7 @@ export async function POST(request: Request) {
     if (openCount && openCount.count === 0) {
       await db
         .prepare(
-          "UPDATE availability SET status = 'open' WHERE la_id = ? AND status = 'hidden'"
+          "UPDATE availability SET status = 'open' WHERE la_id = ? AND status = 'hidden'",
         )
         .bind(slot.la_id)
         .run();
@@ -85,6 +92,8 @@ export async function POST(request: Request) {
 
 export async function GET() {
   try {
+    const { env } = await getCloudflareContext({ async: true });
+
     const auth = await getAuth();
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -94,7 +103,6 @@ export async function GET() {
       return new Response("Unauthenticated user.", { status: 401 });
     }
 
-    const { env } = await getCloudflareContext({ async: true });
     const db = env.data;
 
     const result = await db
@@ -113,7 +121,7 @@ export async function GET() {
         JOIN availability ON observation.availability_id = availability.id
         JOIN section ON availability.section_id = section.id
         JOIN user ON observation.observee_id = user.id
-        WHERE observation.observer_id = ?`
+        WHERE observation.observer_id = ?`,
       )
       .bind(session.user.id)
       .all();

@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 
 export async function GET() {
   try {
+    const { env } = await getCloudflareContext({ async: true });
+
     const auth = await getAuth();
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -13,7 +15,6 @@ export async function GET() {
       return new Response("Unauthenticated user.", { status: 401 });
     }
 
-    const { env } = await getCloudflareContext({ async: true });
     const db = env.data;
 
     const result = await db

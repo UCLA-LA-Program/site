@@ -4,17 +4,17 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
 
 export async function GET() {
-  const auth = await getAuth();
-  const session = await auth.api.getSession({
-    headers: await headers(),
-  });
-
-  if (!session) {
-    return new Response("Unauthenticated user.", { status: 401 });
-  }
-
   try {
     const { env } = getCloudflareContext();
+    const auth = await getAuth();
+    const session = await auth.api.getSession({
+      headers: await headers(),
+    });
+
+    if (!session) {
+      return new Response("Unauthenticated user.", { status: 401 });
+    }
+
     const result = await env.data
       ?.prepare(
         `SELECT course_name, position

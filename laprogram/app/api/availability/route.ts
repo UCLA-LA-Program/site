@@ -14,6 +14,8 @@ interface AvailabilityPayload {
 
 export async function POST(request: Request) {
   try {
+    const { env } = await getCloudflareContext({ async: true });
+
     const auth = await getAuth();
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -23,7 +25,6 @@ export async function POST(request: Request) {
       return new Response("Unauthenticated user.", { status: 401 });
     }
 
-    const { env } = await getCloudflareContext({ async: true });
     const db = env.data;
     const userId = session.user.id;
 
@@ -74,6 +75,8 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
+    const { env } = await getCloudflareContext({ async: true });
+
     const auth = await getAuth();
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -83,7 +86,6 @@ export async function GET(request: Request) {
       return new Response("Unauthenticated user.", { status: 401 });
     }
 
-    const { env } = await getCloudflareContext({ async: true });
     const db = env.data;
     const userId = session.user.id;
 

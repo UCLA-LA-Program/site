@@ -6,6 +6,8 @@ export async function POST(
   request: Request,
   { params }: { params: Promise<{ key: string }> },
 ) {
+  const { env } = await getCloudflareContext({ async: true });
+
   const auth = await getAuth();
   const session = await auth.api.getSession({
     headers: await headers(),
@@ -22,7 +24,6 @@ export async function POST(
   }
 
   const body = await request.text();
-  const { env } = await getCloudflareContext({ async: true });
   await env.config.put(key, body);
 
   return new Response(null, { status: 200 });

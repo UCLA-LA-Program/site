@@ -5,6 +5,8 @@ import { Availability } from "@/types/db";
 
 export async function GET() {
   try {
+    const { env } = await getCloudflareContext({ async: true });
+
     const auth = await getAuth();
     const session = await auth.api.getSession({
       headers: await headers(),
@@ -12,7 +14,6 @@ export async function GET() {
     if (!session) {
       return new Response("Unauthenticated user.", { status: 401 });
     }
-    const { env } = await getCloudflareContext({ async: true });
     const result = await env.data
       .prepare(
         `SELECT user.name AS la_name,
