@@ -168,8 +168,6 @@ export default function SignUp() {
     }
   }
 
-  const loading = !openSlots || !myObservations;
-
   const confirmedCount = myObservations?.length ?? 0;
 
   // Filter available: exclude pending adds
@@ -206,17 +204,12 @@ export default function SignUp() {
     return (DAY_ORDER[a.day] ?? 9) - (DAY_ORDER[b.day] ?? 9);
   });
 
-  if (loading) {
-    return (
-      <div className="mx-auto w-full max-w-6xl px-8 py-10">
-        <h1 className="mb-2 text-2xl font-bold">Observation Sign-Ups</h1>
-        <p className="text-sm text-muted-foreground">Loading slots...</p>
-      </div>
-    );
+  if (!openSlots || !myObservations) {
+    return <></>;
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-8 py-10">
+    <div className="mx-auto w-full max-w-6xl px-8 py-10 animate-fade-up">
       <h1 className="mb-2 text-2xl font-bold">Observation Sign-Ups</h1>
       <p className="mb-5 text-lg">
         You are signing up for{" "}
