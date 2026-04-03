@@ -8,11 +8,12 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, X, CalendarClock, User, Check, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { fetcher } from "@/lib/utils";
-import { QUARTER_START_KEY } from "@/lib/constants";
+import {
+  QUARTER_START_KEY,
+  OBSERVATION_ACTIVE_ROUND_KEY,
+  OBSERVATION_ROUND_WEEKS_PREFIX,
+} from "@/lib/constants";
 import type { Availability } from "@/types/db";
-
-const CURRENT_ROUND = 2;
-const REQUIRED_PER_ROUND = 2;
 
 const DAY_ORDER: Record<string, number> = {
   Monday: 0,
@@ -91,6 +92,19 @@ export default function SignUp() {
   const toDate = (week: string | number, day: string) =>
     weekDayToDate(week, day, quarterStart);
 
+  const activeRound = parseInt(
+    config?.[OBSERVATION_ACTIVE_ROUND_KEY] ?? "0",
+    10,
+  );
+  const roundWeeksRaw =
+    config?.[`${OBSERVATION_ROUND_WEEKS_PREFIX}${activeRound}`] ?? "";
+  const allowedWeeks = new Set(
+    roundWeeksRaw
+      .split(",")
+      .map((w) => w.trim())
+      .filter(Boolean),
+  );
+
   const { data: openSlots, mutate: mutateOpen } = useSWR<Availability[]>(
     "/api/observation/open",
     fetcher,
@@ -168,12 +182,16 @@ export default function SignUp() {
     }
   }
 
-  const confirmedCount = myObservations?.length ?? 0;
-
-  // Filter available: exclude pending adds
-  const available = (openSlots ?? []).filter((s) => !pendingAdds.has(s.id));
-  const pendingAddSlots = (openSlots ?? []).filter((s) =>
-    pendingAdds.has(s.id),
+  // Filter available: by active round weeks, exclude pending adds
+  const available = (openSlots ?? []).filter(
+    (s) =>
+      !pendingAdds.has(s.id) &&
+      (allowedWeeks.size === 0 || allowedWeeks.has(s.week)),
+  );
+  const pendingAddSlots = (openSlots ?? []).filter(
+    (s) =>
+      pendingAdds.has(s.id) &&
+      (allowedWeeks.size === 0 || allowedWeeks.has(s.week)),
   );
 
   // Confirmed observations minus pending removes
@@ -210,16 +228,21 @@ export default function SignUp() {
 
   return (
     <div className="mx-auto w-full max-w-6xl px-8 py-10 animate-fade-up">
-      <h1 className="mb-2 text-2xl font-bold">Observation Sign-Ups</h1>
-      <p className="mb-5 text-lg">
-        You are signing up for{" "}
-        <span className="font-semibold">Round {CURRENT_ROUND}</span>{" "}
-        observations.{" "}
-        <span className="text-sm text-muted-foreground">
-          ({confirmedCount}/{REQUIRED_PER_ROUND} confirmed)
-        </span>
+      <h1 className="mb-2 text-2xl font-bold">
+        Observation Sign-Ups{activeRound > 0 && ` — Round ${activeRound}`}
+      </h1>
+      <p className="mb-5 text-sm text-muted-foreground">
+        Refer to{" "}
+        <a
+          href="https://docs.google.com/document/d/17pDksikMm5NBOjJuHOeH4i9YGslF1A9HYFr879N1814/edit?tab=t.0"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="underline-offset-2 hover:underline text-primary"
+        >
+          Feedback and Growth
+        </a>{" "}
+        to find out how many observations you need to complete.
       </p>
-
       <div className="flex gap-8">
         {/* Left: available slots */}
         <div className="min-w-0 flex-1">

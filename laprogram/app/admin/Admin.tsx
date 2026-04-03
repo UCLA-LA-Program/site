@@ -5,14 +5,15 @@ import useSWR from "swr";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
-import { LA_POSITION_OPTIONS } from "@/app/feedback/constants";
 import {
   FEATURE_FLAGS,
-  OBSERVATION_COUNT_PREFIX,
+  OBSERVATION_ACTIVE_ROUND_KEY,
+  OBSERVATION_ROUND_WEEKS_PREFIX,
   QUARTER_START_KEY,
 } from "@/lib/constants";
 import { fetcher } from "@/lib/utils";
@@ -160,42 +161,61 @@ export default function Admin() {
             </CardContent>
           </Card>
 
-          {/* Observation counts per position */}
+          {/* Observation rounds */}
           <Card size="sm">
             <CardHeader>
-              <CardTitle>Observations Per Round</CardTitle>
+              <CardTitle>Observation Rounds</CardTitle>
             </CardHeader>
             <CardContent>
-              <div>
-                {LA_POSITION_OPTIONS.map((pos) => {
-                  const key = `${OBSERVATION_COUNT_PREFIX}${pos.value}`;
-                  return (
-                    <div key={pos.value} className="flex items-center">
-                      <label
-                        htmlFor={`obs-${pos.value}`}
-                        className="flex-1 text-sm font-medium"
-                      >
-                        {pos.label}
-                        <span className="ml-2 text-xs text-muted-foreground">
-                          {pos.value}
-                        </span>
-                      </label>
-                      <Input
-                        id={`obs-${pos.value}`}
-                        type="number"
-                        min={0}
-                        className="w-20"
-                        value={data[key] ?? "0"}
-                        onChange={(e) => {
-                          const num = parseInt(e.target.value, 10);
-                          if (!isNaN(num) && num >= 0)
-                            setValue(key, String(num));
-                        }}
-                      />
-                    </div>
-                  );
-                })}
+              <div className="flex items-center gap-2 justify-between mb-2">
+                <span className="text-sm font-medium shrink-0">
+                  Active round
+                </span>
+                <RadioGroup
+                  value={data[OBSERVATION_ACTIVE_ROUND_KEY] ?? "0"}
+                  onValueChange={(v) =>
+                    setValue(OBSERVATION_ACTIVE_ROUND_KEY, v)
+                  }
+                  className="flex justify-end gap-4"
+                >
+                  {[
+                    { value: "0", label: "Disabled" },
+                    { value: "1", label: "Round 1" },
+                    { value: "2", label: "Round 2" },
+                  ].map((opt) => (
+                    <label
+                      key={opt.value}
+                      className="flex cursor-pointer items-center gap-1.5 text-sm"
+                    >
+                      <RadioGroupItem value={opt.value} />
+                      {opt.label}
+                    </label>
+                  ))}
+                </RadioGroup>
               </div>
+              {[1, 2].map((round) => {
+                const key = `${OBSERVATION_ROUND_WEEKS_PREFIX}${round}`;
+                return (
+                  <div key={round} className="flex items-center gap-2">
+                    <label
+                      htmlFor={`round-weeks-${round}`}
+                      className="flex-1 text-sm font-medium"
+                    >
+                      Round {round} weeks
+                      <span className="ml-2 text-xs text-muted-foreground">
+                        e.g. 3,4,5
+                      </span>
+                    </label>
+                    <Input
+                      id={`round-weeks-${round}`}
+                      className="w-32"
+                      placeholder="3,4"
+                      value={data[key] ?? ""}
+                      onChange={(e) => setValue(key, e.target.value)}
+                    />
+                  </div>
+                );
+              })}
             </CardContent>
           </Card>
         </TabsContent>
