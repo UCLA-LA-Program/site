@@ -37,7 +37,6 @@ export async function GET() {
       return new Response("[]", { status: 200 });
     }
 
-    const placeholders = weeks.map(() => "?").join(", ");
     const result = await env.data
       .prepare(
         `SELECT user.name AS la_name,
@@ -54,7 +53,7 @@ export async function GET() {
         JOIN section ON availability.section_id = section.id
         WHERE availability.status = 'open'
         AND availability.la_id <> ?
-        AND availability.week IN (${placeholders})`,
+        AND availability.week IN (${weeks.map(() => "?").join(", ")})`,
       )
       .bind(session.user.id, ...weeks)
       .all<Availability>();

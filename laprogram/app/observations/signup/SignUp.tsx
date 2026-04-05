@@ -5,7 +5,17 @@ import useSWR from "swr";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import { Plus, X, CalendarClock, User, Check, MapPin } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Plus,
+  X,
+  CalendarClock,
+  User,
+  Check,
+  MapPin,
+  UserRound,
+} from "lucide-react";
+import Image from "next/image";
 import { toast } from "sonner";
 import { fetcher } from "@/lib/utils";
 import {
@@ -23,20 +33,7 @@ const DAY_ORDER: Record<string, number> = {
   Friday: 4,
 };
 
-const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
+const DAY_NAMES = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"];
 
 function weekDayToDate(
   week: string | number,
@@ -47,12 +44,13 @@ function weekDayToDate(
   const dayOffset = DAY_ORDER[day] ?? 0;
   const date = new Date(quarterStart);
   date.setDate(date.getDate() + (weekNum - 1) * 7 + dayOffset);
-  return `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`;
+  return `${date.getMonth() + 1}/${date.getDate()}`;
 }
 
 type MyObservation = {
   id: string;
   observee_name: string;
+  observee_image: string | null;
   course_name: string;
   section_name: string;
   day: string;
@@ -81,6 +79,22 @@ function timeRangeLabel(time: string): string {
   return `${minutesToLabel(parseTime(start))}–${minutesToLabel(parseTime(end))}`;
 }
 
+type DateTab = { week: string; day: string; label: string };
+
+function buildDateTabs(weeks: string[], quarterStart: Date): DateTab[] {
+  const tabs: DateTab[] = [];
+  for (const week of weeks.sort((a, b) => parseInt(a) - parseInt(b))) {
+    for (const day of DAY_NAMES) {
+      tabs.push({
+        week,
+        day,
+        label: weekDayToDate(week, day, quarterStart),
+      });
+    }
+  }
+  return tabs;
+}
+
 export default function SignUp() {
   const { data: config } = useSWR<Record<string, string>>(
     "/api/config",
@@ -96,19 +110,33 @@ export default function SignUp() {
     config?.[OBSERVATION_ACTIVE_ROUND_KEY] ?? "0",
     10,
   );
-  const roundWeeksRaw =
-    config?.[`${OBSERVATION_ROUND_WEEKS_PREFIX}${activeRound}`] ?? "";
-  const allowedWeeks = new Set(
-    roundWeeksRaw
-      .split(",")
-      .map((w) => w.trim())
-      .filter(Boolean),
-  );
 
   const { data: openSlots, mutate: mutateOpen } = useSWR<Availability[]>(
     "/api/observation/open",
     fetcher,
   );
+
+  // Build tabs from configured round weeks (show all dates, even empty ones)
+  const roundWeeksRaw =
+    config?.[`${OBSERVATION_ROUND_WEEKS_PREFIX}${activeRound}`] ?? "";
+  const roundWeeks = roundWeeksRaw
+    .split(",")
+    .map((w) => w.trim())
+    .filter(Boolean)
+    .sort((a, b) => parseInt(a) - parseInt(b));
+  const dateTabs = buildDateTabs(roundWeeks, quarterStart);
+
+  // Count slots per tab
+  const slotCounts = new Map<string, number>();
+  for (const slot of openSlots ?? []) {
+    const key = `${slot.week}-${slot.day}`;
+    slotCounts.set(key, (slotCounts.get(key) ?? 0) + 1);
+  }
+
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+  const selectedTab =
+    activeTab ??
+    (dateTabs.length > 0 ? `${dateTabs[0].week}-${dateTabs[0].day}` : "");
   const { data: myObservations, mutate: mutateObservations } = useSWR<
     MyObservation[]
   >("/api/observation", fetcher);
@@ -182,19 +210,17 @@ export default function SignUp() {
     }
   }
 
-  // Filter available: by active round weeks, exclude pending adds
+  // Parse selected tab
+  const [selWeek, selDay] = selectedTab.split("-", 2) as [string, string];
+
+  // Filter slots for the active tab, excluding pending adds
   const available = (openSlots ?? []).filter(
-    (s) =>
-      !pendingAdds.has(s.id) &&
-      (allowedWeeks.size === 0 || allowedWeeks.has(s.week)),
+    (s) => s.week === selWeek && s.day === selDay && !pendingAdds.has(s.id),
   );
-  const pendingAddSlots = (openSlots ?? []).filter(
-    (s) =>
-      pendingAdds.has(s.id) &&
-      (allowedWeeks.size === 0 || allowedWeeks.has(s.week)),
+  const pendingAddSlots = (openSlots ?? []).filter((s) =>
+    pendingAdds.has(s.id),
   );
 
-  // Confirmed observations minus pending removes
   const activeConfirmed = (myObservations ?? []).filter(
     (o) => !pendingRemoves.has(o.id),
   );
@@ -202,32 +228,12 @@ export default function SignUp() {
     pendingRemoves.has(o.id),
   );
 
-  // Group available slots by week+day
-  type DayGroup = {
-    week: string;
-    day: string;
-    slots: Availability[];
-  };
-  const groupMap = new Map<string, DayGroup>();
-  for (const slot of available) {
-    const key = `${slot.week}-${slot.day}`;
-    if (!groupMap.has(key)) {
-      groupMap.set(key, { week: slot.week, day: slot.day, slots: [] });
-    }
-    groupMap.get(key)!.slots.push(slot);
-  }
-  const dayGroups = [...groupMap.values()].sort((a, b) => {
-    const weekDiff = parseInt(a.week) - parseInt(b.week);
-    if (weekDiff !== 0) return weekDiff;
-    return (DAY_ORDER[a.day] ?? 9) - (DAY_ORDER[b.day] ?? 9);
-  });
-
   if (!openSlots || !myObservations) {
     return <></>;
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-8 py-10 animate-fade-up">
+    <div className="mx-auto w-full max-w-7xl px-8 py-10 animate-fade-up">
       <h1 className="mb-2 text-2xl font-bold">
         Observation Sign-Ups{activeRound > 0 && ` — Round ${activeRound}`}
       </h1>
@@ -243,22 +249,47 @@ export default function SignUp() {
         </a>{" "}
         to find out how many observations you need to complete.
       </p>
-      <div className="flex gap-8">
+      <div className="flex flex-col gap-8 lg:flex-row">
         {/* Left: available slots */}
         <div className="min-w-0 flex-1">
-          {dayGroups.length === 0 ? (
+          {dateTabs.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No observation slots are currently available.
+              No observation dates are currently available.
             </p>
           ) : (
-            <div className="space-y-6">
-              {dayGroups.map((group) => (
-                <div key={`${group.week}-${group.day}`}>
-                  <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                    {toDate(group.week, group.day)}
-                  </h3>
-                  <div className="space-y-2">
-                    {group.slots.map((slot) => (
+            <Tabs value={selectedTab} onValueChange={setActiveTab}>
+              <div className="mb-4 space-y-2">
+                {roundWeeks.map((week) => (
+                  <TabsList key={week}>
+                    <span className="px-2 text-xs text-muted-foreground">
+                      Wk {week}
+                    </span>
+                    {dateTabs
+                      .filter((tab) => tab.week === week)
+                      .map((tab) => {
+                        const count =
+                          slotCounts.get(`${tab.week}-${tab.day}`) ?? 0;
+                        return (
+                          <TabsTrigger
+                            key={`${tab.week}-${tab.day}`}
+                            value={`${tab.week}-${tab.day}`}
+                          >
+                            {tab.label} ({count})
+                          </TabsTrigger>
+                        );
+                      })}
+                  </TabsList>
+                ))}
+              </div>
+              {available.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No slots available for this date.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {available
+                    .sort((a, b) => a.time.localeCompare(b.time))
+                    .map((slot) => (
                       <div
                         key={slot.id}
                         className="flex items-center justify-between rounded-lg border px-4 py-3 text-sm"
@@ -271,9 +302,6 @@ export default function SignUp() {
                             </span>
                             <span className="text-muted-foreground">
                               {slot.course_name} {slot.section_name}
-                            </span>
-                            <span className="text-muted-foreground">
-                              {toDate(slot.week, slot.day)}
                             </span>
                           </div>
                           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
@@ -298,16 +326,15 @@ export default function SignUp() {
                         </Button>
                       </div>
                     ))}
-                  </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </Tabs>
           )}
         </div>
 
-        {/* Right sidebar */}
-        <div className="w-96 shrink-0">
-          <div className="sticky top-24 space-y-4">
+        {/* Sidebar: confirmed + pending changes (top on mobile, right on desktop) */}
+        <div className="order-first w-full shrink-0 lg:order-last lg:w-[32rem]">
+          <div className="space-y-4 lg:sticky lg:top-24">
             {/* Confirmed box */}
             <Card>
               <CardHeader>
@@ -323,23 +350,41 @@ export default function SignUp() {
                     {activeConfirmed.map((obs) => (
                       <div
                         key={obs.id}
-                        className="flex items-start justify-between gap-2"
+                        className="flex items-start justify-between gap-3"
                       >
-                        <div className="min-w-0 text-sm">
-                          <p className="font-medium">{obs.observee_name}</p>
-                          <p className="text-muted-foreground">
-                            {obs.course_name} {obs.section_name} &middot;{" "}
-                            {toDate(obs.week, obs.day)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {timeRangeLabel(obs.time)} &middot; {obs.location}
-                          </p>
-                          {obs.ta_name && (
-                            <p className="text-xs text-muted-foreground">
-                              TA: {obs.ta_name}
-                              {obs.ta_email && <span> ({obs.ta_email})</span>}
+                        <div className="flex min-w-0 gap-3">
+                          <div className="size-20 shrink-0 overflow-hidden rounded-sm border bg-muted">
+                            {obs.observee_image ? (
+                              <Image
+                                src={obs.observee_image}
+                                alt={obs.observee_name}
+                                width={300}
+                                height={300}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <UserRound
+                                className="h-full w-full text-muted-foreground"
+                                strokeWidth={1}
+                              />
+                            )}
+                          </div>
+                          <div className="min-w-0 text-sm">
+                            <p className="font-medium">{obs.observee_name}</p>
+                            <p className="text-muted-foreground">
+                              {obs.course_name} {obs.section_name} &middot;{" "}
+                              {toDate(obs.week, obs.day)}
                             </p>
-                          )}
+                            <p className="text-xs text-muted-foreground">
+                              {timeRangeLabel(obs.time)} &middot; {obs.location}
+                            </p>
+                            {obs.ta_name && (
+                              <p className="text-xs text-muted-foreground">
+                                TA: {obs.ta_name}
+                                {obs.ta_email && <span> ({obs.ta_email})</span>}
+                              </p>
+                            )}
+                          </div>
                         </div>
                         <Button
                           size="icon-xs"
