@@ -17,6 +17,8 @@ import {
   QUARTER_START_KEY,
 } from "@/lib/constants";
 import { fetcher } from "@/lib/utils";
+import type { RosterUser } from "@/app/api/admin/roster/route";
+import Image from "next/image";
 
 type ConfigData = Record<string, string>;
 
@@ -49,6 +51,7 @@ type JobStatus = "idle" | "running" | "success" | "error";
 
 export default function Admin() {
   const { data, mutate } = useSWR<ConfigData>("/api/config", fetcher);
+  const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher);
   const [jobStatuses, setJobStatuses] = useState<Record<string, JobStatus>>({});
   const [jobResults, setJobResults] = useState<Record<string, string>>({});
 
@@ -97,6 +100,7 @@ export default function Admin() {
       <Tabs defaultValue="config">
         <TabsList>
           <TabsTrigger value="config">Configuration</TabsTrigger>
+          <TabsTrigger value="roster">Roster</TabsTrigger>
           <TabsTrigger value="sync">Airtable Sync</TabsTrigger>
         </TabsList>
 
@@ -218,6 +222,55 @@ export default function Admin() {
               })}
             </CardContent>
           </Card>
+        </TabsContent>
+
+        <TabsContent value="roster">
+          {roster ? (
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="pb-2 font-medium">Photo</th>
+                  <th className="pb-2 font-medium">Name</th>
+                  <th className="pb-2 font-medium">Email</th>
+                  <th className="pb-2 font-medium">Courses</th>
+                </tr>
+              </thead>
+              <tbody>
+                {roster.map((user) => (
+                  <tr key={user.id} className="border-b last:border-0">
+                    <td className="py-2">
+                      {user.image ? (
+                        <Image
+                          height={300}
+                          width={300}
+                          src={user.image}
+                          alt={user.name}
+                          className="h-28 w-28 rounded-md object-cover mr-3"
+                        />
+                      ) : (
+                        <div className="flex h-28 w-28 items-center justify-center rounded-md bg-muted text-xl mr-3 font-medium">
+                          {user.name
+                            .split(" ")
+                            .map((n) => n[0])
+                            .join("")
+                            .slice(0, 2)}
+                        </div>
+                      )}
+                    </td>
+                    <td className="py-2 font-medium">{user.name}</td>
+                    <td className="py-2 text-muted-foreground">{user.email}</td>
+                    <td className="py-2 text-muted-foreground">
+                      {user.courses
+                        .map((c) => `${c.course_name} (${c.position})`)
+                        .join(", ")}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          ) : (
+            <p className="text-sm text-muted-foreground">Loading roster…</p>
+          )}
         </TabsContent>
 
         <TabsContent value="sync" className="space-y-3">
