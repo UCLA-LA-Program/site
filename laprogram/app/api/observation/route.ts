@@ -1,6 +1,7 @@
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
+import { parseTimeRange, getQuarterStart } from "@/lib/utils";
 
 export async function POST(request: Request) {
   try {
@@ -127,7 +128,21 @@ export async function GET() {
       .bind(session.user.id)
       .all();
 
-    return Response.json(result.results);
+    const quarterStart = await getQuarterStart(env);
+    const observations = result.results.map((r) => {
+      const { week, day, time, ...rest } = r as Record<string, unknown>;
+      return {
+        ...rest,
+        ...parseTimeRange(
+          week as string,
+          day as string,
+          time as string,
+          quarterStart,
+        ),
+      };
+    });
+
+    return Response.json(observations);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(`Failed to fetch observations: ${message}`, {

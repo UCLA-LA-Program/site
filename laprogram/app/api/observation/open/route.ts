@@ -1,11 +1,17 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { Availability } from "@/types/db";
+import { AvailabilityRow } from "@/types/db";
 import {
   OBSERVATION_ACTIVE_ROUND_KEY,
   OBSERVATION_ROUND_WEEKS_PREFIX,
 } from "@/lib/constants";
+import {
+  getObsDate,
+  getQuarterStart,
+  daysUntil,
+  parseTimeRange,
+} from "@/lib/utils";
 
 export async function GET() {
   try {
@@ -56,13 +62,22 @@ export async function GET() {
         AND availability.week IN (${weeks.map(() => "?").join(", ")})`,
       )
       .bind(session.user.id, ...weeks)
-      .all<Availability>();
+      .all<AvailabilityRow>();
 
     if (!result) {
       return new Response("Encountered database error.", { status: 500 });
     }
 
-    return new Response(JSON.stringify(result.results), { status: 200 });
+    // Filter out slots that have already passed, and parse time ranges
+    const quarterStart = await getQuarterStart(env);
+    const slots = result.results
+      .filter((s) => daysUntil(getObsDate(s.week, s.day, quarterStart)) >= 0)
+      .map(({ week, day, time, ...rest }) => ({
+        ...rest,
+        ...parseTimeRange(week, day, time, quarterStart),
+      }));
+
+    return new Response(JSON.stringify(slots), { status: 200 });
   } catch {
     return new Response("Encountered database error.", { status: 500 });
   }

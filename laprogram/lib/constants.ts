@@ -14,3 +14,13 @@ export const QUARTER_START_KEY = "QUARTER_START";
 
 export const OBSERVATION_ACTIVE_ROUND_KEY = "OBSERVATION_ACTIVE_ROUND";
 export const OBSERVATION_ROUND_WEEKS_PREFIX = "OBSERVATION_ROUND_WEEKS_";
+
+export const DAY_INDEX = [
+  "Monday",
+  "Tuesday",
+  "Wednesday",
+  "Thursday",
+  "Friday",
+  "Saturday",
+  "Sunday",
+];

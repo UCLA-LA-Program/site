@@ -1,6 +1,7 @@
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
+import { getObsDate, getQuarterStart, daysUntil } from "@/lib/utils";
 
 export async function DELETE(
   request: Request,
@@ -23,7 +24,12 @@ export async function DELETE(
 
     const observation = await db
       .prepare(
-        "SELECT id, observer_id, observee_id, availability_id FROM observation WHERE id = ?",
+        `SELECT observation.id, observation.observer_id, observation.observee_id, observation.availability_id,
+        availability.week, section.day, availability.time
+        FROM observation
+        JOIN availability ON observation.availability_id = availability.id
+        JOIN section ON availability.section_id = section.id
+        WHERE observation.id = ?`,
       )
       .bind(id)
       .first<{
@@ -31,6 +37,9 @@ export async function DELETE(
         observer_id: string;
         observee_id: string;
         availability_id: string;
+        week: string;
+        day: string;
+        time: string;
       }>();
 
     if (!observation) {
@@ -39,6 +48,16 @@ export async function DELETE(
 
     if (observation.observer_id !== session.user.id) {
       return new Response("Not authorized to cancel this observation", {
+        status: 403,
+      });
+    }
+
+    // Block deletion if observation is within 3 calendar days
+    const quarterStart = await getQuarterStart(env);
+    const obsDate = getObsDate(observation.week, observation.day, quarterStart);
+
+    if (daysUntil(obsDate) < 3) {
+      return new Response("Cannot cancel observations within 3 days", {
         status: 403,
       });
     }
