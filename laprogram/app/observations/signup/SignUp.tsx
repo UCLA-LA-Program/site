@@ -1,108 +1,96 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useSWR from "swr";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Plus, X, CalendarClock, User, Check, MapPin } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Plus, CalendarClock, User, MapPin } from "lucide-react";
 import { toast } from "sonner";
-import { fetcher } from "@/lib/utils";
-import { QUARTER_START_KEY } from "@/lib/constants";
+import { fetcher, getObsDate } from "@/lib/utils";
+import { format, differenceInCalendarDays, isSameDay } from "date-fns";
+import { DAY_INDEX } from "@/lib/constants";
 import type { Availability } from "@/types/db";
+import type { MyObservation } from "./types";
+import { formatTime } from "./types";
+import { PendingChanges } from "./components/PendingChanges";
+import {
+  FutureObservations,
+  UpcomingObservations,
+  PastObservations,
+} from "./components/ObservationCard";
 
-const CURRENT_ROUND = 2;
-const REQUIRED_PER_ROUND = 2;
+const UPCOMING_DAYS = 3;
 
-const DAY_ORDER: Record<string, number> = {
-  Monday: 0,
-  Tuesday: 1,
-  Wednesday: 2,
-  Thursday: 3,
-  Friday: 4,
-};
-
-const MONTH_NAMES = [
-  "Jan",
-  "Feb",
-  "Mar",
-  "Apr",
-  "May",
-  "Jun",
-  "Jul",
-  "Aug",
-  "Sep",
-  "Oct",
-  "Nov",
-  "Dec",
-];
-
-function weekDayToDate(
-  week: string | number,
-  day: string,
-  quarterStart: Date,
-): string {
-  const weekNum = typeof week === "string" ? parseInt(week) : week;
-  const dayOffset = DAY_ORDER[day] ?? 0;
-  const date = new Date(quarterStart);
-  date.setDate(date.getDate() + (weekNum - 1) * 7 + dayOffset);
-  return `${MONTH_NAMES[date.getMonth()]} ${date.getDate()}`;
+function hydrateDates<T extends { time_start: Date; time_end: Date }>(
+  items: T[],
+): T[] {
+  return items.map((item) => ({
+    ...item,
+    time_start: new Date(item.time_start),
+    time_end: new Date(item.time_end),
+  }));
 }
 
-type MyObservation = {
-  id: string;
-  observee_name: string;
-  course_name: string;
-  section_name: string;
-  day: string;
-  week: string;
-  time: string;
-  location: string;
-  ta_name: string | null;
-  ta_email: string | null;
-};
+type DateTab = { week: string; date: Date; label: string };
 
-function parseTime(timeStr: string): number {
-  const [h, m] = timeStr.split(":").map(Number);
-  return h * 60 + m;
+function buildDateTabs(
+  weeks: string[],
+  quarterStart: Date | string,
+): DateTab[] {
+  const tabs: DateTab[] = [];
+  for (const week of weeks.sort((a, b) => parseInt(a) - parseInt(b))) {
+    for (const day of DAY_INDEX.slice(0, 5)) {
+      const date = getObsDate(week, day, quarterStart);
+      if (date > new Date()) {
+        tabs.push({ week, date, label: format(date, "M/d") });
+      }
+    }
+  }
+  return tabs;
 }
 
-function minutesToLabel(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  const period = h >= 12 ? "PM" : "AM";
-  const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
-  return `${displayH}:${m.toString().padStart(2, "0")} ${period}`;
-}
-
-function timeRangeLabel(time: string): string {
-  const [start, end] = time.split("-");
-  return `${minutesToLabel(parseTime(start))}–${minutesToLabel(parseTime(end))}`;
-}
-
-export default function SignUp() {
-  const { data: config } = useSWR<Record<string, string>>(
-    "/api/config",
-    fetcher,
-  );
-  const quarterStart = config?.[QUARTER_START_KEY]
-    ? new Date(config[QUARTER_START_KEY] + "T00:00:00")
-    : new Date();
-  const toDate = (week: string | number, day: string) =>
-    weekDayToDate(week, day, quarterStart);
-
+export default function SignUp({
+  activeRound,
+  quarterStart,
+  roundWeeks,
+}: {
+  activeRound: number;
+  quarterStart: string;
+  roundWeeks: string[];
+}) {
   const { data: openSlots, mutate: mutateOpen } = useSWR<Availability[]>(
     "/api/observation/open",
-    fetcher,
+    (url: string) => fetcher(url).then(hydrateDates<Availability>),
   );
-  const { data: myObservations, mutate: mutateObservations } = useSWR<
-    MyObservation[]
-  >("/api/observation", fetcher);
+
+  const dateTabs = buildDateTabs(roundWeeks, quarterStart);
+
+  // Count slots per tab from ISO dates
+  const slotCounts = new Map<string, number>();
+  for (const slot of openSlots ?? []) {
+    const label = format(slot.time_start, "M/d");
+    slotCounts.set(label, (slotCounts.get(label) ?? 0) + 1);
+  }
+
+  const [activeTab, setActiveTab] = useState<string | null>(null);
+  const selectedTab =
+    activeTab ?? (dateTabs.length > 0 ? dateTabs[0].label : "");
+  const { data: myObservations, mutate: mutateObservations } = useSWR(
+    "/api/observation",
+    (url: string) => fetcher(url).then(hydrateDates<MyObservation>),
+  );
 
   const [pendingAdds, setPendingAdds] = useState<Set<string>>(new Set());
   const [pendingRemoves, setPendingRemoves] = useState<Set<string>>(new Set());
 
   const hasPendingChanges = pendingAdds.size > 0 || pendingRemoves.size > 0;
+
+  useEffect(() => {
+    if (!hasPendingChanges) return;
+    const handler = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasPendingChanges]);
 
   function addSlot(id: string) {
     setPendingAdds((prev) => new Set(prev).add(id));
@@ -168,81 +156,112 @@ export default function SignUp() {
     }
   }
 
-  const loading = !openSlots || !myObservations;
+  // Find selected date from tabs
+  const selectedDate = dateTabs.find((t) => t.label === selectedTab)?.date;
 
-  const confirmedCount = myObservations?.length ?? 0;
-
-  // Filter available: exclude pending adds
-  const available = (openSlots ?? []).filter((s) => !pendingAdds.has(s.id));
+  // Filter slots for the active tab, excluding pending adds
+  const available = (openSlots ?? []).filter(
+    (s) =>
+      selectedDate &&
+      isSameDay(s.time_start, selectedDate) &&
+      !pendingAdds.has(s.id),
+  );
   const pendingAddSlots = (openSlots ?? []).filter((s) =>
     pendingAdds.has(s.id),
   );
 
-  // Confirmed observations minus pending removes
-  const activeConfirmed = (myObservations ?? []).filter(
-    (o) => !pendingRemoves.has(o.id),
-  );
-  const pendingRemoveSlots = (myObservations ?? []).filter((o) =>
-    pendingRemoves.has(o.id),
-  );
+  // Split observations into past / upcoming (3 days) / future
+  const pastObs: MyObservation[] = [];
+  const upcomingObs: MyObservation[] = [];
+  const futureObs: MyObservation[] = [];
 
-  // Group available slots by week+day
-  type DayGroup = {
-    week: string;
-    day: string;
-    slots: Availability[];
-  };
-  const groupMap = new Map<string, DayGroup>();
-  for (const slot of available) {
-    const key = `${slot.week}-${slot.day}`;
-    if (!groupMap.has(key)) {
-      groupMap.set(key, { week: slot.week, day: slot.day, slots: [] });
+  for (const obs of myObservations ?? []) {
+    if (obs.time_start < new Date()) {
+      pastObs.push(obs);
+    } else if (
+      differenceInCalendarDays(obs.time_start, new Date()) < UPCOMING_DAYS
+    ) {
+      upcomingObs.push(obs);
+    } else {
+      futureObs.push(obs);
     }
-    groupMap.get(key)!.slots.push(slot);
   }
-  const dayGroups = [...groupMap.values()].sort((a, b) => {
-    const weekDiff = parseInt(a.week) - parseInt(b.week);
-    if (weekDiff !== 0) return weekDiff;
-    return (DAY_ORDER[a.day] ?? 9) - (DAY_ORDER[b.day] ?? 9);
-  });
 
-  if (loading) {
-    return (
-      <div className="mx-auto w-full max-w-6xl px-8 py-10">
-        <h1 className="mb-2 text-2xl font-bold">Observation Sign-Ups</h1>
-        <p className="text-sm text-muted-foreground">Loading slots...</p>
-      </div>
-    );
+  const activeFuture = futureObs.filter((o) => !pendingRemoves.has(o.id));
+  const pendingRemoveSlots = futureObs.filter((o) => pendingRemoves.has(o.id));
+
+  if (!openSlots || !myObservations) {
+    return <></>;
   }
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-8 py-10">
-      <h1 className="mb-2 text-2xl font-bold">Observation Sign-Ups</h1>
-      <p className="mb-5 text-lg">
-        You are signing up for{" "}
-        <span className="font-semibold">Round {CURRENT_ROUND}</span>{" "}
-        observations.{" "}
-        <span className="text-sm text-muted-foreground">
-          ({confirmedCount}/{REQUIRED_PER_ROUND} confirmed)
-        </span>
-      </p>
-
-      <div className="flex gap-8">
+    <div className="mx-auto w-full max-w-7xl px-8 py-10 animate-fade-up">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
         {/* Left: available slots */}
         <div className="min-w-0 flex-1">
-          {dayGroups.length === 0 ? (
+          <h1 className="mb-2 text-2xl font-bold">
+            Observation Sign-Ups{activeRound > 0 && ` — Round ${activeRound}`}
+          </h1>
+          <p className="mb-2 text-sm text-muted-foreground">
+            Refer to{" "}
+            <a
+              href="https://docs.google.com/document/d/17pDksikMm5NBOjJuHOeH4i9YGslF1A9HYFr879N1814/edit?tab=t.0"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline-offset-2 hover:underline text-primary"
+            >
+              Feedback and Growth
+            </a>{" "}
+            to find out how many observations you need to complete.
+          </p>
+          <ul className="mb-5 list-disc space-y-1 pl-5 text-sm">
+            <li>
+              <span className="font-medium text-foreground">Upcoming</span> —
+              observations within the next 3 days. These cannot be cancelled.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Future</span> —
+              observations more than 3 days away. You can cancel and reschedule
+              these.
+            </li>
+            <li>
+              <span className="font-medium text-foreground">Past</span> —
+              completed observations for your records.
+            </li>
+          </ul>
+          {dateTabs.length === 0 ? (
             <p className="text-sm text-muted-foreground">
-              No observation slots are currently available.
+              No observation dates are currently available.
             </p>
           ) : (
-            <div className="space-y-6">
-              {dayGroups.map((group) => (
-                <div key={`${group.week}-${group.day}`}>
-                  <h3 className="mb-2 text-sm font-medium text-muted-foreground">
-                    {toDate(group.week, group.day)}
-                  </h3>
-                  <div className="space-y-2">
-                    {group.slots.map((slot) => (
+            <Tabs value={selectedTab} onValueChange={setActiveTab}>
+              <div className="mb-4 space-y-2">
+                {roundWeeks.map((week) => (
+                  <TabsList key={week}>
+                    <span className="px-2 text-xs text-muted-foreground">
+                      Wk {week}
+                    </span>
+                    {dateTabs
+                      .filter((tab) => tab.week === week)
+                      .map((tab) => (
+                        <TabsTrigger key={tab.label} value={tab.label}>
+                          {tab.label} ({slotCounts.get(tab.label) ?? 0})
+                        </TabsTrigger>
+                      ))}
+                  </TabsList>
+                ))}
+              </div>
+              {available.length === 0 ? (
+                <p className="text-sm text-muted-foreground">
+                  No slots available for this date.
+                </p>
+              ) : (
+                <div className="space-y-2">
+                  {available
+                    .sort(
+                      (a, b) => a.time_start.getTime() - b.time_start.getTime(),
+                    )
+                    .map((slot) => (
                       <div
                         key={slot.id}
                         className="flex items-center justify-between rounded-lg border px-4 py-3 text-sm"
@@ -256,14 +275,12 @@ export default function SignUp() {
                             <span className="text-muted-foreground">
                               {slot.course_name} {slot.section_name}
                             </span>
-                            <span className="text-muted-foreground">
-                              {toDate(slot.week, slot.day)}
-                            </span>
                           </div>
                           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <CalendarClock className="size-3" />
-                              {timeRangeLabel(slot.time)}
+                              {formatTime(slot.time_start)}–
+                              {formatTime(slot.time_end)}
                             </span>
                             <span className="flex items-center gap-1">
                               <MapPin className="size-3" />
@@ -282,154 +299,32 @@ export default function SignUp() {
                         </Button>
                       </div>
                     ))}
-                  </div>
                 </div>
-              ))}
-            </div>
+              )}
+            </Tabs>
           )}
         </div>
 
-        {/* Right sidebar */}
-        <div className="w-96 shrink-0">
-          <div className="sticky top-24 space-y-4">
-            {/* Confirmed box */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Confirmed Observations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {activeConfirmed.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    No confirmed observations yet.
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {activeConfirmed.map((obs) => (
-                      <div
-                        key={obs.id}
-                        className="flex items-start justify-between gap-2"
-                      >
-                        <div className="min-w-0 text-sm">
-                          <p className="font-medium">{obs.observee_name}</p>
-                          <p className="text-muted-foreground">
-                            {obs.course_name} {obs.section_name} &middot;{" "}
-                            {toDate(obs.week, obs.day)}
-                          </p>
-                          <p className="text-xs text-muted-foreground">
-                            {timeRangeLabel(obs.time)} &middot; {obs.location}
-                          </p>
-                          {obs.ta_name && (
-                            <p className="text-xs text-muted-foreground">
-                              TA: {obs.ta_name}
-                              {obs.ta_email && <span> ({obs.ta_email})</span>}
-                            </p>
-                          )}
-                        </div>
-                        <Button
-                          size="icon-xs"
-                          variant="ghost"
-                          onClick={() => markForRemoval(obs.id)}
-                        >
-                          <X className="size-3.5" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+        {/* Sidebar (top on mobile, right on desktop) */}
+        <div className="order-first w-full shrink-0 lg:order-last lg:w-[32rem]">
+          <div className="space-y-4 lg:sticky lg:top-24">
+            <FutureObservations
+              observations={activeFuture}
+              onRemove={markForRemoval}
+            />
 
-            {/* Pending changes box */}
             {hasPendingChanges && (
-              <Card className="border-primary/30">
-                <CardHeader>
-                  <CardTitle>Pending Changes</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {/* Pending adds */}
-                  {pendingAddSlots.length > 0 && (
-                    <div>
-                      <h3 className="mb-2 text-xs font-medium text-green-600">
-                        Adding
-                      </h3>
-                      <div className="space-y-3">
-                        {pendingAddSlots.map((slot) => (
-                          <div
-                            key={slot.id}
-                            className="flex items-start justify-between gap-2"
-                          >
-                            <div className="min-w-0 text-sm">
-                              <p className="font-medium">{slot.la_name}</p>
-                              <p className="text-muted-foreground">
-                                {slot.course_name} {slot.section_name} &middot;{" "}
-                                {toDate(slot.week, slot.day)}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {timeRangeLabel(slot.time)} &middot;{" "}
-                                {slot.location}
-                              </p>
-                            </div>
-                            <Button
-                              size="icon-xs"
-                              variant="ghost"
-                              onClick={() => undoAdd(slot.id)}
-                            >
-                              <X className="size-3.5" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Pending removes */}
-                  {pendingRemoveSlots.length > 0 && (
-                    <div>
-                      <h3 className="mb-2 text-xs font-medium text-red-600">
-                        Removing
-                      </h3>
-                      <div className="space-y-3">
-                        {pendingRemoveSlots.map((obs) => (
-                          <div
-                            key={obs.id}
-                            className="flex items-start justify-between gap-2"
-                          >
-                            <div className="min-w-0 text-sm">
-                              <p className="font-medium line-through opacity-60">
-                                {obs.observee_name}
-                              </p>
-                              <p className="text-muted-foreground line-through opacity-60">
-                                {obs.course_name} {obs.section_name} &middot;{" "}
-                                {toDate(obs.week, obs.day)}
-                              </p>
-                              <p className="text-xs text-muted-foreground line-through opacity-60">
-                                {timeRangeLabel(obs.time)} &middot;{" "}
-                                {obs.location}
-                              </p>
-                            </div>
-                            <Button
-                              size="icon-xs"
-                              variant="ghost"
-                              onClick={() => undoRemoval(obs.id)}
-                              title="Undo removal"
-                            >
-                              <Plus className="size-3.5" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <Separator />
-
-                  <Button className="w-full" size="sm" onClick={confirmChanges}>
-                    <Check className="size-3.5" />
-                    Confirm Changes
-                  </Button>
-                </CardContent>
-              </Card>
+              <PendingChanges
+                addSlots={pendingAddSlots}
+                removeSlots={pendingRemoveSlots}
+                onUndoAdd={undoAdd}
+                onUndoRemove={undoRemoval}
+                onConfirm={confirmChanges}
+              />
             )}
+
+            <UpcomingObservations observations={upcomingObs} />
+            <PastObservations observations={pastObs} />
           </div>
         </div>
       </div>

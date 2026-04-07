@@ -2,10 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import {
   FEATURE_FLAGS,
-  OBSERVATION_COUNT_PREFIX,
+  OBSERVATION_ACTIVE_ROUND_KEY,
+  OBSERVATION_ROUND_WEEKS_PREFIX,
   QUARTER_START_KEY,
 } from "@/lib/constants";
-import { LA_POSITION_OPTIONS } from "@/app/feedback/constants";
 
 export async function GET(request: NextRequest) {
   const { env } = await getCloudflareContext({ async: true });
@@ -21,8 +21,10 @@ export async function GET(request: NextRequest) {
   // Fetch all known keys
   const keys = [
     ...FEATURE_FLAGS.map((f) => f.key),
-    ...LA_POSITION_OPTIONS.map((p) => `${OBSERVATION_COUNT_PREFIX}${p.value}`),
     QUARTER_START_KEY,
+    OBSERVATION_ACTIVE_ROUND_KEY,
+    `${OBSERVATION_ROUND_WEEKS_PREFIX}1`,
+    `${OBSERVATION_ROUND_WEEKS_PREFIX}2`,
   ];
 
   const entries = Object.fromEntries(await env.config.get(keys));

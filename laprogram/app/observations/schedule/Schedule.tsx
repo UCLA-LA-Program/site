@@ -286,16 +286,11 @@ export default function Schedule() {
   }
 
   if (!sections || !availability || !schedules) {
-    return (
-      <div className="mx-auto w-full max-w-4xl px-8 py-10">
-        <h1 className="mb-2 text-2xl font-bold">Schedule Observations</h1>
-        <p className="text-sm text-muted-foreground">Loading sections...</p>
-      </div>
-    );
+    return <></>;
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-8 py-10">
+    <div className="mx-auto w-full max-w-4xl px-8 py-10 animate-fade-up">
       <div className="mb-8 flex items-start justify-between">
         <div>
           <h1 className="mb-2 text-2xl font-bold">Schedule Observations</h1>

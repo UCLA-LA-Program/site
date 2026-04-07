@@ -11,6 +11,7 @@ import { fetcher } from "@/lib/utils";
 import type { Position } from "@/types/db";
 import { LA_POSITION_MAP } from "@/app/feedback/constants";
 import ContactUs from "@/components/ContactUs";
+import { useTheme } from "next-themes";
 
 export default function Settings() {
   const { data: session, isPending } = authClient.useSession();
@@ -20,6 +21,7 @@ export default function Settings() {
   });
   const [preview, setPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
+  const { theme, setTheme } = useTheme();
 
   if (!session || isPending) return <></>;
 
@@ -54,16 +56,16 @@ export default function Settings() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-lg px-8 py-10">
-      <h1 className="mb-6 text-2xl font-bold">Settings</h1>
+    <div className="mx-auto w-full max-w-lg space-y-8 px-8 py-10">
+      <h1 className="text-2xl font-bold">Settings</h1>
 
-      <div className="mb-8">
+      <div className="space-y-1">
         <span className="font-medium text-lg">I am...</span>
         <p>{session.user.name}</p>
         <p>{session.user.email}</p>
       </div>
 
-      <div className="mb-8">
+      <div className="space-y-1">
         <span className="font-medium text-lg">Courses</span>
         {positions && positions.length > 0 ? (
           <ul className="space-y-1">
@@ -75,7 +77,7 @@ export default function Settings() {
             ))}
           </ul>
         ) : (
-          <p className="mt-1">No courses listed.</p>
+          <p>No courses listed.</p>
         )}
         <p className="text-xs text-muted-foreground mt-3">
           Please <ContactUs /> if inaccurate information has not resolved itself
@@ -83,9 +85,13 @@ export default function Settings() {
         </p>
       </div>
 
-      <div className="space-y-4">
+      <div className="space-y-2">
         <label className="font-medium text-lg">Headshot</label>
-        <div className="flex items-center gap-6">
+        <p className="text-xs text-muted-foreground">
+          This image will be used to help identify you for
+          observations/feedback. Please choose a professional headshot.
+        </p>
+        <div className="flex items-center gap-6 mt-4">
           <button
             type="button"
             onClick={() => fileRef.current?.click()}
@@ -128,9 +134,36 @@ export default function Settings() {
             )}
           </div>
         </div>
-        <p className="text-xs text-muted-foreground">
-          JPEG, PNG, or WebP. Max 2 MB.
+        <p className="text-xs text-muted-foreground mt-4">
+          JPEG, PNG, or WebP. Max 2 MB. The site will automatically crop/zoom
+          your upload for you, but a square image is the easiest way to get it
+          right!
         </p>
+      </div>
+
+      <div className="space-y-2">
+        <label className="font-medium text-lg">Appearance</label>
+        <div className="flex gap-1 rounded-lg border p-1 w-fit">
+          {(
+            [
+              { value: "light", emoji: "🌞" },
+              { value: "system", emoji: "💻" },
+              { value: "dark", emoji: "🌚" },
+            ] as const
+          ).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setTheme(opt.value)}
+              className={`rounded-md px-3 py-1.5 text-4xl transition-colors ${
+                theme === opt.value ? "bg-accent" : "hover:bg-accent/50"
+              }`}
+              title={opt.value.charAt(0).toUpperCase() + opt.value.slice(1)}
+            >
+              {opt.emoji}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );

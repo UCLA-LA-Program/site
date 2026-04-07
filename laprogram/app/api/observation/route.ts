@@ -1,6 +1,12 @@
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
+import {
+  parseTimeRange,
+  getQuarterStart,
+  getObsDate,
+  daysUntil,
+} from "@/lib/utils";
 
 export async function POST(request: Request) {
   try {
@@ -28,7 +34,11 @@ export async function POST(request: Request) {
 
     const slot = await db
       .prepare(
-        "SELECT id, la_id, section_id, time, week FROM availability WHERE id = ? AND status = 'open'",
+        `SELECT availability.id, availability.la_id, availability.section_id,
+        availability.time, availability.week, section.day
+        FROM availability
+        JOIN section ON availability.section_id = section.id
+        WHERE availability.id = ? AND availability.status = 'open'`,
       )
       .bind(availability_id)
       .first<{
@@ -37,6 +47,7 @@ export async function POST(request: Request) {
         section_id: string;
         time: string;
         week: string;
+        day: string;
       }>();
 
     if (!slot) {
@@ -45,6 +56,13 @@ export async function POST(request: Request) {
 
     if (slot.la_id === observerId) {
       return new Response("Cannot observe yourself", { status: 400 });
+    }
+
+    const quarterStart = await getQuarterStart(env);
+    if (daysUntil(getObsDate(slot.week, slot.day, quarterStart)) <= 0) {
+      return new Response("Cannot sign up for past observations", {
+        status: 400,
+      });
     }
 
     const observationId = crypto.randomUUID();
@@ -109,6 +127,8 @@ export async function GET() {
       .prepare(
         `SELECT observation.id AS id,
         user.name AS observee_name,
+        user.email AS observee_email,
+        user.image AS observee_image,
         section.course_name AS course_name,
         section.section_name AS section_name,
         section.day AS day,
@@ -126,7 +146,21 @@ export async function GET() {
       .bind(session.user.id)
       .all();
 
-    return Response.json(result.results);
+    const quarterStart = await getQuarterStart(env);
+    const observations = result.results.map((r) => {
+      const { week, day, time, ...rest } = r as Record<string, unknown>;
+      return {
+        ...rest,
+        ...parseTimeRange(
+          week as string,
+          day as string,
+          time as string,
+          quarterStart,
+        ),
+      };
+    });
+
+    return Response.json(observations);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(`Failed to fetch observations: ${message}`, {

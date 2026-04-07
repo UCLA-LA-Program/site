@@ -19,6 +19,7 @@
     "better-auth": "^1.5.5",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "date-fns": "^4.1.0",
     "kysely": "^0.28.12",
     "kysely-d1": "^0.4.0",
     "lodash": "^4.17.23",

@@ -1,7 +1,17 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { Availability } from "@/types/db";
+import { AvailabilityRow } from "@/types/db";
+import {
+  OBSERVATION_ACTIVE_ROUND_KEY,
+  OBSERVATION_ROUND_WEEKS_PREFIX,
+} from "@/lib/constants";
+import {
+  getObsDate,
+  getQuarterStart,
+  daysUntil,
+  parseTimeRange,
+} from "@/lib/utils";
 
 export async function GET() {
   try {
@@ -14,6 +24,25 @@ export async function GET() {
     if (!session) {
       return new Response("Unauthenticated user.", { status: 401 });
     }
+
+    const activeRound = await env.config.get(OBSERVATION_ACTIVE_ROUND_KEY);
+    if (!activeRound || activeRound === "0") {
+      return new Response("[]", { status: 200 });
+    }
+
+    const weeksRaw =
+      (await env.config.get(
+        `${OBSERVATION_ROUND_WEEKS_PREFIX}${activeRound}`,
+      )) ?? "";
+    const weeks = weeksRaw
+      .split(",")
+      .map((w) => w.trim())
+      .filter(Boolean);
+
+    if (weeks.length === 0) {
+      return new Response("[]", { status: 200 });
+    }
+
     const result = await env.data
       .prepare(
         `SELECT user.name AS la_name,
@@ -28,17 +57,27 @@ export async function GET() {
         FROM availability
         JOIN user ON availability.la_id = user.id
         JOIN section ON availability.section_id = section.id
-        WHERE availability.status = 'open' 
-        AND availability.la_id <> ?1`,
+        WHERE availability.status = 'open'
+        AND availability.la_id <> ?
+        AND availability.week IN (${weeks.map(() => "?").join(", ")})`,
       )
-      .bind(session.user.id)
-      .all<Availability>();
+      .bind(session.user.id, ...weeks)
+      .all<AvailabilityRow>();
 
     if (!result) {
       return new Response("Encountered database error.", { status: 500 });
     }
 
-    return new Response(JSON.stringify(result.results), { status: 200 });
+    // Filter out slots that have already passed, and parse time ranges
+    const quarterStart = await getQuarterStart(env);
+    const slots = result.results
+      .filter((s) => daysUntil(getObsDate(s.week, s.day, quarterStart)) >= 0)
+      .map(({ week, day, time, ...rest }) => ({
+        ...rest,
+        ...parseTimeRange(week, day, time, quarterStart),
+      }));
+
+    return new Response(JSON.stringify(slots), { status: 200 });
   } catch {
     return new Response("Encountered database error.", { status: 500 });
   }

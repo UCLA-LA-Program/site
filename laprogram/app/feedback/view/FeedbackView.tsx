@@ -99,7 +99,7 @@ export default function FeedbackView() {
   const tables = buildTables(positions ?? []);
 
   return (
-    <div className="mx-auto w-full px-8 py-5">
+    <div className="mx-auto w-full px-8 py-5 animate-fade-up">
       <h1 className="mb-5 text-2xl font-bold tracking-tight">
         Feedback Responses
       </h1>
