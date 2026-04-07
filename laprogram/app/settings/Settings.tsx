@@ -145,9 +145,6 @@ export default function Settings() {
             )}
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-4">
-          JPEG, PNG, or WebP. Max 5 MB.
-        </p>
       </div>
 
       <div className="space-y-2">
