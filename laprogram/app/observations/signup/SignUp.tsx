@@ -41,9 +41,7 @@ function buildDateTabs(
   for (const week of weeks.sort((a, b) => parseInt(a) - parseInt(b))) {
     for (const day of DAY_INDEX.slice(0, 5)) {
       const date = getObsDate(week, day, quarterStart);
-      if (date > new Date()) {
-        tabs.push({ week, date, label: format(date, "M/d") });
-      }
+      tabs.push({ week, date, label: format(date, "M/d") });
     }
   }
   return tabs;
@@ -62,20 +60,18 @@ export function SignUp({
     slots: Availability[];
     filters: string[];
     notes: string[];
-  }>(
-    "/api/observation/open",
-    (url: string) =>
-      fetcher(url).then(
-        (data: {
-          slots: Availability[];
-          filters: string[];
-          notes: string[];
-        }) => ({
-          slots: hydrateDates(data.slots),
-          filters: data.filters,
-          notes: data.notes,
-        }),
-      ),
+  }>("/api/observation/open", (url: string) =>
+    fetcher(url).then(
+      (data: {
+        slots: Availability[];
+        filters: string[];
+        notes: string[];
+      }) => ({
+        slots: hydrateDates(data.slots),
+        filters: data.filters,
+        notes: data.notes,
+      }),
+    ),
   );
   const openSlots = openData?.slots;
   const activeFilters = openData?.filters ?? [];
@@ -250,7 +246,7 @@ export function SignUp({
             </li>
           </ul>
           {(activeFilters.length > 0 || activeNotes.length > 0) && (
-            <div className="mb-5 flex flex-col gap-3 sm:flex-row">
+            <div className="mb-5 flex flex-col gap-3">
               {activeFilters.length > 0 && (
                 <div className="flex-1 rounded-md border border-primary/20 bg-primary/5 px-4 py-3">
                   <p className="mb-1 flex items-center gap-1.5 text-sm font-medium">
@@ -287,7 +283,7 @@ export function SignUp({
             <Tabs value={selectedTab} onValueChange={setActiveTab}>
               <div className="mb-4 space-y-2">
                 {roundWeeks.map((week) => (
-                  <TabsList key={week}>
+                  <TabsList key={week} className="w-full justify-start">
                     <span className="px-2 text-xs text-muted-foreground">
                       Wk {week}
                     </span>
