@@ -4,8 +4,7 @@ import Image from "next/image";
 import { format } from "date-fns";
 import type { MyObservation } from "../types";
 import { formatTime } from "../types";
-import { IMAGE_SIZE } from "@/lib/constants";
-import { LA_POSITION_MAP } from "@/app/feedback/constants";
+import { IMAGE_SIZE, LA_POSITION_MAP } from "@/lib/constants";
 
 export function ObservationRow({
   obs,

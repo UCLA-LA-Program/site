@@ -4,7 +4,7 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, X, Check } from "lucide-react";
 import { format } from "date-fns";
 import type { Availability } from "@/types/db";
-import { LA_POSITION_MAP } from "@/app/feedback/constants";
+import { LA_POSITION_MAP } from "@/lib/constants";
 import type { MyObservation } from "../types";
 import { formatTime } from "../types";
 
