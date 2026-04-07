@@ -32,7 +32,12 @@ export function ObservationRow({
           )}
         </div>
         <div className="min-w-0 text-sm">
-          <p className="font-medium">{obs.observee_name}</p>
+          <p className="font-medium">
+            {obs.observee_name}{" "}
+            <span className="font-normal text-muted-foreground">
+              ({obs.observee_email})
+            </span>
+          </p>
           <p className="text-muted-foreground">
             {obs.course_name} {obs.section_name} &middot;{" "}
             {format(obs.time_start, "M/d")}

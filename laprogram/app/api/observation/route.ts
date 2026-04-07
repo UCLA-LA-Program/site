@@ -127,6 +127,7 @@ export async function GET() {
       .prepare(
         `SELECT observation.id AS id,
         user.name AS observee_name,
+        user.email AS observee_email,
         user.image AS observee_image,
         section.course_name AS course_name,
         section.section_name AS section_name,
