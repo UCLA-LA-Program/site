@@ -229,22 +229,6 @@ export function SignUp({
             </a>{" "}
             to find out how many observations you need to complete.
           </p>
-          <ul className="mb-5 list-disc space-y-1 pl-5 text-sm">
-            <li>
-              <span className="font-medium text-foreground">Future</span> —
-              observations more than {OBSERVATION_CHANGE_DAYS_LIMIT} days away.
-              You can cancel and reschedule these.
-            </li>
-            <li>
-              <span className="font-medium text-foreground">Upcoming</span> —
-              observations within the next {OBSERVATION_CHANGE_DAYS_LIMIT} days.
-              These cannot be cancelled.
-            </li>
-            <li>
-              <span className="font-medium text-foreground">Past</span> —
-              completed observations for your records.
-            </li>
-          </ul>
           {(activeFilters.length > 0 || activeNotes.length > 0) && (
             <div className="mb-5 flex flex-col gap-3">
               {activeFilters.length > 0 && (
