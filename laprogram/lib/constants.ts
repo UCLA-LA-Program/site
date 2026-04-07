@@ -26,4 +26,4 @@ export const DAY_INDEX = [
   "Sunday",
 ];
 
-export const IMAGE_SIZE = 400;
+export const IMAGE_SIZE = 500;
