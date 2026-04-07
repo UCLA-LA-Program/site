@@ -12,6 +12,7 @@ import {
   daysUntil,
   parseTimeRange,
 } from "@/lib/utils";
+import { getApplicableRules } from "@/lib/observation-rules";
 
 export async function GET() {
   try {
@@ -40,8 +41,16 @@ export async function GET() {
       .filter(Boolean);
 
     if (weeks.length === 0) {
-      return new Response("[]", { status: 200 });
+      return Response.json({ slots: [], filters: [] });
     }
+
+    // Get observer's positions to determine filtering rules
+    const observerPositions = await env.data
+      .prepare("SELECT position FROM course WHERE userId = ?")
+      .bind(session.user.id)
+      .all<{ position: string }>();
+    const positions = observerPositions.results.map((r) => r.position);
+    const { descriptions, filter } = getApplicableRules(positions);
 
     const result = await env.data
       .prepare(
@@ -70,16 +79,17 @@ export async function GET() {
       return new Response("Encountered database error.", { status: 500 });
     }
 
-    // Filter out slots that have already passed, and parse time ranges
+    // Filter out past slots, apply observation rules, and parse time ranges
     const quarterStart = await getQuarterStart(env);
     const slots = result.results
       .filter((s) => daysUntil(getObsDate(s.week, s.day, quarterStart)) >= 0)
+      .filter(filter)
       .map(({ week, day, time, ...rest }) => ({
         ...rest,
         ...parseTimeRange(week, day, time, quarterStart),
       }));
 
-    return new Response(JSON.stringify(slots), { status: 200 });
+    return Response.json({ slots, filters: descriptions });
   } catch {
     return new Response("Encountered database error.", { status: 500 });
   }

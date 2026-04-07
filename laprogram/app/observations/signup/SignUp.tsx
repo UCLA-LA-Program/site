@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, CalendarClock, User, MapPin } from "lucide-react";
+import { Plus, CalendarClock, User, MapPin, Filter } from "lucide-react";
 import { toast } from "sonner";
 import { fetcher, getObsDate } from "@/lib/utils";
 import { format, differenceInCalendarDays, isSameDay } from "date-fns";
@@ -58,10 +58,17 @@ export function SignUp({
   quarterStart: string;
   roundWeeks: string[];
 }) {
-  const { data: openSlots, mutate: mutateOpen } = useSWR<Availability[]>(
-    "/api/observation/open",
-    (url: string) => fetcher(url).then(hydrateDates<Availability>),
+  const { data: openData, mutate: mutateOpen } = useSWR<{
+    slots: Availability[];
+    filters: string[];
+  }>("/api/observation/open", (url: string) =>
+    fetcher(url).then((data: { slots: Availability[]; filters: string[] }) => ({
+      slots: hydrateDates(data.slots),
+      filters: data.filters,
+    })),
   );
+  const openSlots = openData?.slots;
+  const activeFilters = openData?.filters ?? [];
 
   const dateTabs = buildDateTabs(roundWeeks, quarterStart);
 
@@ -191,7 +198,7 @@ export function SignUp({
   const activeFuture = futureObs.filter((o) => !pendingRemoves.has(o.id));
   const pendingRemoveSlots = futureObs.filter((o) => pendingRemoves.has(o.id));
 
-  if (!openSlots || !myObservations) {
+  if (!openData || !myObservations) {
     return <></>;
   }
 
@@ -231,6 +238,19 @@ export function SignUp({
               completed observations for your records.
             </li>
           </ul>
+          {activeFilters.length > 0 && (
+            <div className="mb-5 rounded-md border border-primary/20 bg-primary/5 px-4 py-3">
+              <p className="mb-1 flex items-center gap-1.5 text-sm font-medium">
+                <Filter className="size-3.5" />
+                Active filters
+              </p>
+              <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted-foreground">
+                {activeFilters.map((desc) => (
+                  <li key={desc}>{desc}</li>
+                ))}
+              </ul>
+            </div>
+          )}
           {dateTabs.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No observation dates are currently available.
