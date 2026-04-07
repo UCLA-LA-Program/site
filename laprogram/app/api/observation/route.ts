@@ -126,9 +126,10 @@ export async function GET() {
     const result = await db
       .prepare(
         `SELECT observation.id AS id,
-        user.name AS observee_name,
-        user.email AS observee_email,
-        user.image AS observee_image,
+        user.name AS la_name,
+        user.email AS la_email,
+        user.image AS la_image,
+        course.position AS la_position,
         section.course_name AS course_name,
         section.section_name AS section_name,
         section.day AS day,
@@ -141,6 +142,7 @@ export async function GET() {
         JOIN availability ON observation.availability_id = availability.id
         JOIN section ON availability.section_id = section.id
         JOIN user ON observation.observee_id = user.id
+        JOIN course ON observation.observee_id = course.userId AND section.course_name = course.course_name
         WHERE observation.observer_id = ?`,
       )
       .bind(session.user.id)

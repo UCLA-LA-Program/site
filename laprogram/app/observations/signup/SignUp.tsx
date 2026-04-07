@@ -10,6 +10,7 @@ import { fetcher, getObsDate } from "@/lib/utils";
 import { format, differenceInCalendarDays, isSameDay } from "date-fns";
 import { DAY_INDEX } from "@/lib/constants";
 import type { Availability } from "@/types/db";
+import { LA_POSITION_MAP } from "@/app/feedback/constants";
 import type { MyObservation } from "./types";
 import { formatTime } from "./types";
 import { PendingChanges } from "./components/PendingChanges";
@@ -272,6 +273,10 @@ export function SignUp({
                             <span className="flex items-center gap-1.5 font-medium">
                               <User className="size-3.5 text-muted-foreground" />
                               {slot.la_name}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {LA_POSITION_MAP.get(slot.la_position) ??
+                                slot.la_position}
                             </span>
                             <span className="text-muted-foreground">
                               {slot.course_name} {slot.section_name}

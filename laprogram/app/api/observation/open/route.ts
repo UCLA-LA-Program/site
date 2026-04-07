@@ -47,6 +47,7 @@ export async function GET() {
       .prepare(
         `SELECT user.name AS la_name,
         user.email AS la_email,
+        course.position AS la_position,
         section.course_name AS course_name,
         section.section_name AS section_name,
         section.day AS day,
@@ -57,6 +58,7 @@ export async function GET() {
         FROM availability
         JOIN user ON availability.la_id = user.id
         JOIN section ON availability.section_id = section.id
+        JOIN course ON availability.la_id = course.userId AND section.course_name = course.course_name
         WHERE availability.status = 'open'
         AND availability.la_id <> ?
         AND availability.week IN (${weeks.map(() => "?").join(", ")})`,
