@@ -1,4 +1,6 @@
+import { TZDate } from "@date-fns/tz";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { TIMEZONE } from "./constants";
 
 const TABLES = [
   "user",
@@ -23,7 +25,7 @@ export async function backupDatabase() {
     backup[table] = results;
   }
 
-  const timestamp = new Date().toISOString().replace(/[:.]/g, "-");
+  const timestamp = TZDate.tz(TIMEZONE).toISOString().replace(/[:.]/g, "-");
   const key = `backups/${timestamp}.json`;
 
   await env.db_backups.put(key, JSON.stringify(backup, null, 2), {

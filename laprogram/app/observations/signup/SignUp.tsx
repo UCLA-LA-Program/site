@@ -19,22 +19,23 @@ import {
 } from "./components/ObservationCard";
 
 import { OBSERVATION_CHANGE_DAYS_LIMIT } from "@/lib/constants";
+import { TZDate } from "@date-fns/tz";
 
-export function hydrateDates<T extends { time_start: Date; time_end: Date }>(
+function hydrateDates<T extends { time_start: TZDate; time_end: TZDate }>(
   items: T[],
 ): T[] {
   return items.map((item) => ({
     ...item,
-    time_start: new Date(item.time_start),
-    time_end: new Date(item.time_end),
+    time_start: new TZDate(item.time_start),
+    time_end: new TZDate(item.time_end),
   }));
 }
 
-type DateTab = { week: string; date: Date; label: string };
+type DateTab = { week: string; date: TZDate; label: string };
 
 function buildDateTabs(
   weeks: string[],
-  quarterStart: Date | string,
+  quarterStart: TZDate | string,
 ): DateTab[] {
   const tabs: DateTab[] = [];
   for (const week of weeks.sort((a, b) => parseInt(a) - parseInt(b))) {

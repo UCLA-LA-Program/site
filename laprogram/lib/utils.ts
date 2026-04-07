@@ -20,8 +20,8 @@ export function fetcher(url: string): Promise<any> {
 }
 
 /** Current time in LA timezone. */
-export function nowLA(): Date {
-  return new TZDate(new Date(), TIMEZONE);
+export function nowLA(): TZDate {
+  return TZDate.tz(TIMEZONE);
 }
 
 function parseQuarterStart(raw: string): Date {
@@ -37,8 +37,8 @@ export async function getQuarterStart(env: CloudflareEnv): Promise<Date> {
 export function getObsDate(
   week: string | number,
   day: string,
-  quarterStart: Date | string,
-): Date {
+  quarterStart: TZDate | string,
+): TZDate {
   const qs =
     typeof quarterStart === "string"
       ? parseQuarterStart(quarterStart)
@@ -48,7 +48,7 @@ export function getObsDate(
   return startOfDay(addDays(addWeeks(qs, weekNum - 1), dayOffset));
 }
 
-export function daysUntil(target: Date): number {
+export function daysUntil(target: TZDate): number {
   return differenceInCalendarDays(target, nowLA());
 }
 
@@ -65,8 +65,8 @@ export function parseTimeRange(
   week: string | number,
   day: string,
   time: string,
-  quarterStart: Date | string,
-): { time_start: Date; time_end: Date } {
+  quarterStart: TZDate | string,
+): { time_start: TZDate; time_end: TZDate } {
   const baseDate = getObsDate(week, day, quarterStart);
   const [startRaw, endRaw] = time.split("-");
   const [sh, sm] = startRaw.split(":").map(Number);

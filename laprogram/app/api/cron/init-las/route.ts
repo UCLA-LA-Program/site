@@ -7,6 +7,8 @@ import {
 import { backupDatabase } from "@/lib/backup";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
+import { TZDate } from "@date-fns/tz";
+import { TIMEZONE } from "@/lib/constants";
 
 export async function POST(request: Request) {
   try {
@@ -100,7 +102,7 @@ export async function POST(request: Request) {
         : record.fields[
             "Assigned Sections (click or mouseover to see all info)"
           ];
-      const now = new Date().toISOString();
+      const now = TZDate.tz(TIMEZONE).toISOString();
 
       if (!name || !email) {
         errors.push(`Skipping record ${record.id}: missing name or email`);

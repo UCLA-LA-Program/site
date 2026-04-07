@@ -16,7 +16,9 @@ import { CheckCircle2, Loader2, Lock, Users } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ContactUs } from "@/components/ContactUs";
-import { fetcher } from "@/lib/utils";
+import { fetcher, nowLA } from "@/lib/utils";
+import { QUARTER_START_KEY, TIMEZONE } from "@/lib/constants";
+import { TZDate } from "@date-fns/tz";
 
 const WEEKS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
 const STEP = 10; // minutes
