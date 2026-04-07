@@ -57,16 +57,17 @@ const OBSERVATION_NOTES: ObservationNote[] = [
         (c) => isLSCourse(c.course_name) && c.position.includes("ret"),
       ),
   },
-  {
-    text: "If observing in a lab course: long pants required, no open-toed shoes, no food or drinks. Ask your observee if a lab coat is needed.",
-    applies: () => true,
-  },
+];
+
+const OBSERVATION_NOTES_ALWAYS = [
+  "If observing in a lab course: long pants required, no open-toed shoes, no food or drinks. Ask your observee if a lab coat is needed.",
+  "Please remember to email your observee/TA when you sign up and if you need to cancel your observations as per the BruinLearn assignment.",
 ];
 
 export function getApplicableNotes(
   observerCourses: CoursePosition[],
 ): string[] {
-  return OBSERVATION_NOTES.filter((n) => n.applies({ observerCourses })).map(
-    (n) => n.text,
-  );
+  return OBSERVATION_NOTES.filter((n) => n.applies({ observerCourses }))
+    .map((n) => n.text)
+    .concat(OBSERVATION_NOTES_ALWAYS);
 }
