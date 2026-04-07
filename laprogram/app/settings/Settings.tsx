@@ -12,6 +12,7 @@ import type { Position } from "@/types/db";
 import { LA_POSITION_MAP } from "@/app/feedback/constants";
 import ContactUs from "@/components/ContactUs";
 import { useTheme } from "next-themes";
+import { IMAGE_SIZE } from "@/lib/constants";
 
 export default function Settings() {
   const { data: session, isPending } = authClient.useSession();
@@ -101,8 +102,8 @@ export default function Settings() {
               <Image
                 src={imageUrl}
                 alt="Profile Picture"
-                width={300}
-                height={300}
+                width={IMAGE_SIZE}
+                height={IMAGE_SIZE}
                 className="h-full w-full"
               />
             ) : (

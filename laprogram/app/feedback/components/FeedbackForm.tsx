@@ -38,6 +38,7 @@ import Image from "next/image";
 import { UserRound, LogIn } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import Link from "next/link";
+import { IMAGE_SIZE } from "@/lib/constants";
 
 type Option = { value: string; label: string };
 
@@ -295,8 +296,8 @@ export function FeedbackForm({
                                   <Image
                                     src={la.image}
                                     alt={la.name}
-                                    width={300}
-                                    height={300}
+                                    width={IMAGE_SIZE}
+                                    height={IMAGE_SIZE}
                                     className="h-24 w-24 rounded-sm"
                                   />
                                 ) : (

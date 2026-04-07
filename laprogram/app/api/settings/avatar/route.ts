@@ -1,4 +1,5 @@
 import { getAuth } from "@/lib/auth";
+import { IMAGE_SIZE } from "@/lib/constants";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
 import { v7 as uuidv7 } from "uuid";
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
 
     const transformedImage = (
       await env.IMAGES?.input(file.stream())
-        .transform({ width: 300, height: 300, fit: "cover" })
+        .transform({ width: IMAGE_SIZE, height: IMAGE_SIZE, fit: "cover" })
         .output({ format: "image/webp" })
     )?.response();
 

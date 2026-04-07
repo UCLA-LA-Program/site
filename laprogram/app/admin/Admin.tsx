@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Loader2, CheckCircle2, XCircle } from "lucide-react";
 import {
   FEATURE_FLAGS,
+  IMAGE_SIZE,
   OBSERVATION_ACTIVE_ROUND_KEY,
   OBSERVATION_ROUND_WEEKS_PREFIX,
   QUARTER_START_KEY,
@@ -241,8 +242,8 @@ export default function Admin() {
                     <td className="py-2">
                       {user.image ? (
                         <Image
-                          height={300}
-                          width={300}
+                          height={IMAGE_SIZE}
+                          width={IMAGE_SIZE}
                           src={user.image}
                           alt={user.name}
                           className="h-28 w-28 rounded-md object-cover mr-3"
