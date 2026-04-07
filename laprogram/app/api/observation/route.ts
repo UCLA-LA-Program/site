@@ -85,7 +85,7 @@ export async function POST(request: Request) {
 
     const openCount = await db
       .prepare(
-        "SELECT COUNT(*) as count FROM availability WHERE la_id = ? AND status = 'open'",
+        "SELECT COUNT(*) as count FROM availability WHERE status = 'open'",
       )
       .bind(slot.la_id)
       .first<{ count: number }>();
@@ -93,7 +93,7 @@ export async function POST(request: Request) {
     if (openCount && openCount.count === 0) {
       await db
         .prepare(
-          "UPDATE availability SET status = 'open' WHERE la_id = ? AND status = 'hidden'",
+          "UPDATE availability SET status = 'open' WHERE status = 'hidden'",
         )
         .bind(slot.la_id)
         .run();
