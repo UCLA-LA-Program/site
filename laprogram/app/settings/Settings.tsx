@@ -12,6 +12,8 @@ import type { Position } from "@/types/db";
 import { LA_POSITION_MAP } from "@/app/feedback/constants";
 import ContactUs from "@/components/ContactUs";
 import { useTheme } from "next-themes";
+import { IMAGE_SIZE } from "@/lib/constants";
+import { CropDialog } from "./components/CropDialog";
 
 export default function Settings() {
   const { data: session, isPending } = authClient.useSession();
@@ -19,9 +21,12 @@ export default function Settings() {
     suspense: true,
     fallbackData: [],
   });
-  const [preview, setPreview] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
+
+  const [cropSrc, setCropSrc] = useState<string | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [croppedBlob, setCroppedBlob] = useState<Blob | null>(null);
 
   if (!session || isPending) return <></>;
 
@@ -30,15 +35,20 @@ export default function Settings() {
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setPreview(URL.createObjectURL(file));
+    setCropSrc(URL.createObjectURL(file));
+  }
+
+  function handleCropConfirm(blob: Blob, previewUrl: string) {
+    setPreview(previewUrl);
+    setCroppedBlob(blob);
+    setCropSrc(null);
   }
 
   async function handleUpload() {
-    const file = fileRef.current?.files?.[0];
-    if (!file) return;
+    if (!croppedBlob) return;
 
     const formData = new FormData();
-    formData.append("file", file);
+    formData.append("file", croppedBlob);
 
     const res = await fetch("/api/settings/avatar", {
       method: "POST",
@@ -49,6 +59,7 @@ export default function Settings() {
       const { url } = await res.json<{ url: string }>();
       await authClient.updateUser({ image: url });
       setPreview(null);
+      setCroppedBlob(null);
       toast.success("Changed headshot!");
     } else {
       toast.error(await res.text());
@@ -101,8 +112,8 @@ export default function Settings() {
               <Image
                 src={imageUrl}
                 alt="Profile Picture"
-                width={300}
-                height={300}
+                width={IMAGE_SIZE}
+                height={IMAGE_SIZE}
                 className="h-full w-full"
               />
             ) : (
@@ -128,17 +139,12 @@ export default function Settings() {
               {imageUrl ? "Replace Image" : "Upload Image"}
             </Button>
             {preview && (
-              <Button size="sm" onClick={handleUpload}>
+              <Button size="sm" onClick={() => handleUpload()}>
                 Save
               </Button>
             )}
           </div>
         </div>
-        <p className="text-xs text-muted-foreground mt-4">
-          JPEG, PNG, or WebP. Max 2 MB. The site will automatically crop/zoom
-          your upload for you, but a square image is the easiest way to get it
-          right!
-        </p>
       </div>
 
       <div className="space-y-2">
@@ -165,6 +171,14 @@ export default function Settings() {
           ))}
         </div>
       </div>
+
+      {cropSrc && (
+        <CropDialog
+          src={cropSrc}
+          onConfirm={handleCropConfirm}
+          onClose={() => setCropSrc(null)}
+        />
+      )}
     </div>
   );
 }

@@ -20,12 +20,19 @@ export function PendingChanges({
   onUndoRemove: (id: string) => void;
   onConfirm: () => void;
 }) {
+  const hasChanges = addSlots.length > 0 || removeSlots.length > 0;
+
   return (
-    <Card className="border-primary/30">
+    <Card className={hasChanges ? "border-primary/30" : ""}>
       <CardHeader>
         <CardTitle>Pending Changes</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
+        {!hasChanges && (
+          <p className="text-xs text-muted-foreground">
+            No pending changes.
+          </p>
+        )}
         {addSlots.length > 0 && (
           <div>
             <h3 className="mb-2 text-xs font-medium text-green-600">Adding</h3>
@@ -95,9 +102,14 @@ export function PendingChanges({
           </div>
         )}
 
-        <Separator />
+        {hasChanges && <Separator />}
 
-        <Button className="w-full" size="sm" onClick={onConfirm}>
+        <Button
+          className="w-full"
+          size="sm"
+          onClick={onConfirm}
+          disabled={!hasChanges}
+        >
           <Check className="size-3.5" />
           Confirm Changes
         </Button>

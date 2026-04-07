@@ -14,6 +14,7 @@ export const QUARTER_START_KEY = "QUARTER_START";
 
 export const OBSERVATION_ACTIVE_ROUND_KEY = "OBSERVATION_ACTIVE_ROUND";
 export const OBSERVATION_ROUND_WEEKS_PREFIX = "OBSERVATION_ROUND_WEEKS_";
+export const OBSERVATION_CHANGE_DAYS_LIMIT = 2;
 
 export const DAY_INDEX = [
   "Monday",
@@ -24,3 +25,5 @@ export const DAY_INDEX = [
   "Saturday",
   "Sunday",
 ];
+
+export const IMAGE_SIZE = 500;

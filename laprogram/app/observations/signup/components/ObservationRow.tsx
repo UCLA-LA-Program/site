@@ -4,6 +4,7 @@ import Image from "next/image";
 import { format } from "date-fns";
 import type { MyObservation } from "../types";
 import { formatTime } from "../types";
+import { IMAGE_SIZE } from "@/lib/constants";
 
 export function ObservationRow({
   obs,
@@ -20,8 +21,8 @@ export function ObservationRow({
             <Image
               src={obs.observee_image}
               alt={obs.observee_name}
-              width={300}
-              height={300}
+              width={IMAGE_SIZE}
+              height={IMAGE_SIZE}
               className="h-full w-full object-cover"
             />
           ) : (

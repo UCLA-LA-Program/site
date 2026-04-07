@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useEffect } from "react";
 import useSWR from "swr";
 import {
   Card,
@@ -12,7 +12,9 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { Check, Loader2, Lock, Users } from "lucide-react";
+import { Loader2, Lock, Users } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 import ContactUs from "@/components/ContactUs";
 import { fetcher } from "@/lib/utils";
 import { QUARTER_START_KEY } from "@/lib/constants";
@@ -179,11 +181,28 @@ export default function Schedule() {
     CourseSchedule
   > | null>(null);
   const [showPast, setShowPast] = useState<Set<string>>(new Set());
-  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
-    "idle",
-  );
-  const saveTimeout = useRef<ReturnType<typeof setTimeout>>(null);
-  const resetTimeout = useRef<ReturnType<typeof setTimeout>>(null);
+  const [dirty, setDirty] = useState<Set<string>>(new Set());
+  const [saving, setSaving] = useState<Set<string>>(new Set());
+
+  function toggleShowPast(sectionId: string) {
+    setShowPast((prev) => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      return next;
+    });
+  }
+
+  const hasDirty = dirty.size > 0;
+  useEffect(() => {
+    if (!hasDirty) return;
+    const handler = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasDirty]);
 
   // Build schedules once data loads
   if (sections && availability && !schedules) {
@@ -194,40 +213,42 @@ export default function Schedule() {
     ? signupCountsFromAvailability(availability)
     : new Map<string, Map<number, number>>();
 
-  useEffect(() => {
-    return () => {
-      if (saveTimeout.current) clearTimeout(saveTimeout.current);
-      if (resetTimeout.current) clearTimeout(resetTimeout.current);
-    };
-  }, []);
+  async function saveSection(sectionId: string) {
+    const schedule = schedules?.get(sectionId);
+    if (!schedule) return;
 
-  function saveSection(sectionId: string, schedule: CourseSchedule) {
-    if (saveTimeout.current) clearTimeout(saveTimeout.current);
-    if (resetTimeout.current) clearTimeout(resetTimeout.current);
-
-    setSaveState("saving");
-    saveTimeout.current = setTimeout(async () => {
-      const weeks: { week: string; time: string }[] = [];
-      for (const [week, slot] of schedule.weekSlots) {
-        if (slot.selected) {
-          const timeStr = `${minutesToTimeStr(slot.timeRange[0])}-${minutesToTimeStr(slot.timeRange[1])}`;
-          weeks.push({ week: String(week), time: timeStr });
-        }
+    setSaving((prev) => new Set(prev).add(sectionId));
+    const weeks: { week: string; time: string }[] = [];
+    for (const [week, slot] of schedule.weekSlots) {
+      if (slot.selected) {
+        const timeStr = `${minutesToTimeStr(slot.timeRange[0])}-${minutesToTimeStr(slot.timeRange[1])}`;
+        weeks.push({ week: String(week), time: timeStr });
       }
+    }
 
-      try {
-        await fetch("/api/availability", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ section_id: sectionId, weeks }),
-        });
-        await mutateAvailability();
-        setSaveState("saved");
-        resetTimeout.current = setTimeout(() => setSaveState("idle"), 2000);
-      } catch {
-        setSaveState("idle");
-      }
-    }, 500);
+    try {
+      await fetch("/api/availability", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ section_id: sectionId, weeks }),
+      });
+      await mutateAvailability();
+      setDirty((prev) => {
+        const next = new Set(prev);
+        next.delete(sectionId);
+        return next;
+      });
+    } finally {
+      setSaving((prev) => {
+        const next = new Set(prev);
+        next.delete(sectionId);
+        return next;
+      });
+    }
+  }
+
+  function markDirty(sectionId: string) {
+    setDirty((prev) => new Set(prev).add(sectionId));
   }
 
   function toggleWeek(sectionId: string, week: number) {
@@ -240,9 +261,9 @@ export default function Schedule() {
       weekSlots.set(week, { ...slot, selected: !slot.selected });
       entry.weekSlots = weekSlots;
       next.set(sectionId, entry);
-      saveSection(sectionId, entry);
       return next;
     });
+    markDirty(sectionId);
   }
 
   function setTimeRange(sectionId: string, value: number[]) {
@@ -273,16 +294,7 @@ export default function Schedule() {
       next.set(sectionId, entry);
       return next;
     });
-  }
-
-  function commitTimeRange(sectionId: string, value: number[]) {
-    setTimeRange(sectionId, value);
-    setSchedules((prev) => {
-      if (!prev) return prev;
-      const entry = prev.get(sectionId)!;
-      saveSection(sectionId, entry);
-      return prev;
-    });
+    markDirty(sectionId);
   }
 
   if (!sections || !availability || !schedules) {
@@ -297,29 +309,21 @@ export default function Schedule() {
           <p className="mb-2 text-sm">Instructions:</p>
           <ul className="mb-2 list-disc space-y-1 pl-5 text-sm">
             <li>
-              Check/uncheck weeks depending on if you will be available to be
-              observed during that week.
+              Check/uncheck your availability per week and edit your available
+              timeslot per section using the slider. Any changes will apply to
+              all future weeks. You can edit in 10 minute increments with a
+              required minimum of 30 minutes.
             </li>
-            <li>
-              Edit your available timeslot during your section using the{" "}
-              <span className="font-semibold">timeslot</span> slider. Any
-              changes will apply to all future weeks.
-            </li>
+            <li>Press &ldquo;Save Changes&rdquo; to save your availability.</li>
           </ul>
           <p className="mb-2 text-sm">Notes:</p>
           <ul className="mb-2 list-disc space-y-1 pl-5 text-sm">
             <li>
-              You will be <span className="font-bold">unable</span> to change
-              your available timeslot if anyone has signed up to observe you for
-              the present week or a future week.
+              You will be unable to change your available timeslot if anyone has
+              signed up to observe you for the present week or a future week.
             </li>
             <li>
-              You will be <span className="font-bold">able</span> to change your
-              available timeslot if no present/future week has a observation
-              sign up (i.e. between/before observation rounds).
-            </li>
-            <li>
-              You will be able to check/uncheck future weeks if no one has
+              You will be unable to check/uncheck future weeks if anyone has
               signed up to observe that week.
             </li>
           </ul>
@@ -327,20 +331,6 @@ export default function Schedule() {
             If you run into any issues, please refer to the syllabus and/or{" "}
             <ContactUs /> for technical problems.
           </p>
-        </div>
-        <div className="mt-1 flex w-20 shrink-0 items-center justify-end gap-1.5 text-xs text-muted-foreground">
-          {saveState === "saving" && (
-            <>
-              <Loader2 className="size-3.5 animate-spin" />
-              Saving…
-            </>
-          )}
-          {saveState === "saved" && (
-            <>
-              <Check className="size-3.5 text-green-600" />
-              Saved
-            </>
-          )}
         </div>
       </div>
 
@@ -379,23 +369,31 @@ export default function Schedule() {
                     {section.location}
                   </CardDescription>
                   <CardAction>
-                    <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
-                      <Checkbox
-                        checked={showingPast}
-                        onCheckedChange={() =>
-                          setShowPast((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(key)) {
-                              next.delete(key);
-                            } else {
-                              next.add(key);
-                            }
-                            return next;
-                          })
-                        }
-                      />
-                      Show previous weeks
-                    </label>
+                    <div className="flex flex-col items-end gap-2">
+                      <Label
+                        className="cursor-pointer text-sm font-normal text-muted-foreground"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleShowPast(key);
+                        }}
+                      >
+                        <Checkbox
+                          checked={showingPast}
+                          onCheckedChange={() => toggleShowPast(key)}
+                        />
+                        Show previous weeks
+                      </Label>
+                      <Button
+                        size="sm"
+                        disabled={!dirty.has(key) || saving.has(key)}
+                        onClick={() => saveSection(key)}
+                      >
+                        {saving.has(key) && (
+                          <Loader2 className="size-3.5 animate-spin" />
+                        )}
+                        Save Changes
+                      </Button>
+                    </div>
                   </CardAction>
                 </CardHeader>
                 <CardContent>
@@ -420,7 +418,6 @@ export default function Schedule() {
                           step={STEP}
                           value={schedule.timeRange}
                           onValueChange={(v) => setTimeRange(key, v)}
-                          onValueCommit={(v) => commitTimeRange(key, v)}
                           minStepsBetweenThumbs={MIN_RANGE / STEP}
                         />
                         <span className="w-[10.5rem] shrink-0 text-right text-xs text-muted-foreground tabular-nums">
@@ -450,10 +447,14 @@ export default function Schedule() {
                                 : ""
                           }`}
                         >
-                          <label
-                            className={`flex shrink-0 items-center gap-2 ${
+                          <Label
+                            className={`shrink-0 font-normal ${
                               isLocked ? "" : "cursor-pointer"
                             }`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (!isLocked) toggleWeek(key, week);
+                            }}
                           >
                             <Checkbox
                               checked={slot.selected}
@@ -461,7 +462,7 @@ export default function Schedule() {
                               onCheckedChange={() => toggleWeek(key, week)}
                             />
                             <span className="w-16">Week {week}</span>
-                          </label>
+                          </Label>
 
                           <span className="flex w-16 shrink-0 items-center gap-1.5">
                             {hasSignups && (

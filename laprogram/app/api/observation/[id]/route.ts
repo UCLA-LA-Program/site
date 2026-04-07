@@ -2,6 +2,7 @@ import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
 import { getObsDate, getQuarterStart, daysUntil } from "@/lib/utils";
+import { OBSERVATION_CHANGE_DAYS_LIMIT } from "@/lib/constants";
 
 export async function DELETE(
   request: Request,
@@ -52,14 +53,15 @@ export async function DELETE(
       });
     }
 
-    // Block deletion if observation is within 3 calendar days
+    // Block deletion if observation is too close
     const quarterStart = await getQuarterStart(env);
     const obsDate = getObsDate(observation.week, observation.day, quarterStart);
 
-    if (daysUntil(obsDate) < 3) {
-      return new Response("Cannot cancel observations within 3 days", {
-        status: 403,
-      });
+    if (daysUntil(obsDate) < OBSERVATION_CHANGE_DAYS_LIMIT) {
+      return new Response(
+        `Cannot cancel observations within ${OBSERVATION_CHANGE_DAYS_LIMIT} days`,
+        { status: 403 },
+      );
     }
 
     await db.batch([
