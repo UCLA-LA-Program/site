@@ -13,6 +13,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
 import { Loader2, Lock, Users } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import ContactUs from "@/components/ContactUs";
 import { fetcher } from "@/lib/utils";
@@ -182,6 +183,18 @@ export default function Schedule() {
   const [showPast, setShowPast] = useState<Set<string>>(new Set());
   const [dirty, setDirty] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState<Set<string>>(new Set());
+
+  function toggleShowPast(sectionId: string) {
+    setShowPast((prev) => {
+      const next = new Set(prev);
+      if (next.has(sectionId)) {
+        next.delete(sectionId);
+      } else {
+        next.add(sectionId);
+      }
+      return next;
+    });
+  }
 
   const hasDirty = dirty.size > 0;
   useEffect(() => {
@@ -357,23 +370,19 @@ export default function Schedule() {
                   </CardDescription>
                   <CardAction>
                     <div className="flex flex-col items-end gap-2">
-                      <label className="flex cursor-pointer items-center gap-2 text-sm text-muted-foreground">
+                      <Label
+                        className="cursor-pointer text-sm font-normal text-muted-foreground"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          toggleShowPast(key);
+                        }}
+                      >
                         <Checkbox
                           checked={showingPast}
-                          onCheckedChange={() =>
-                            setShowPast((prev) => {
-                              const next = new Set(prev);
-                              if (next.has(key)) {
-                                next.delete(key);
-                              } else {
-                                next.add(key);
-                              }
-                              return next;
-                            })
-                          }
+                          onCheckedChange={() => toggleShowPast(key)}
                         />
                         Show previous weeks
-                      </label>
+                      </Label>
                       <Button
                         size="sm"
                         disabled={!dirty.has(key) || saving.has(key)}
@@ -438,10 +447,14 @@ export default function Schedule() {
                                 : ""
                           }`}
                         >
-                          <label
-                            className={`flex shrink-0 items-center gap-2 ${
+                          <Label
+                            className={`shrink-0 font-normal ${
                               isLocked ? "" : "cursor-pointer"
                             }`}
+                            onClick={(e) => {
+                              e.preventDefault();
+                              if (!isLocked) toggleWeek(key, week);
+                            }}
                           >
                             <Checkbox
                               checked={slot.selected}
@@ -449,7 +462,7 @@ export default function Schedule() {
                               onCheckedChange={() => toggleWeek(key, week)}
                             />
                             <span className="w-16">Week {week}</span>
-                          </label>
+                          </Label>
 
                           <span className="flex w-16 shrink-0 items-center gap-1.5">
                             {hasSignups && (
