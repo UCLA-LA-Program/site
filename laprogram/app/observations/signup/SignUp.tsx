@@ -313,15 +313,13 @@ export default function SignUp({
               onRemove={markForRemoval}
             />
 
-            {hasPendingChanges && (
-              <PendingChanges
-                addSlots={pendingAddSlots}
-                removeSlots={pendingRemoveSlots}
-                onUndoAdd={undoAdd}
-                onUndoRemove={undoRemoval}
-                onConfirm={confirmChanges}
-              />
-            )}
+            <PendingChanges
+              addSlots={pendingAddSlots}
+              removeSlots={pendingRemoveSlots}
+              onUndoAdd={undoAdd}
+              onUndoRemove={undoRemoval}
+              onConfirm={confirmChanges}
+            />
 
             <UpcomingObservations observations={upcomingObs} />
             <PastObservations observations={pastObs} />
