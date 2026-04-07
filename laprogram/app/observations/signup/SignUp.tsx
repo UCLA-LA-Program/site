@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -84,6 +84,13 @@ export default function SignUp({
   const [pendingRemoves, setPendingRemoves] = useState<Set<string>>(new Set());
 
   const hasPendingChanges = pendingAdds.size > 0 || pendingRemoves.size > 0;
+
+  useEffect(() => {
+    if (!hasPendingChanges) return;
+    const handler = (e: BeforeUnloadEvent) => e.preventDefault();
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [hasPendingChanges]);
 
   function addSlot(id: string) {
     setPendingAdds((prev) => new Set(prev).add(id));
