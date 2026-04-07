@@ -85,7 +85,7 @@ export async function GET() {
     // Filter out past slots, apply observation rules, and parse time ranges
     const quarterStart = await getQuarterStart(env);
     const slots = result.results
-      .filter((s) => daysUntil(getObsDate(s.week, s.day, quarterStart)) >= 0)
+      .filter((s) => daysUntil(getObsDate(s.week, s.day, quarterStart)) > 0)
       .filter(filter)
       .map(({ week, day, time, ...rest }) => ({
         ...rest,
