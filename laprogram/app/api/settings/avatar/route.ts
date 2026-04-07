@@ -4,8 +4,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
 import { v7 as uuidv7 } from "uuid";
 
-const MAX_SIZE = 2 * 1024 * 1024; // 2 MB
-const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+const MAX_SIZE = 5 * 1024 * 1024; // 5 MB
 
 export async function POST(request: Request) {
   try {
@@ -27,12 +26,14 @@ export async function POST(request: Request) {
       return new Response("No file provided.", { status: 400 });
     }
 
-    if (!ALLOWED_TYPES.has(file.type)) {
-      return new Response("File must be JPEG, PNG, or WebP.", { status: 400 });
+    if (file.type != "image/png") {
+      return new Response("Uploaded file not properly transformed to .png", {
+        status: 400,
+      });
     }
 
     if (file.size > MAX_SIZE) {
-      return new Response("File must be under 2 MB.", { status: 400 });
+      return new Response("Cropped image must be under 5MB", { status: 400 });
     }
 
     const transformedImage = (
