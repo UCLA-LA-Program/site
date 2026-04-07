@@ -12,13 +12,6 @@ import type { Position } from "@/types/db";
 import { LA_POSITION_MAP } from "@/app/feedback/constants";
 import ContactUs from "@/components/ContactUs";
 import { useTheme } from "next-themes";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 
 export default function Settings() {
   const { data: session, isPending } = authClient.useSession();
@@ -150,20 +143,27 @@ export default function Settings() {
 
       <div className="space-y-2">
         <label className="font-medium text-lg">Appearance</label>
-        <p className="text-xs text-muted-foreground">
-          Choose your preferred color scheme. System will follow your
-          device&apos;s setting.
-        </p>
-        <Select value={theme} onValueChange={setTheme}>
-          <SelectTrigger className="w-32">
-            <SelectValue placeholder="Theme" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="system">System</SelectItem>
-            <SelectItem value="light">Light</SelectItem>
-            <SelectItem value="dark">Dark</SelectItem>
-          </SelectContent>
-        </Select>
+        <div className="flex gap-1 rounded-lg border p-1 w-fit">
+          {([
+            { value: "light", emoji: "☀️" },
+            { value: "system", emoji: "💻" },
+            { value: "dark", emoji: "🌙" },
+          ] as const).map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => setTheme(opt.value)}
+              className={`rounded-md px-3 py-1.5 text-lg transition-colors ${
+                theme === opt.value
+                  ? "bg-accent"
+                  : "hover:bg-accent/50"
+              }`}
+              title={opt.value.charAt(0).toUpperCase() + opt.value.slice(1)}
+            >
+              {opt.emoji}
+            </button>
+          ))}
+        </div>
       </div>
     </div>
   );
