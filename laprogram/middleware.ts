@@ -6,6 +6,7 @@ import { getAuth } from "./lib/auth";
 import { headers } from "next/headers";
 
 export async function middleware(request: NextRequest) {
+  if (process.env.NODE_ENV === "development") return NextResponse.next();
   const { env } = await getCloudflareContext({ async: true });
   const maintenance = (await env.config.get(MAINTENANCE_KEY)) === "true";
   if (!maintenance) return NextResponse.next();
