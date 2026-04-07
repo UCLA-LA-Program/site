@@ -2,49 +2,33 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Plus,
-  X,
-  CalendarClock,
-  User,
-  Check,
-  MapPin,
-  UserRound,
-  ChevronRight,
-} from "lucide-react";
-import Image from "next/image";
+import { Plus, CalendarClock, User, MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { fetcher, getObsDate } from "@/lib/utils";
 import { format, differenceInCalendarDays, isSameDay } from "date-fns";
-import {
-  QUARTER_START_KEY,
-  OBSERVATION_ACTIVE_ROUND_KEY,
-  OBSERVATION_ROUND_WEEKS_PREFIX,
-  DAY_INDEX,
-} from "@/lib/constants";
+import { DAY_INDEX } from "@/lib/constants";
 import type { Availability } from "@/types/db";
+import type { MyObservation } from "./types";
+import { formatTime } from "./types";
+import { PendingChanges } from "./components/PendingChanges";
+import {
+  FutureObservations,
+  UpcomingObservations,
+  PastObservations,
+} from "./components/ObservationCard";
 
 const UPCOMING_DAYS = 3;
 
-type MyObservation = {
-  id: string;
-  observee_name: string;
-  observee_image: string | null;
-  course_name: string;
-  section_name: string;
-  time_start: string;
-  time_end: string;
-  location: string;
-  ta_name: string | null;
-  ta_email: string | null;
-};
-
-function formatTime(iso: string): string {
-  return format(new Date(iso), "h:mm a");
+function hydrateDates<T extends { time_start: Date; time_end: Date }>(
+  items: T[],
+): T[] {
+  return items.map((item) => ({
+    ...item,
+    time_start: new Date(item.time_start),
+    time_end: new Date(item.time_end),
+  }));
 }
 
 type DateTab = { week: string; date: Date; label: string };
@@ -57,32 +41,26 @@ function buildDateTabs(
   for (const week of weeks.sort((a, b) => parseInt(a) - parseInt(b))) {
     for (const day of DAY_INDEX.slice(0, 5)) {
       const date = getObsDate(week, day, quarterStart);
-      tabs.push({ week, date, label: format(date, "M/d") });
+      if (date > new Date()) {
+        tabs.push({ week, date, label: format(date, "M/d") });
+      }
     }
   }
   return tabs;
 }
 
-export default function SignUp() {
-  const { data: config } = useSWR<Record<string, string>>(
-    "/api/config",
-    fetcher,
-  );
-  const activeRound = parseInt(
-    config?.[OBSERVATION_ACTIVE_ROUND_KEY] ?? "0",
-    10,
-  );
-  const quarterStart = config?.[QUARTER_START_KEY] ?? "";
-  const roundWeeksRaw =
-    config?.[`${OBSERVATION_ROUND_WEEKS_PREFIX}${activeRound}`] ?? "";
-  const roundWeeks = roundWeeksRaw
-    .split(",")
-    .map((w) => w.trim())
-    .filter(Boolean);
-
+export default function SignUp({
+  activeRound,
+  quarterStart,
+  roundWeeks,
+}: {
+  activeRound: number;
+  quarterStart: string;
+  roundWeeks: string[];
+}) {
   const { data: openSlots, mutate: mutateOpen } = useSWR<Availability[]>(
     "/api/observation/open",
-    fetcher,
+    (url: string) => fetcher(url).then(hydrateDates<Availability>),
   );
 
   const dateTabs = buildDateTabs(roundWeeks, quarterStart);
@@ -90,16 +68,17 @@ export default function SignUp() {
   // Count slots per tab from ISO dates
   const slotCounts = new Map<string, number>();
   for (const slot of openSlots ?? []) {
-    const label = format(new Date(slot.time_start), "M/d");
+    const label = format(slot.time_start, "M/d");
     slotCounts.set(label, (slotCounts.get(label) ?? 0) + 1);
   }
 
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const selectedTab =
     activeTab ?? (dateTabs.length > 0 ? dateTabs[0].label : "");
-  const { data: myObservations, mutate: mutateObservations } = useSWR<
-    MyObservation[]
-  >("/api/observation", fetcher);
+  const { data: myObservations, mutate: mutateObservations } = useSWR(
+    "/api/observation",
+    (url: string) => fetcher(url).then(hydrateDates<MyObservation>),
+  );
 
   const [pendingAdds, setPendingAdds] = useState<Set<string>>(new Set());
   const [pendingRemoves, setPendingRemoves] = useState<Set<string>>(new Set());
@@ -177,7 +156,7 @@ export default function SignUp() {
   const available = (openSlots ?? []).filter(
     (s) =>
       selectedDate &&
-      isSameDay(new Date(s.time_start), selectedDate) &&
+      isSameDay(s.time_start, selectedDate) &&
       !pendingAdds.has(s.id),
   );
   const pendingAddSlots = (openSlots ?? []).filter((s) =>
@@ -190,10 +169,11 @@ export default function SignUp() {
   const futureObs: MyObservation[] = [];
 
   for (const obs of myObservations ?? []) {
-    const days = differenceInCalendarDays(new Date(obs.time_start), new Date());
-    if (days < 0) {
+    if (obs.time_start < new Date()) {
       pastObs.push(obs);
-    } else if (days < UPCOMING_DAYS) {
+    } else if (
+      differenceInCalendarDays(obs.time_start, new Date()) < UPCOMING_DAYS
+    ) {
       upcomingObs.push(obs);
     } else {
       futureObs.push(obs);
@@ -257,10 +237,7 @@ export default function SignUp() {
                     {dateTabs
                       .filter((tab) => tab.week === week)
                       .map((tab) => (
-                        <TabsTrigger
-                          key={tab.label}
-                          value={tab.label}
-                        >
+                        <TabsTrigger key={tab.label} value={tab.label}>
                           {tab.label} ({slotCounts.get(tab.label) ?? 0})
                         </TabsTrigger>
                       ))}
@@ -274,7 +251,9 @@ export default function SignUp() {
               ) : (
                 <div className="space-y-2">
                   {available
-                    .sort((a, b) => a.time_start.localeCompare(b.time_start))
+                    .sort(
+                      (a, b) => a.time_start.getTime() - b.time_start.getTime(),
+                    )
                     .map((slot) => (
                       <div
                         key={slot.id}
@@ -293,7 +272,8 @@ export default function SignUp() {
                           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <CalendarClock className="size-3" />
-                              {formatTime(slot.time_start)}–{formatTime(slot.time_end)}
+                              {formatTime(slot.time_start)}–
+                              {formatTime(slot.time_end)}
                             </span>
                             <span className="flex items-center gap-1">
                               <MapPin className="size-3" />
@@ -321,226 +301,26 @@ export default function SignUp() {
         {/* Sidebar (top on mobile, right on desktop) */}
         <div className="order-first w-full shrink-0 lg:order-last lg:w-[32rem]">
           <div className="space-y-4 lg:sticky lg:top-24">
-            {/* Future observations (deletable) */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Future Observations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                {activeFuture.length === 0 ? (
-                  <p className="text-xs text-muted-foreground">
-                    No future observations yet.
-                  </p>
-                ) : (
-                  <div className="space-y-4">
-                    {activeFuture.map((obs) => (
-                      <ObservationRow
-                        key={obs.id}
-                        obs={obs}
-                       
-                        onRemove={() => markForRemoval(obs.id)}
-                      />
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
+            <FutureObservations
+              observations={activeFuture}
+              onRemove={markForRemoval}
+            />
 
-            {/* Pending changes box */}
             {hasPendingChanges && (
-              <Card className="border-primary/30">
-                <CardHeader>
-                  <CardTitle>Pending Changes</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {pendingAddSlots.length > 0 && (
-                    <div>
-                      <h3 className="mb-2 text-xs font-medium text-green-600">
-                        Adding
-                      </h3>
-                      <div className="space-y-3">
-                        {pendingAddSlots.map((slot) => (
-                          <div
-                            key={slot.id}
-                            className="flex items-start justify-between gap-2"
-                          >
-                            <div className="min-w-0 text-sm">
-                              <p className="font-medium">{slot.la_name}</p>
-                              <p className="text-muted-foreground">
-                                {slot.course_name} {slot.section_name} &middot;{" "}
-                                {format(new Date(slot.time_start), "M/d")}
-                              </p>
-                              <p className="text-xs text-muted-foreground">
-                                {formatTime(slot.time_start)}–{formatTime(slot.time_end)} &middot;{" "}
-                                {slot.location}
-                              </p>
-                            </div>
-                            <Button
-                              size="icon-xs"
-                              variant="ghost"
-                              onClick={() => undoAdd(slot.id)}
-                            >
-                              <X className="size-3.5" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {pendingRemoveSlots.length > 0 && (
-                    <div>
-                      <h3 className="mb-2 text-xs font-medium text-red-600">
-                        Removing
-                      </h3>
-                      <div className="space-y-3">
-                        {pendingRemoveSlots.map((obs) => (
-                          <div
-                            key={obs.id}
-                            className="flex items-start justify-between gap-2"
-                          >
-                            <div className="min-w-0 text-sm">
-                              <p className="font-medium line-through opacity-60">
-                                {obs.observee_name}
-                              </p>
-                              <p className="text-muted-foreground line-through opacity-60">
-                                {obs.course_name} {obs.section_name} &middot;{" "}
-                                {format(new Date(obs.time_start), "M/d")}
-                              </p>
-                              <p className="text-xs text-muted-foreground line-through opacity-60">
-                                {formatTime(obs.time_start)}–{formatTime(obs.time_end)} &middot;{" "}
-                                {obs.location}
-                              </p>
-                            </div>
-                            <Button
-                              size="icon-xs"
-                              variant="ghost"
-                              onClick={() => undoRemoval(obs.id)}
-                              title="Undo removal"
-                            >
-                              <Plus className="size-3.5" />
-                            </Button>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <Separator />
-
-                  <Button className="w-full" size="sm" onClick={confirmChanges}>
-                    <Check className="size-3.5" />
-                    Confirm Changes
-                  </Button>
-                </CardContent>
-              </Card>
+              <PendingChanges
+                addSlots={pendingAddSlots}
+                removeSlots={pendingRemoveSlots}
+                onUndoAdd={undoAdd}
+                onUndoRemove={undoRemoval}
+                onConfirm={confirmChanges}
+              />
             )}
 
-            {/* Upcoming observations (within 36h — locked) */}
-            {upcomingObs.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>
-                    Upcoming Observations
-                    <span className="ml-2 text-xs font-normal text-muted-foreground">
-                      next 3 days
-                    </span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    {upcomingObs.map((obs) => (
-                      <ObservationRow key={obs.id} obs={obs} />
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Past observations (collapsible, info only) */}
-            {pastObs.length > 0 && (
-              <Card>
-                <details className="group">
-                  <summary className="cursor-pointer list-none">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-1.5">
-                        <ChevronRight className="size-4 transition-transform group-open:rotate-90" />
-                        Past Observations
-                        <span className="text-xs font-normal text-muted-foreground">
-                          ({pastObs.length})
-                        </span>
-                      </CardTitle>
-                    </CardHeader>
-                  </summary>
-                  <CardContent>
-                    <div className="space-y-4 opacity-60">
-                      {pastObs.map((obs) => (
-                        <ObservationRow
-                          key={obs.id}
-                          obs={obs}
-                         
-                        />
-                      ))}
-                    </div>
-                  </CardContent>
-                </details>
-              </Card>
-            )}
+            <UpcomingObservations observations={upcomingObs} />
+            <PastObservations observations={pastObs} />
           </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function ObservationRow({
-  obs,
-  onRemove,
-}: {
-  obs: MyObservation;
-  onRemove?: () => void;
-}) {
-  return (
-    <div className="flex items-start justify-between gap-3">
-      <div className="flex min-w-0 gap-3">
-        <div className="size-20 shrink-0 overflow-hidden rounded-sm border bg-muted">
-          {obs.observee_image ? (
-            <Image
-              src={obs.observee_image}
-              alt={obs.observee_name}
-              width={300}
-              height={300}
-              className="h-full w-full object-cover"
-            />
-          ) : (
-            <UserRound
-              className="h-full w-full text-muted-foreground"
-              strokeWidth={1}
-            />
-          )}
-        </div>
-        <div className="min-w-0 text-sm">
-          <p className="font-medium">{obs.observee_name}</p>
-          <p className="text-muted-foreground">
-            {obs.course_name} {obs.section_name} &middot;{" "}
-            {format(new Date(obs.time_start), "M/d")}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {formatTime(obs.time_start)}–{formatTime(obs.time_end)} &middot; {obs.location}
-          </p>
-          {obs.ta_name && (
-            <p className="text-xs text-muted-foreground">
-              TA: {obs.ta_name}
-              {obs.ta_email && <span> ({obs.ta_email})</span>}
-            </p>
-          )}
-        </div>
-      </div>
-      {onRemove && (
-        <Button size="icon-xs" variant="ghost" onClick={onRemove}>
-          <X className="size-3.5" />
-        </Button>
-      )}
     </div>
   );
 }
