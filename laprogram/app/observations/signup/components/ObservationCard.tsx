@@ -5,44 +5,16 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { ChevronRight } from "lucide-react";
 import type { MyObservation } from "../types";
 import { ObservationRow } from "./ObservationRow";
+import { OBSERVATION_CHANGE_DAYS_LIMIT } from "@/lib/constants";
 
-export function FutureObservations({
-  observations,
+export function FutureObservationsCard({
+  futureObservations,
+  upcomingObservations,
   onRemove,
 }: {
-  observations: MyObservation[];
+  futureObservations: MyObservation[];
+  upcomingObservations: MyObservation[];
   onRemove: (id: string) => void;
-}) {
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Future Observations</CardTitle>
-      </CardHeader>
-      <CardContent>
-        {observations.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            No future observations yet.
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {observations.map((obs) => (
-              <ObservationRow
-                key={obs.id}
-                obs={obs}
-                onRemove={() => onRemove(obs.id)}
-              />
-            ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-export function UpcomingObservations({
-  observations,
-}: {
-  observations: MyObservation[];
 }) {
   return (
     <Card>
@@ -50,24 +22,65 @@ export function UpcomingObservations({
         <CardTitle>
           Upcoming Observations
           <span className="ml-2 text-xs font-normal text-muted-foreground">
-            next 3 days
+            next {OBSERVATION_CHANGE_DAYS_LIMIT} days, not reschedulable
           </span>
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {observations.length === 0 ? (
-          <p className="text-xs text-muted-foreground">
-            No upcoming observations.
-          </p>
-        ) : (
-          <div className="space-y-4">
-            {observations.map((obs) => (
-              <ObservationRow key={obs.id} obs={obs} />
-            ))}
-          </div>
-        )}
+        <UpcomingObservations observations={upcomingObservations} />
+      </CardContent>
+      <CardHeader>
+        <CardTitle>Confirmed Observations</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <ConfirmedObservations
+          observations={futureObservations}
+          onRemove={onRemove}
+        />
       </CardContent>
     </Card>
+  );
+}
+
+function ConfirmedObservations({
+  observations,
+  onRemove,
+}: {
+  observations: MyObservation[];
+  onRemove: (id: string) => void;
+}) {
+  return observations.length === 0 ? (
+    <p className="text-xs text-muted-foreground">
+      No other confirmed observations yet.
+    </p>
+  ) : (
+    <div className="space-y-4">
+      {observations.map((obs) => (
+        <ObservationRow
+          key={obs.id}
+          obs={obs}
+          onRemove={() => onRemove(obs.id)}
+        />
+      ))}
+    </div>
+  );
+}
+
+function UpcomingObservations({
+  observations,
+}: {
+  observations: MyObservation[];
+}) {
+  return observations.length === 0 ? (
+    <p className="text-xs text-muted-foreground">
+      No upcoming observations within {OBSERVATION_CHANGE_DAYS_LIMIT} days.
+    </p>
+  ) : (
+    <div className="space-y-4">
+      {observations.map((obs) => (
+        <ObservationRow key={obs.id} obs={obs} />
+      ))}
+    </div>
   );
 }
 
@@ -77,45 +90,39 @@ export function PastObservations({
   observations: MyObservation[];
 }) {
   const [open, setOpen] = useState(false);
-  const hasObs = observations.length > 0;
 
   return (
     <Card>
       <CardHeader
-        className={hasObs ? "cursor-pointer" : undefined}
-        onClick={hasObs ? () => setOpen((o) => !o) : undefined}
+        className={"cursor-pointer"}
+        onClick={() => setOpen((o) => !o)}
       >
         <CardTitle className="flex items-center gap-1.5">
-          {hasObs && (
-            <ChevronRight
-              className={`size-4 transition-transform ${open ? "rotate-90" : ""}`}
-            />
-          )}
+          <ChevronRight
+            className={`size-4 transition-transform ${open ? "rotate-90" : ""}`}
+          />
           Past Observations
-          {hasObs && (
-            <span className="text-xs font-normal text-muted-foreground">
-              ({observations.length})
-            </span>
-          )}
+          <span className="text-xs font-normal text-muted-foreground">
+            ({observations.length})
+          </span>
         </CardTitle>
       </CardHeader>
-      {hasObs && open ? (
-        <CardContent>
-          <div className="space-y-4">
-            {observations.map((obs) => (
-              <ObservationRow key={obs.id} obs={obs} />
-            ))}
-          </div>
-        </CardContent>
-      ) : (
-        !hasObs && (
+      {open &&
+        (observations.length > 0 ? (
+          <CardContent>
+            <div className="space-y-4">
+              {observations.map((obs) => (
+                <ObservationRow key={obs.id} obs={obs} />
+              ))}
+            </div>
+          </CardContent>
+        ) : (
           <CardContent>
             <p className="text-xs text-muted-foreground">
-              No past observations.
+              No past observations yet.
             </p>
           </CardContent>
-        )
-      )}
+        ))}
     </Card>
   );
 }

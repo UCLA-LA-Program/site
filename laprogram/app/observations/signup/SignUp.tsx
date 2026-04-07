@@ -14,12 +14,11 @@ import type { MyObservation } from "./types";
 import { formatTime } from "./types";
 import { PendingChanges } from "./components/PendingChanges";
 import {
-  FutureObservations,
-  UpcomingObservations,
   PastObservations,
+  FutureObservationsCard,
 } from "./components/ObservationCard";
 
-const UPCOMING_DAYS = 3;
+import { OBSERVATION_CHANGE_DAYS_LIMIT } from "@/lib/constants";
 
 function hydrateDates<T extends { time_start: Date; time_end: Date }>(
   items: T[],
@@ -179,7 +178,8 @@ export default function SignUp({
     if (obs.time_start < new Date()) {
       pastObs.push(obs);
     } else if (
-      differenceInCalendarDays(obs.time_start, new Date()) < UPCOMING_DAYS
+      differenceInCalendarDays(obs.time_start, new Date()) <
+      OBSERVATION_CHANGE_DAYS_LIMIT
     ) {
       upcomingObs.push(obs);
     } else {
@@ -216,13 +216,14 @@ export default function SignUp({
           </p>
           <ul className="mb-5 list-disc space-y-1 pl-5 text-sm">
             <li>
-              <span className="font-medium text-foreground">Upcoming</span> —
-              observations within the next 3 days. These cannot be cancelled.
+              <span className="font-medium text-foreground">Future</span> —
+              observations more than {OBSERVATION_CHANGE_DAYS_LIMIT} days away.
+              You can cancel and reschedule these.
             </li>
             <li>
-              <span className="font-medium text-foreground">Future</span> —
-              observations more than 3 days away. You can cancel and reschedule
-              these.
+              <span className="font-medium text-foreground">Upcoming</span> —
+              observations within the next {OBSERVATION_CHANGE_DAYS_LIMIT} days.
+              These cannot be cancelled.
             </li>
             <li>
               <span className="font-medium text-foreground">Past</span> —
@@ -308,11 +309,6 @@ export default function SignUp({
         {/* Sidebar (top on mobile, right on desktop) */}
         <div className="order-first w-full shrink-0 lg:order-last lg:w-[32rem]">
           <div className="space-y-4 lg:sticky lg:top-24">
-            <FutureObservations
-              observations={activeFuture}
-              onRemove={markForRemoval}
-            />
-
             <PendingChanges
               addSlots={pendingAddSlots}
               removeSlots={pendingRemoveSlots}
@@ -320,8 +316,12 @@ export default function SignUp({
               onUndoRemove={undoRemoval}
               onConfirm={confirmChanges}
             />
+            <FutureObservationsCard
+              futureObservations={activeFuture}
+              upcomingObservations={upcomingObs}
+              onRemove={markForRemoval}
+            />
 
-            <UpcomingObservations observations={upcomingObs} />
             <PastObservations observations={pastObs} />
           </div>
         </div>
