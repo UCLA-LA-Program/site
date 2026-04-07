@@ -4,11 +4,11 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, CalendarClock, User, MapPin } from "lucide-react";
+import { Plus, CalendarClock, User, MapPin, Filter, Info } from "lucide-react";
 import { toast } from "sonner";
 import { fetcher, getObsDate } from "@/lib/utils";
 import { format, differenceInCalendarDays, isSameDay } from "date-fns";
-import { DAY_INDEX } from "@/lib/constants";
+import { DAY_INDEX, LA_POSITION_MAP } from "@/lib/constants";
 import type { Availability } from "@/types/db";
 import type { MyObservation } from "./types";
 import { formatTime } from "./types";
@@ -40,9 +40,7 @@ function buildDateTabs(
   for (const week of weeks.sort((a, b) => parseInt(a) - parseInt(b))) {
     for (const day of DAY_INDEX.slice(0, 5)) {
       const date = getObsDate(week, day, quarterStart);
-      if (date > new Date()) {
-        tabs.push({ week, date, label: format(date, "M/d") });
-      }
+      tabs.push({ week, date, label: format(date, "M/d") });
     }
   }
   return tabs;
@@ -57,10 +55,26 @@ export function SignUp({
   quarterStart: string;
   roundWeeks: string[];
 }) {
-  const { data: openSlots, mutate: mutateOpen } = useSWR<Availability[]>(
-    "/api/observation/open",
-    (url: string) => fetcher(url).then(hydrateDates<Availability>),
+  const { data: openData, mutate: mutateOpen } = useSWR<{
+    slots: Availability[];
+    filters: string[];
+    notes: string[];
+  }>("/api/observation/open", (url: string) =>
+    fetcher(url).then(
+      (data: {
+        slots: Availability[];
+        filters: string[];
+        notes: string[];
+      }) => ({
+        slots: hydrateDates(data.slots),
+        filters: data.filters,
+        notes: data.notes,
+      }),
+    ),
   );
+  const openSlots = openData?.slots;
+  const activeFilters = openData?.filters ?? [];
+  const activeNotes = openData?.notes ?? [];
 
   const dateTabs = buildDateTabs(roundWeeks, quarterStart);
 
@@ -190,7 +204,7 @@ export function SignUp({
   const activeFuture = futureObs.filter((o) => !pendingRemoves.has(o.id));
   const pendingRemoveSlots = futureObs.filter((o) => pendingRemoves.has(o.id));
 
-  if (!openSlots || !myObservations) {
+  if (!openData || !myObservations) {
     return <></>;
   }
 
@@ -214,22 +228,36 @@ export function SignUp({
             </a>{" "}
             to find out how many observations you need to complete.
           </p>
-          <ul className="mb-5 list-disc space-y-1 pl-5 text-sm">
-            <li>
-              <span className="font-medium text-foreground">Future</span> —
-              observations more than {OBSERVATION_CHANGE_DAYS_LIMIT} days away.
-              You can cancel and reschedule these.
-            </li>
-            <li>
-              <span className="font-medium text-foreground">Upcoming</span> —
-              observations within the next {OBSERVATION_CHANGE_DAYS_LIMIT} days.
-              These cannot be cancelled.
-            </li>
-            <li>
-              <span className="font-medium text-foreground">Past</span> —
-              completed observations for your records.
-            </li>
-          </ul>
+          {(activeFilters.length > 0 || activeNotes.length > 0) && (
+            <div className="mb-5 flex flex-col gap-3">
+              {activeFilters.length > 0 && (
+                <div className="flex-1 rounded-md border border-primary/20 bg-primary/5 px-4 py-3">
+                  <p className="mb-1 flex items-center gap-1.5 text-sm font-medium">
+                    <Filter className="size-3.5" />
+                    Active filters
+                  </p>
+                  <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted-foreground">
+                    {activeFilters.map((desc) => (
+                      <li key={desc}>{desc}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {activeNotes.length > 0 && (
+                <div className="flex-1 rounded-md border border-muted-foreground/20 bg-muted/50 px-4 py-3">
+                  <p className="mb-1 flex items-center gap-1.5 text-sm font-medium">
+                    <Info className="size-3.5" />
+                    Notes
+                  </p>
+                  <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted-foreground">
+                    {activeNotes.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
           {dateTabs.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No observation dates are currently available.
@@ -238,7 +266,7 @@ export function SignUp({
             <Tabs value={selectedTab} onValueChange={setActiveTab}>
               <div className="mb-4 space-y-2">
                 {roundWeeks.map((week) => (
-                  <TabsList key={week}>
+                  <TabsList key={week} className="w-full justify-start">
                     <span className="px-2 text-xs text-muted-foreground">
                       Wk {week}
                     </span>
@@ -272,6 +300,10 @@ export function SignUp({
                             <span className="flex items-center gap-1.5 font-medium">
                               <User className="size-3.5 text-muted-foreground" />
                               {slot.la_name}
+                            </span>
+                            <span className="text-muted-foreground">
+                              {LA_POSITION_MAP.get(slot.la_position) ??
+                                slot.la_position}
                             </span>
                             <span className="text-muted-foreground">
                               {slot.course_name} {slot.section_name}

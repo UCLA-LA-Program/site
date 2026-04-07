@@ -4,8 +4,42 @@ import { Separator } from "@/components/ui/separator";
 import { Plus, X, Check } from "lucide-react";
 import { format } from "date-fns";
 import type { Availability } from "@/types/db";
+import { LA_POSITION_MAP } from "@/lib/constants";
 import type { MyObservation } from "../types";
 import { formatTime } from "../types";
+
+function PendingRow({
+  slot,
+  strikethrough,
+  action,
+}: {
+  slot: Availability;
+  strikethrough?: boolean;
+  action: React.ReactNode;
+}) {
+  const strike = strikethrough ? "line-through opacity-60" : "";
+  return (
+    <div className="flex items-start justify-between gap-2">
+      <div className="min-w-0 text-sm">
+        <p className={`font-medium ${strike}`}>{slot.la_name}</p>
+        <p className={`text-muted-foreground ${strike}`}>
+          {slot.la_position && (
+            <>
+              {LA_POSITION_MAP.get(slot.la_position) ?? slot.la_position}{" "}
+              &middot; {slot.course_name} {slot.section_name} &middot;{" "}
+              {format(slot.time_start, "M/d")}{" "}
+            </>
+          )}
+        </p>
+        <p className={`text-xs text-muted-foreground ${strike}`}>
+          {formatTime(slot.time_start)}–{formatTime(slot.time_end)} &middot;{" "}
+          {slot.location}
+        </p>
+      </div>
+      {action}
+    </div>
+  );
+}
 
 export function PendingChanges({
   addSlots,
@@ -29,38 +63,26 @@ export function PendingChanges({
       </CardHeader>
       <CardContent className="space-y-4">
         {!hasChanges && (
-          <p className="text-xs text-muted-foreground">
-            No pending changes.
-          </p>
+          <p className="text-xs text-muted-foreground">No pending changes.</p>
         )}
         {addSlots.length > 0 && (
           <div>
             <h3 className="mb-2 text-xs font-medium text-green-600">Adding</h3>
             <div className="space-y-3">
               {addSlots.map((slot) => (
-                <div
+                <PendingRow
                   key={slot.id}
-                  className="flex items-start justify-between gap-2"
-                >
-                  <div className="min-w-0 text-sm">
-                    <p className="font-medium">{slot.la_name}</p>
-                    <p className="text-muted-foreground">
-                      {slot.course_name} {slot.section_name} &middot;{" "}
-                      {format(slot.time_start, "M/d")}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {formatTime(slot.time_start)}–
-                      {formatTime(slot.time_end)} &middot; {slot.location}
-                    </p>
-                  </div>
-                  <Button
-                    size="icon-xs"
-                    variant="ghost"
-                    onClick={() => onUndoAdd(slot.id)}
-                  >
-                    <X className="size-3.5" />
-                  </Button>
-                </div>
+                  slot={slot}
+                  action={
+                    <Button
+                      size="icon-xs"
+                      variant="ghost"
+                      onClick={() => onUndoAdd(slot.id)}
+                    >
+                      <X className="size-3.5" />
+                    </Button>
+                  }
+                />
               ))}
             </div>
           </div>
@@ -71,32 +93,21 @@ export function PendingChanges({
             <h3 className="mb-2 text-xs font-medium text-red-600">Removing</h3>
             <div className="space-y-3">
               {removeSlots.map((obs) => (
-                <div
+                <PendingRow
                   key={obs.id}
-                  className="flex items-start justify-between gap-2"
-                >
-                  <div className="min-w-0 text-sm">
-                    <p className="font-medium line-through opacity-60">
-                      {obs.observee_name}
-                    </p>
-                    <p className="text-muted-foreground line-through opacity-60">
-                      {obs.course_name} {obs.section_name} &middot;{" "}
-                      {format(obs.time_start, "M/d")}
-                    </p>
-                    <p className="text-xs text-muted-foreground line-through opacity-60">
-                      {formatTime(obs.time_start)}–
-                      {formatTime(obs.time_end)} &middot; {obs.location}
-                    </p>
-                  </div>
-                  <Button
-                    size="icon-xs"
-                    variant="ghost"
-                    onClick={() => onUndoRemove(obs.id)}
-                    title="Undo removal"
-                  >
-                    <Plus className="size-3.5" />
-                  </Button>
-                </div>
+                  slot={obs}
+                  strikethrough
+                  action={
+                    <Button
+                      size="icon-xs"
+                      variant="ghost"
+                      onClick={() => onUndoRemove(obs.id)}
+                      title="Undo removal"
+                    >
+                      <Plus className="size-3.5" />
+                    </Button>
+                  }
+                />
               ))}
             </div>
           </div>

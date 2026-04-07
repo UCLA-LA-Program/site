@@ -4,7 +4,7 @@ import Image from "next/image";
 import { format } from "date-fns";
 import type { MyObservation } from "../types";
 import { formatTime } from "../types";
-import { IMAGE_SIZE } from "@/lib/constants";
+import { IMAGE_SIZE, LA_POSITION_MAP } from "@/lib/constants";
 
 export function ObservationRow({
   obs,
@@ -17,10 +17,10 @@ export function ObservationRow({
     <div className="flex items-start justify-between gap-3">
       <div className="flex min-w-0 gap-3">
         <div className="size-20 shrink-0 overflow-hidden rounded-sm border bg-muted">
-          {obs.observee_image ? (
+          {obs.la_image ? (
             <Image
-              src={obs.observee_image}
-              alt={obs.observee_name}
+              src={obs.la_image}
+              alt={obs.la_name}
               width={IMAGE_SIZE}
               height={IMAGE_SIZE}
               className="h-full w-full object-cover"
@@ -34,12 +34,13 @@ export function ObservationRow({
         </div>
         <div className="min-w-0 text-sm">
           <p className="font-medium">
-            {obs.observee_name}{" "}
+            {obs.la_name}{" "}
             <span className="font-normal text-muted-foreground">
-              ({obs.observee_email})
+              ({obs.la_email})
             </span>
           </p>
           <p className="text-muted-foreground">
+            {LA_POSITION_MAP.get(obs.la_position) ?? obs.la_position} &middot;{" "}
             {obs.course_name} {obs.section_name} &middot;{" "}
             {format(obs.time_start, "M/d")}
           </p>

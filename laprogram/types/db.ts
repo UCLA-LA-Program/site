@@ -19,6 +19,7 @@ export type AvailabilityRow = {
   id: string;
   la_name: string;
   la_email: string;
+  la_position: string;
   course_name: string;
   section_name: string;
   location: string;

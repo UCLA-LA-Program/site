@@ -12,6 +12,10 @@ import {
   daysUntil,
   parseTimeRange,
 } from "@/lib/utils";
+import {
+  getApplicableRules,
+  getApplicableNotes,
+} from "@/lib/observation-rules";
 
 export async function GET() {
   try {
@@ -40,13 +44,22 @@ export async function GET() {
       .filter(Boolean);
 
     if (weeks.length === 0) {
-      return new Response("[]", { status: 200 });
+      return Response.json({ slots: [], filters: [] });
     }
+
+    // Get observer's courses/positions to determine filtering rules and notes
+    const observerCourses = await env.data
+      .prepare("SELECT course_name, position FROM course WHERE userId = ?")
+      .bind(session.user.id)
+      .all<{ course_name: string; position: string }>();
+    const positions = observerCourses.results.map((r) => r.position);
+    const { descriptions, filter } = getApplicableRules(positions);
 
     const result = await env.data
       .prepare(
         `SELECT user.name AS la_name,
         user.email AS la_email,
+        course.position AS la_position,
         section.course_name AS course_name,
         section.section_name AS section_name,
         section.day AS day,
@@ -57,6 +70,7 @@ export async function GET() {
         FROM availability
         JOIN user ON availability.la_id = user.id
         JOIN section ON availability.section_id = section.id
+        JOIN course ON availability.la_id = course.userId AND section.course_name = course.course_name
         WHERE availability.status = 'open'
         AND availability.la_id <> ?
         AND availability.week IN (${weeks.map(() => "?").join(", ")})`,
@@ -68,16 +82,19 @@ export async function GET() {
       return new Response("Encountered database error.", { status: 500 });
     }
 
-    // Filter out slots that have already passed, and parse time ranges
+    // Filter out past slots, apply observation rules, and parse time ranges
     const quarterStart = await getQuarterStart(env);
     const slots = result.results
-      .filter((s) => daysUntil(getObsDate(s.week, s.day, quarterStart)) >= 0)
+      .filter((s) => daysUntil(getObsDate(s.week, s.day, quarterStart)) > 0)
+      .filter(filter)
       .map(({ week, day, time, ...rest }) => ({
         ...rest,
         ...parseTimeRange(week, day, time, quarterStart),
       }));
 
-    return new Response(JSON.stringify(slots), { status: 200 });
+    const notes = getApplicableNotes(observerCourses.results);
+
+    return Response.json({ slots, filters: descriptions, notes });
   } catch {
     return new Response("Encountered database error.", { status: 500 });
   }
