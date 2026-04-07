@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
-import { DAY_INDEX, QUARTER_START_KEY } from "@/lib/constants";
+import { DAY_INDEX, QUARTER_START_KEY, TIMEZONE } from "@/lib/constants";
+import { TZDate } from "@date-fns/tz";
 import {
   parse,
   addDays,
@@ -18,8 +19,13 @@ export function fetcher(url: string): Promise<any> {
   return fetch(url).then((r) => r.json());
 }
 
+/** Current time in LA timezone. */
+export function nowLA(): Date {
+  return new TZDate(new Date(), TIMEZONE);
+}
+
 function parseQuarterStart(raw: string): Date {
-  return startOfDay(parse(raw, "yyyy-MM-dd", new Date()));
+  return startOfDay(parse(raw, "yyyy-MM-dd", nowLA()));
 }
 
 export async function getQuarterStart(env: CloudflareEnv): Promise<Date> {
@@ -43,7 +49,7 @@ export function getObsDate(
 }
 
 export function daysUntil(target: Date): number {
-  return differenceInCalendarDays(target, new Date());
+  return differenceInCalendarDays(target, nowLA());
 }
 
 /** Build full Date objects from week/day/quarterStart + "H:mm-H:mm" time range. */
@@ -58,19 +64,25 @@ export function parseTimeRange(
   const [sh, sm] = startRaw.split(":").map(Number);
   const [eh, em] = endRaw.split(":").map(Number);
   return {
-    time_start: new Date(
+    time_start: new TZDate(
       baseDate.getFullYear(),
       baseDate.getMonth(),
       baseDate.getDate(),
       sh,
       sm,
+      0,
+      0,
+      TIMEZONE,
     ),
-    time_end: new Date(
+    time_end: new TZDate(
       baseDate.getFullYear(),
       baseDate.getMonth(),
       baseDate.getDate(),
       eh,
       em,
+      0,
+      0,
+      TIMEZONE,
     ),
   };
 }
