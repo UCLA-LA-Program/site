@@ -144,19 +144,19 @@ export default function Settings() {
       <div className="space-y-2">
         <label className="font-medium text-lg">Appearance</label>
         <div className="flex gap-1 rounded-lg border p-1 w-fit">
-          {([
-            { value: "light", emoji: "☀️" },
-            { value: "system", emoji: "💻" },
-            { value: "dark", emoji: "🌙" },
-          ] as const).map((opt) => (
+          {(
+            [
+              { value: "light", emoji: "🌞" },
+              { value: "system", emoji: "💻" },
+              { value: "dark", emoji: "🌚" },
+            ] as const
+          ).map((opt) => (
             <button
               key={opt.value}
               type="button"
               onClick={() => setTheme(opt.value)}
-              className={`rounded-md px-3 py-1.5 text-lg transition-colors ${
-                theme === opt.value
-                  ? "bg-accent"
-                  : "hover:bg-accent/50"
+              className={`rounded-md px-3 py-1.5 text-4xl transition-colors ${
+                theme === opt.value ? "bg-accent" : "hover:bg-accent/50"
               }`}
               title={opt.value.charAt(0).toUpperCase() + opt.value.slice(1)}
             >
