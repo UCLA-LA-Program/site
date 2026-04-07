@@ -16,7 +16,7 @@ import { Loader2, Lock, Users } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ContactUs } from "@/components/ContactUs";
-import { fetcher } from "@/lib/utils";
+import { fetcher, nowLA } from "@/lib/utils";
 import { QUARTER_START_KEY } from "@/lib/constants";
 
 const WEEKS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
@@ -160,7 +160,7 @@ function signupCountsFromAvailability(
 function getCurrentWeek(quarterStart: string | undefined): number {
   if (!quarterStart) return 1;
   const start = new Date(quarterStart + "T00:00:00");
-  const now = new Date();
+  const now = nowLA();
   const diff = now.getTime() - start.getTime();
   return Math.max(1, Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1);
 }

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarClock, User, MapPin, Filter, Info } from "lucide-react";
 import { toast } from "sonner";
-import { fetcher, getObsDate } from "@/lib/utils";
+import { fetcher, getObsDate, nowLA } from "@/lib/utils";
 import { format, differenceInCalendarDays, isSameDay } from "date-fns";
 import { DAY_INDEX, LA_POSITION_MAP } from "@/lib/constants";
 import type { Availability } from "@/types/db";
@@ -189,10 +189,10 @@ export function SignUp({
   const futureObs: MyObservation[] = [];
 
   for (const obs of myObservations ?? []) {
-    if (obs.time_start < new Date()) {
+    if (obs.time_start < nowLA()) {
       pastObs.push(obs);
     } else if (
-      differenceInCalendarDays(obs.time_start, new Date()) <
+      differenceInCalendarDays(obs.time_start, nowLA()) <
       OBSERVATION_CHANGE_DAYS_LIMIT
     ) {
       upcomingObs.push(obs);
