@@ -12,7 +12,10 @@ import {
   daysUntil,
   parseTimeRange,
 } from "@/lib/utils";
-import { getApplicableRules } from "@/lib/observation-rules";
+import {
+  getApplicableRules,
+  getApplicableNotes,
+} from "@/lib/observation-rules";
 
 export async function GET() {
   try {
@@ -44,12 +47,12 @@ export async function GET() {
       return Response.json({ slots: [], filters: [] });
     }
 
-    // Get observer's positions to determine filtering rules
-    const observerPositions = await env.data
-      .prepare("SELECT position FROM course WHERE userId = ?")
+    // Get observer's courses/positions to determine filtering rules and notes
+    const observerCourses = await env.data
+      .prepare("SELECT course_name, position FROM course WHERE userId = ?")
       .bind(session.user.id)
-      .all<{ position: string }>();
-    const positions = observerPositions.results.map((r) => r.position);
+      .all<{ course_name: string; position: string }>();
+    const positions = observerCourses.results.map((r) => r.position);
     const { descriptions, filter } = getApplicableRules(positions);
 
     const result = await env.data
@@ -89,7 +92,9 @@ export async function GET() {
         ...parseTimeRange(week, day, time, quarterStart),
       }));
 
-    return Response.json({ slots, filters: descriptions });
+    const notes = getApplicableNotes(observerCourses.results);
+
+    return Response.json({ slots, filters: descriptions, notes });
   } catch {
     return new Response("Encountered database error.", { status: 500 });
   }

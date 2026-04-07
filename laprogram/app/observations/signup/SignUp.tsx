@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, CalendarClock, User, MapPin, Filter } from "lucide-react";
+import { Plus, CalendarClock, User, MapPin, Filter, Info } from "lucide-react";
 import { toast } from "sonner";
 import { fetcher, getObsDate } from "@/lib/utils";
 import { format, differenceInCalendarDays, isSameDay } from "date-fns";
@@ -61,14 +61,25 @@ export function SignUp({
   const { data: openData, mutate: mutateOpen } = useSWR<{
     slots: Availability[];
     filters: string[];
-  }>("/api/observation/open", (url: string) =>
-    fetcher(url).then((data: { slots: Availability[]; filters: string[] }) => ({
-      slots: hydrateDates(data.slots),
-      filters: data.filters,
-    })),
+    notes: string[];
+  }>(
+    "/api/observation/open",
+    (url: string) =>
+      fetcher(url).then(
+        (data: {
+          slots: Availability[];
+          filters: string[];
+          notes: string[];
+        }) => ({
+          slots: hydrateDates(data.slots),
+          filters: data.filters,
+          notes: data.notes,
+        }),
+      ),
   );
   const openSlots = openData?.slots;
   const activeFilters = openData?.filters ?? [];
+  const activeNotes = openData?.notes ?? [];
 
   const dateTabs = buildDateTabs(roundWeeks, quarterStart);
 
@@ -238,17 +249,34 @@ export function SignUp({
               completed observations for your records.
             </li>
           </ul>
-          {activeFilters.length > 0 && (
-            <div className="mb-5 rounded-md border border-primary/20 bg-primary/5 px-4 py-3">
-              <p className="mb-1 flex items-center gap-1.5 text-sm font-medium">
-                <Filter className="size-3.5" />
-                Active filters
-              </p>
-              <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted-foreground">
-                {activeFilters.map((desc) => (
-                  <li key={desc}>{desc}</li>
-                ))}
-              </ul>
+          {(activeFilters.length > 0 || activeNotes.length > 0) && (
+            <div className="mb-5 flex flex-col gap-3 sm:flex-row">
+              {activeFilters.length > 0 && (
+                <div className="flex-1 rounded-md border border-primary/20 bg-primary/5 px-4 py-3">
+                  <p className="mb-1 flex items-center gap-1.5 text-sm font-medium">
+                    <Filter className="size-3.5" />
+                    Active filters
+                  </p>
+                  <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted-foreground">
+                    {activeFilters.map((desc) => (
+                      <li key={desc}>{desc}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {activeNotes.length > 0 && (
+                <div className="flex-1 rounded-md border border-muted-foreground/20 bg-muted/50 px-4 py-3">
+                  <p className="mb-1 flex items-center gap-1.5 text-sm font-medium">
+                    <Info className="size-3.5" />
+                    Notes
+                  </p>
+                  <ul className="list-disc space-y-0.5 pl-5 text-sm text-muted-foreground">
+                    {activeNotes.map((note) => (
+                      <li key={note}>{note}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
           )}
           {dateTabs.length === 0 ? (

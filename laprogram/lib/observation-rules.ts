@@ -1,10 +1,5 @@
 /**
- * Observation sign-up filtering rules.
- *
- * Each rule has:
- *  - `description` — shown to the user on the sign-up page
- *  - `applies`     — returns true if the rule is active for the given observer positions
- *  - `filter`      — returns true if a slot should be KEPT (visible to the observer)
+ * Observation sign-up filtering rules and contextual notes.
  */
 
 type ObservationRule = {
@@ -35,4 +30,43 @@ export function getApplicableRules(observerPositions: string[]): {
     descriptions: active.map((r) => r.description),
     filter: (slot) => active.every((r) => r.filter(slot)),
   };
+}
+
+// --- Notes ---
+
+type CoursePosition = { course_name: string; position: string };
+
+type ObservationNote = {
+  text: string;
+  applies: (context: { observerCourses: CoursePosition[] }) => boolean;
+};
+
+const isLSCourse = (name: string) => name.startsWith("LS 7A");
+const OBSERVATION_NOTES: ObservationNote[] = [
+  {
+    text: "LS 7 Ped Heads: Please prioritize observing LS 7 New LAs.",
+    applies: ({ observerCourses }) =>
+      observerCourses.some(
+        (c) => isLSCourse(c.course_name) && c.position.includes("ped"),
+      ),
+  },
+  {
+    text: "LS 7 Returners: Please prioritize observing LS 7 Returners and Ped Heads.",
+    applies: ({ observerCourses }) =>
+      observerCourses.some(
+        (c) => isLSCourse(c.course_name) && c.position.includes("ret"),
+      ),
+  },
+  {
+    text: "If observing in a lab course: long pants required, no open-toed shoes, no food or drinks. Ask your observee if a lab coat is needed.",
+    applies: () => true,
+  },
+];
+
+export function getApplicableNotes(
+  observerCourses: CoursePosition[],
+): string[] {
+  return OBSERVATION_NOTES.filter((n) => n.applies({ observerCourses })).map(
+    (n) => n.text,
+  );
 }
