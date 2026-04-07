@@ -9,13 +9,13 @@ import { toast } from "sonner";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import type { Position } from "@/types/db";
-import { LA_POSITION_MAP } from "@/app/feedback/constants";
-import ContactUs from "@/components/ContactUs";
+import { ContactUs } from "@/components/ContactUs";
 import { useTheme } from "next-themes";
 import { IMAGE_SIZE } from "@/lib/constants";
 import { CropDialog } from "./components/CropDialog";
+import { LA_POSITION_MAP } from "@/lib/constants";
 
-export default function Settings() {
+export function Settings() {
   const { data: session, isPending } = authClient.useSession();
   const { data: positions } = useSWR<Position[]>("/api/la/self", fetcher, {
     suspense: true,

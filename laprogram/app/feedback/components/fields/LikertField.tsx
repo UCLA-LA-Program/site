@@ -12,7 +12,7 @@ export const LikertField = withForm({
   props: {} as {
     fieldName: keyof FeedbackFormValues;
     label: string;
-    options: { value: string; label: string }[];
+    options: readonly { value: string; label: string }[];
   },
   render: ({ form, fieldName, label, options }) => (
     <form.Field name={fieldName}>

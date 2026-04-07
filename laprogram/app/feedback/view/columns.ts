@@ -1,19 +1,26 @@
 import z from "zod";
 import {
-  type FieldEntry,
-  ACTIVITIES,
-  MID_QUARTER_NONSENSITIVE_QUESTIONS,
-  END_OF_QUARTER_NONSENSITIVE_QUESTIONS,
-  OBSERVATION_NONSENSITIVE_QUESTIONS,
-  LA_PED_NONSENSITIVE_QUESTIONS,
-  LA_LCC_NONSENSITIVE_QUESTIONS,
-  TA_NONSENSITIVE_QUESTIONS,
-  MQ_NONSENSITIVE_TEXT_FIELDS,
+  EQ_NONSENSITIVE_QUESTIONS,
   EQ_NONSENSITIVE_TEXT_FIELDS,
-  OBS_NONSENSITIVE_TEXT_FIELDS,
+} from "../questions/end_quarter";
+import {
+  LA_PED_NONSENSITIVE_QUESTIONS,
   LA_HEAD_NONSENSITIVE_TEXT_FIELDS,
+  LA_LCC_NONSENSITIVE_QUESTIONS,
+} from "../questions/head_la";
+import {
+  MQ_NONSENSITIVE_QUESTIONS,
+  MQ_NONSENSITIVE_TEXT_FIELDS,
+} from "../questions/mid_quarter";
+import {
+  OBS_NONSENSITIVE_QUESTIONS,
+  OBS_NONSENSITIVE_TEXT_FIELDS,
+} from "../questions/observation";
+import { FieldEntry, ACTIVITY_OPTIONS } from "../questions/options";
+import {
+  TA_NONSENSITIVE_QUESTIONS,
   TA_NONSENSITIVE_TEXT_FIELDS,
-} from "../constants";
+} from "../questions/ta";
 
 export interface Column {
   key: string;
@@ -39,14 +46,21 @@ function fromQuestions(questions: readonly FieldEntry[]): Column[] {
   });
 }
 
-const activityMap = new Map(ACTIVITIES.map((a) => [a.value, a.label]));
+const activityMap = new Map(ACTIVITY_OPTIONS.map((a) => [a.value, a.label]));
 
 const activitiesColumn: Column = {
   key: "activities",
   header: "LA-Supported Activities",
   render: (val) => {
     if (!Array.isArray(val)) return val as React.ReactNode;
-    return val.map((v: string) => activityMap.get(v) ?? v).join(", ");
+    return val
+      .map(
+        (v: string) =>
+          activityMap.get(
+            v as "discussion" | "lecture" | "office_hours" | "study_session",
+          ) ?? v,
+      )
+      .join(", ");
   },
 };
 
@@ -62,7 +76,7 @@ const hoursColumn: Column = {
 export const midQuarterColumns: Column[] = [
   activitiesColumn,
   hoursColumn,
-  ...fromQuestions(MID_QUARTER_NONSENSITIVE_QUESTIONS),
+  ...fromQuestions(MQ_NONSENSITIVE_QUESTIONS),
   ...fromQuestions(MQ_NONSENSITIVE_TEXT_FIELDS),
 ];
 
@@ -72,7 +86,7 @@ export const midQuarterColumns: Column[] = [
 export const endOfQuarterColumns: Column[] = [
   activitiesColumn,
   hoursColumn,
-  ...fromQuestions(END_OF_QUARTER_NONSENSITIVE_QUESTIONS),
+  ...fromQuestions(EQ_NONSENSITIVE_QUESTIONS),
   ...fromQuestions(EQ_NONSENSITIVE_TEXT_FIELDS),
 ];
 
@@ -80,7 +94,7 @@ export const endOfQuarterColumns: Column[] = [
 // 3. Observation (LA → LA)
 // ---------------------------------------------------------------------------
 export const observationColumns: Column[] = [
-  ...fromQuestions(OBSERVATION_NONSENSITIVE_QUESTIONS),
+  ...fromQuestions(OBS_NONSENSITIVE_QUESTIONS),
   ...fromQuestions(OBS_NONSENSITIVE_TEXT_FIELDS),
 ];
 
@@ -124,7 +138,7 @@ const anonMidQuarterSchema = z.object({
   feedback_type: z.literal("mid_quarter"),
   activities: z.any(),
   hours: z.any(),
-  ...viewFields(MID_QUARTER_NONSENSITIVE_QUESTIONS),
+  ...viewFields(MQ_NONSENSITIVE_QUESTIONS),
   ...viewFields(MQ_NONSENSITIVE_TEXT_FIELDS),
 });
 
@@ -132,13 +146,13 @@ const anonEndOfQuarterSchema = z.object({
   feedback_type: z.literal("end_of_quarter"),
   activities: z.any(),
   hours: z.any(),
-  ...viewFields(END_OF_QUARTER_NONSENSITIVE_QUESTIONS),
+  ...viewFields(EQ_NONSENSITIVE_QUESTIONS),
   ...viewFields(EQ_NONSENSITIVE_TEXT_FIELDS),
 });
 
 const anonObservationSchema = z.object({
   feedback_type: z.literal("la_observation"),
-  ...viewFields(OBSERVATION_NONSENSITIVE_QUESTIONS),
+  ...viewFields(OBS_NONSENSITIVE_QUESTIONS),
   ...viewFields(OBS_NONSENSITIVE_TEXT_FIELDS),
 });
 

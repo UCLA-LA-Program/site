@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
-import Admin from "./Admin";
+import { Admin } from "./Admin";
 
 export const metadata: Metadata = {
   title: "Admin",

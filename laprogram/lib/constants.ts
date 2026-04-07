@@ -27,3 +27,16 @@ export const DAY_INDEX = [
 ];
 
 export const IMAGE_SIZE = 500;
+
+export const LA_POSITION_OPTIONS = [
+  { value: "new", label: "New LA" },
+  { value: "ret", label: "Returning LA" },
+  { value: "ped", label: "Pedagogy Head LA" },
+  { value: "lcc", label: "LA Course Coordinator (LCC)" },
+  { value: "ret_lcc", label: "Returner + LCC" },
+  { value: "ped_lcc", label: "Pedagogy Head + LCC" },
+];
+
+export const LA_POSITION_MAP = new Map(
+  LA_POSITION_OPTIONS.map((o) => [o.value, o.label]),
+);

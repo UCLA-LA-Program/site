@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import Schedule from "./Schedule";
+import { Schedule } from "./Schedule";
 
 export const metadata: Metadata = {
   title: "Schedule Observations",

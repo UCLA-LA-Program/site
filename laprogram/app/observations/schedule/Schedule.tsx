@@ -15,7 +15,7 @@ import { Slider } from "@/components/ui/slider";
 import { Loader2, Lock, Users } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import ContactUs from "@/components/ContactUs";
+import { ContactUs } from "@/components/ContactUs";
 import { fetcher } from "@/lib/utils";
 import { QUARTER_START_KEY } from "@/lib/constants";
 
@@ -165,7 +165,7 @@ function getCurrentWeek(quarterStart: string | undefined): number {
   return Math.max(1, Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1);
 }
 
-export default function Schedule() {
+export function Schedule() {
   const { data: config } = useSWR<Record<string, string>>(
     "/api/config",
     fetcher,

@@ -6,7 +6,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { Kysely } from "kysely";
 import { D1Dialect } from "kysely-d1";
 import { nextCookies } from "better-auth/next-js";
-import sendMagicLink from "./email";
+import { sendMagicLink } from "./email";
 
 async function authBuilder() {
   const { env } = await getCloudflareContext({ async: true });

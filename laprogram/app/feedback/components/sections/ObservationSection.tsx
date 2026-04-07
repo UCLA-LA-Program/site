@@ -1,13 +1,6 @@
 "use client";
 
 import type { FeedbackFormValues } from "../../schema";
-import {
-  OBSERVATION_NONSENSITIVE_QUESTIONS,
-  OBSERVATION_ROUND_OPTIONS,
-  LA_POSITION_OPTIONS,
-  OBS_NONSENSITIVE_TEXT_FIELDS,
-  OBS_SENSITIVE_TEXT_FIELDS,
-} from "../../constants";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
@@ -20,6 +13,13 @@ import { LikertField } from "../fields/LikertField";
 import { TextareaFormField } from "../fields/TextareaFormField";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";
+import { LA_POSITION_OPTIONS } from "@/lib/constants";
+import {
+  OBS_NONSENSITIVE_QUESTIONS,
+  OBS_NONSENSITIVE_TEXT_FIELDS,
+  OBS_SENSITIVE_TEXT_FIELDS,
+} from "../../questions/observation";
+import { OBSERVATION_ROUND_OPTIONS } from "../../questions/options";
 
 export const ObservationSection = withForm({
   defaultValues,
@@ -127,7 +127,7 @@ export const ObservationSection = withForm({
       </form.Field>
 
       {/* Likert questions */}
-      {OBSERVATION_NONSENSITIVE_QUESTIONS.map(({ value, label, options }) => (
+      {OBS_NONSENSITIVE_QUESTIONS.map(({ value, label, options }) => (
         <LikertField
           key={value}
           form={form}
