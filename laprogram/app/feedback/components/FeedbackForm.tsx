@@ -55,9 +55,18 @@ export function FeedbackForm({
   const { data: myPositions } = useSWR<Position[]>(
     session ? "/api/la/self" : null,
     fetcher,
+    {
+      suspense: true,
+      fallbackData: [],
+    },
   );
-  const { data: myObservations } = useSWR("/api/observation", (url: string) =>
-    fetcher(url).then(hydrateDates<MyObservation>),
+  const { data: myObservations } = useSWR(
+    session ? "/api/la/self" : null,
+    (url: string) => fetcher(url).then(hydrateDates<MyObservation>),
+    {
+      suspense: true,
+      fallbackData: [],
+    },
   );
 
   const form = useAppForm({
@@ -194,7 +203,12 @@ export function FeedbackForm({
             role === "la" &&
             feedbackType === "la_head_la" &&
             myPositions && (
-              <HeadLAPicker form={form} las={las} myPositions={myPositions} />
+              <HeadLAPicker
+                form={form}
+                las={las}
+                myPositions={myPositions}
+                name={session?.user.name ?? ""}
+              />
             )
           }
         </form.Subscribe>

@@ -15,12 +15,14 @@ export const HeadLAPicker = withForm({
   props: {} as {
     las: LA[];
     myPositions: Position[];
+    name: string;
   },
-  render: function Render({ form, las, myPositions }) {
+  render: function Render({ form, las, myPositions, name }) {
     const myCourses = myPositions.map((p) => p.course_name);
     const headLAs = las
       .filter(
         (la) =>
+          la.name !== name &&
           myCourses.includes(la.course) &&
           (la.position.includes("ped") || la.position.includes("lcc")),
       )
@@ -38,9 +40,13 @@ export const HeadLAPicker = withForm({
           </p>
         ) : (
           <RadioGroup
-            value={form.getFieldValue("la")}
             onValueChange={(v) => {
-              const la = headLAs.find((h) => h.name === v);
+              const name = v.split("|")[0];
+              const course = v.split("|")[1];
+
+              const la = headLAs.find(
+                (h) => h.name === name && h.course === course,
+              );
               if (la) {
                 form.setFieldValue("course", la.course);
                 form.setFieldValue("la", la.name);
@@ -60,7 +66,10 @@ export const HeadLAPicker = withForm({
                   key={`${la.name}|${la.course}`}
                   className="flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 has-checked:border-primary has-checked:bg-primary/5"
                 >
-                  <RadioGroupItem value={la.name} type="button" />
+                  <RadioGroupItem
+                    value={`${la.name}|${la.course}`}
+                    type="button"
+                  />
                   <div className="flex min-w-0 items-center gap-3">
                     <div className="size-20 shrink-0 overflow-hidden rounded-sm border bg-muted">
                       {la.image ? (
