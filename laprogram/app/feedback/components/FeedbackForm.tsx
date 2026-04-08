@@ -31,19 +31,8 @@ import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-
-type ObservationOption = {
-  id: string;
-  la_name: string;
-  la_email: string;
-  la_image: string | null;
-  la_position: string;
-  course_name: string;
-  section_name: string;
-  location: string;
-  time_start: string;
-  time_end: string;
-};
+import { hydrateDates } from "@/app/observations/signup/SignUp";
+import { MyObservation } from "@/app/observations/signup/types";
 
 type Option = { value: string; label: string };
 
@@ -67,9 +56,8 @@ export function FeedbackForm({
     session ? "/api/la/self" : null,
     fetcher,
   );
-  const { data: myObservations } = useSWR<ObservationOption[]>(
-    session ? "/api/observation" : null,
-    fetcher,
+  const { data: myObservations } = useSWR("/api/observation", (url: string) =>
+    fetcher(url).then(hydrateDates<MyObservation>),
   );
 
   const form = useAppForm({

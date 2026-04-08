@@ -27,11 +27,6 @@ export const LA_HEAD_TYPE_OPTIONS = [
   { value: "ped_lcc", label: "Both Ped Head and LCC" },
 ] as const;
 
-export const OBSERVATION_ROUND_OPTIONS = [
-  { value: "round_1", label: "Observations Round 1 (Weeks 3-4)" },
-  { value: "round_2", label: "Observations Round 2 (Weeks 7-8)" },
-] as const;
-
 export const ACTIVITY_OPTIONS = [
   { value: "discussion", label: "Discussion/Lab Section" },
   {

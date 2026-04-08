@@ -8,25 +8,13 @@ import { IMAGE_SIZE, LA_POSITION_MAP } from "@/lib/constants";
 import { format } from "date-fns";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";
-
-type ObservationOption = {
-  id: string;
-  la_name: string;
-  la_email: string;
-  la_image: string | null;
-  la_position: string;
-  course_name: string;
-  section_name: string;
-  location: string;
-  time_start: string;
-  time_end: string;
-};
+import { MyObservation } from "@/app/observations/signup/types";
 
 export const ObservationPicker = withForm({
   defaultValues,
   validators: { onSubmit: feedbackFormSchema },
   props: {} as {
-    observations: ObservationOption[];
+    observations: MyObservation[];
   },
   render: ({ form, observations }) => (
     <Field>
@@ -46,6 +34,11 @@ export const ObservationPicker = withForm({
             if (obs) {
               form.setFieldValue("course", obs.course_name);
               form.setFieldValue("la", obs.la_name);
+              form.setFieldValue(
+                "obs_section",
+                `${obs.section_name} — ${format(obs.time_start, "M/d")}`,
+              );
+              form.setFieldValue("obs_la_position", obs.la_position);
             }
           }}
         >
@@ -59,11 +52,11 @@ export const ObservationPicker = withForm({
               .map((obs) => (
                 <label
                   key={obs.id}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+                  className="flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 has-checked:border-primary has-checked:bg-primary/5"
                 >
                   <RadioGroupItem value={obs.la_name} type="button" />
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="size-12 shrink-0 overflow-hidden rounded-sm border bg-muted">
+                    <div className="size-20 shrink-0 overflow-hidden rounded-sm border bg-muted">
                       {obs.la_image ? (
                         <Image
                           src={obs.la_image}

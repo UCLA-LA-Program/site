@@ -109,7 +109,6 @@ const laFields = {
 };
 
 const obsFields = {
-  obs_round: required("Please select a round"),
   obs_section: required("Please describe the observed section"),
   obs_la_position: required("Please select an LA position"),
   ...zodFromFields(OBS_NONSENSITIVE_QUESTIONS),
