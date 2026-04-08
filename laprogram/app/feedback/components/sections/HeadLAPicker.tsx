@@ -44,11 +44,12 @@ export const HeadLAPicker = withForm({
               if (la) {
                 form.setFieldValue("course", la.course);
                 form.setFieldValue("la", la.name);
-                const headType = la.position.includes("ped") && la.position.includes("lcc")
-                  ? "ped_lcc"
-                  : la.position.includes("ped")
-                    ? "ped_head"
-                    : "lcc";
+                const headType =
+                  la.position.includes("ped") && la.position.includes("lcc")
+                    ? "ped_lcc"
+                    : la.position.includes("ped")
+                      ? "ped_head"
+                      : "lcc";
                 form.setFieldValue("la_head_type", headType);
               }
             }}
@@ -57,11 +58,11 @@ export const HeadLAPicker = withForm({
               {headLAs.map((la) => (
                 <label
                   key={`${la.name}|${la.course}`}
-                  className="flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 has-[:checked]:border-primary has-[:checked]:bg-primary/5"
+                  className="flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 has-checked:border-primary has-checked:bg-primary/5"
                 >
                   <RadioGroupItem value={la.name} type="button" />
                   <div className="flex min-w-0 items-center gap-3">
-                    <div className="size-12 shrink-0 overflow-hidden rounded-sm border bg-muted">
+                    <div className="size-20 shrink-0 overflow-hidden rounded-sm border bg-muted">
                       {la.image ? (
                         <Image
                           src={la.image}
