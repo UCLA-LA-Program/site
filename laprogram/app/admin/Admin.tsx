@@ -5,6 +5,14 @@ import useSWR from "swr";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { LA_POSITION_MAP } from "@/lib/constants";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -55,6 +63,69 @@ export function Admin() {
   const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher);
   const [jobStatuses, setJobStatuses] = useState<Record<string, JobStatus>>({});
   const [jobResults, setJobResults] = useState<Record<string, string>>({});
+
+  const [rosterQuery, setRosterQuery] = useState("");
+  const [rosterCourse, setRosterCourse] = useState("");
+  const [rosterPosition, setRosterPosition] = useState("");
+  const [rosterSortKey, setRosterSortKey] = useState<
+    "name" | "email" | "courses"
+  >("name");
+  const [rosterSortDir, setRosterSortDir] = useState<"asc" | "desc">("asc");
+
+  const courseOptions = roster
+    ? Array.from(
+        new Set(roster.flatMap((u) => u.courses.map((c) => c.course_name))),
+      ).sort()
+    : [];
+  const positionOptions = roster
+    ? Array.from(
+        new Set(roster.flatMap((u) => u.courses.map((c) => c.position))),
+      ).sort()
+    : [];
+
+  const filteredRoster = roster
+    ? roster
+        .filter((u) => {
+          const q = rosterQuery.trim().toLowerCase();
+          if (
+            q &&
+            !u.name.toLowerCase().includes(q) &&
+            !u.email.toLowerCase().includes(q)
+          )
+            return false;
+          if (
+            rosterCourse &&
+            !u.courses.some((c) => c.course_name === rosterCourse)
+          )
+            return false;
+          if (
+            rosterPosition &&
+            !u.courses.some((c) => c.position === rosterPosition)
+          )
+            return false;
+          return true;
+        })
+        .sort((a, b) => {
+          const dir = rosterSortDir === "asc" ? 1 : -1;
+          const get = (u: RosterUser) =>
+            rosterSortKey === "courses"
+              ? u.courses.map((c) => c.course_name).join(",")
+              : (u[rosterSortKey] ?? "");
+          return get(a).localeCompare(get(b)) * dir;
+        })
+    : [];
+
+  function toggleRosterSort(key: "name" | "email" | "courses") {
+    if (rosterSortKey === key) {
+      setRosterSortDir(rosterSortDir === "asc" ? "desc" : "asc");
+    } else {
+      setRosterSortKey(key);
+      setRosterSortDir("asc");
+    }
+  }
+
+  const sortArrow = (key: "name" | "email" | "courses") =>
+    rosterSortKey === key ? (rosterSortDir === "asc" ? " ↑" : " ↓") : "";
 
   if (data === undefined) return <></>;
 
@@ -227,48 +298,126 @@ export function Admin() {
 
         <TabsContent value="roster">
           {roster ? (
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b text-left text-muted-foreground">
-                  <th className="pb-2 font-medium">Photo</th>
-                  <th className="pb-2 font-medium">Name</th>
-                  <th className="pb-2 font-medium">Email</th>
-                  <th className="pb-2 font-medium">Courses</th>
-                </tr>
-              </thead>
-              <tbody>
-                {roster.map((user) => (
-                  <tr key={user.id} className="border-b last:border-0">
-                    <td className="py-2">
-                      {user.image ? (
-                        <Image
-                          height={IMAGE_SIZE}
-                          width={IMAGE_SIZE}
-                          src={user.image}
-                          alt={user.name}
-                          className="h-28 w-28 rounded-md object-cover mr-3"
-                        />
-                      ) : (
-                        <div className="flex h-28 w-28 items-center justify-center rounded-md bg-muted text-xl mr-3 font-medium">
-                          {user.name
-                            .split(" ")
-                            .map((n) => n[0])
-                            .join("")
-                            .slice(0, 2)}
-                        </div>
-                      )}
-                    </td>
-                    <td className="py-2 font-medium">{user.name}</td>
-                    <td className="py-2 text-muted-foreground">{user.email}</td>
-                    <td className="py-2 text-muted-foreground">
-                      {user.courses
-                        .map((c) => `${c.course_name} (${c.position})`)
-                        .join(", ")}
-                    </td>
+            <div className="space-y-3">
+              <div className="flex flex-wrap gap-2">
+                <Input
+                  placeholder="Search name or email…"
+                  value={rosterQuery}
+                  onChange={(e) => setRosterQuery(e.target.value)}
+                  className="max-w-xs"
+                />
+                <Select
+                  value={rosterCourse || "all"}
+                  onValueChange={(v) => setRosterCourse(v === "all" ? "" : v)}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="All courses" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All courses</SelectItem>
+                    {courseOptions.map((c) => (
+                      <SelectItem key={c} value={c}>
+                        {c}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select
+                  value={rosterPosition || "all"}
+                  onValueChange={(v) => setRosterPosition(v === "all" ? "" : v)}
+                >
+                  <SelectTrigger className="w-48">
+                    <SelectValue placeholder="All roles" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All roles</SelectItem>
+                    {positionOptions.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {LA_POSITION_MAP.get(p) ?? p}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {(rosterQuery || rosterCourse || rosterPosition) && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setRosterQuery("");
+                      setRosterCourse("");
+                      setRosterPosition("");
+                    }}
+                  >
+                    Clear
+                  </Button>
+                )}
+                <span className="ml-auto self-center text-xs text-muted-foreground">
+                  {filteredRoster.length} of {roster.length}
+                </span>
+              </div>
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-muted-foreground">
+                    <th className="pb-2 font-medium">Photo</th>
+                    <th
+                      className="cursor-pointer pb-2 font-medium select-none hover:text-foreground"
+                      onClick={() => toggleRosterSort("name")}
+                    >
+                      Name{sortArrow("name")}
+                    </th>
+                    <th
+                      className="cursor-pointer pb-2 font-medium select-none hover:text-foreground"
+                      onClick={() => toggleRosterSort("email")}
+                    >
+                      Email{sortArrow("email")}
+                    </th>
+                    <th
+                      className="cursor-pointer pb-2 font-medium select-none hover:text-foreground"
+                      onClick={() => toggleRosterSort("courses")}
+                    >
+                      Courses{sortArrow("courses")}
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {filteredRoster.map((user) => (
+                    <tr key={user.id} className="border-b last:border-0">
+                      <td className="py-2">
+                        {user.image ? (
+                          <Image
+                            height={IMAGE_SIZE}
+                            width={IMAGE_SIZE}
+                            src={user.image}
+                            alt={user.name}
+                            className="h-28 w-28 rounded-md object-cover mr-3"
+                          />
+                        ) : (
+                          <div className="flex h-28 w-28 items-center justify-center rounded-md bg-muted text-xl mr-3 font-medium">
+                            {user.name
+                              .split(" ")
+                              .map((n) => n[0])
+                              .join("")
+                              .slice(0, 2)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-2 font-medium">{user.name}</td>
+                      <td className="py-2 text-muted-foreground">
+                        {user.email}
+                      </td>
+                      <td className="py-2 text-muted-foreground">
+                        {user.courses
+                          .map(
+                            (c) =>
+                              `${c.course_name} (${LA_POSITION_MAP.get(c.position) ?? c.position})`,
+                          )
+                          .join(", ")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           ) : (
             <p className="text-sm text-muted-foreground">Loading roster…</p>
           )}

@@ -27,6 +27,7 @@ export interface Column {
   header: string;
   width?: string;
   render?: (value: unknown) => React.ReactNode;
+  options?: readonly { value: string; label: string }[];
 }
 
 function fromQuestions(questions: readonly FieldEntry[]): Column[] {
@@ -41,6 +42,7 @@ function fromQuestions(questions: readonly FieldEntry[]): Column[] {
       ...(optionMap && {
         render: (val: unknown) =>
           optionMap.get(val as string) ?? (val as React.ReactNode),
+        options: q.options,
       }),
     };
   });
