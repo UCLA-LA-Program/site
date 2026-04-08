@@ -2,11 +2,8 @@
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Field,
-  FieldDescription,
   FieldError,
   FieldGroup,
   FieldLabel,
@@ -18,27 +15,35 @@ import { MidQuarterSection } from "./sections/MidQuarterSection";
 import { TASection } from "./sections/TASection";
 import { HeadLASection } from "./sections/HeadLASection";
 import { ObservationSection } from "./sections/ObservationSection";
+import { RoleField } from "./sections/RoleField";
+import { SignInGate } from "./sections/SignInGate";
+import { LAFeedbackTypeField } from "./sections/LAFeedbackTypeField";
+import { ObservationPicker } from "./sections/ObservationPicker";
+import { HeadLAPicker } from "./sections/HeadLAPicker";
+import { CourseField } from "./sections/CourseField";
+import { LAField } from "./sections/LAField";
+import { StudentFeedbackTypeField } from "./sections/StudentFeedbackTypeField";
 
 import { useAppForm } from "../form";
 import { defaultValues, feedbackFormSchema } from "../schema";
-import {
-  Combobox,
-  ComboboxContent,
-  ComboboxItem,
-  ComboboxInput,
-  ComboboxEmpty,
-  ComboboxList,
-} from "@/components/ui/combobox";
-import { LA } from "@/types/db";
+import type { LA, Position } from "@/types/db";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import { toast } from "sonner";
-import Image from "next/image";
-import { UserRound, LogIn } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import Link from "next/link";
-import { IMAGE_SIZE } from "@/lib/constants";
-import { LA_POSITION_MAP } from "@/lib/constants";
+
+type ObservationOption = {
+  id: string;
+  la_name: string;
+  la_email: string;
+  la_image: string | null;
+  la_position: string;
+  course_name: string;
+  section_name: string;
+  location: string;
+  time_start: string;
+  time_end: string;
+};
 
 type Option = { value: string; label: string };
 
@@ -58,6 +63,14 @@ export function FeedbackForm({
     suspense: true,
     fallbackData: [],
   });
+  const { data: myPositions } = useSWR<Position[]>(
+    session ? "/api/la/self" : null,
+    fetcher,
+  );
+  const { data: myObservations } = useSWR<ObservationOption[]>(
+    session ? "/api/observation" : null,
+    fetcher,
+  );
 
   const form = useAppForm({
     defaultValues,
@@ -149,182 +162,72 @@ export function FeedbackForm({
         </form.Field>
 
         {/* Role */}
-        <form.Field
-          name="role"
-          listeners={{
-            onChange: () => {
-              form.setFieldValue("course", "");
-              form.setFieldValue("la", "");
-            },
-          }}
-        >
-          {(field) => {
-            const isInvalid =
-              field.state.meta.isTouched && !field.state.meta.isValid;
-            return (
-              <Field data-invalid={isInvalid}>
-                <FieldLabel>
-                  I am&hellip; <span className="text-destructive">*</span>
-                </FieldLabel>
-                <RadioGroup
-                  value={field.state.value}
-                  onValueChange={(v) => field.handleChange(v)}
-                  onBlur={field.handleBlur}
-                >
-                  {roleOptions.map(({ value, label }) => (
-                    <div key={value} className="flex items-center gap-2">
-                      <RadioGroupItem
-                        id={`role-${value}`}
-                        value={value}
-                        aria-invalid={isInvalid}
-                      />
-                      <Label
-                        htmlFor={`role-${value}`}
-                        className="cursor-pointer font-normal"
-                      >
-                        {label}
-                      </Label>
-                    </div>
-                  ))}
-                </RadioGroup>
-              </Field>
-            );
-          }}
-        </form.Field>
+        <RoleField form={form} roleOptions={roleOptions} />
 
-        {/* Sign-in gate for LAs */}
+        {/* LA Feedback selector */}
         <form.Subscribe selector={(state) => state.values.role}>
           {(role) =>
             role === "la" &&
-            !session && (
-              <div className="flex flex-col items-center gap-3 rounded-lg border border-dashed p-6 text-center">
-                <LogIn className="h-6 w-6 text-muted-foreground" />
-                <p className="text-sm text-muted-foreground">
-                  LAs must login to submit Head LA & Observation feedback.
-                </p>
-                <Button asChild size="sm">
-                  <Link href="/login">Login</Link>
-                </Button>
-              </div>
+            (session ? (
+              <LAFeedbackTypeField
+                form={form}
+                laFeedbackTypeOptions={laFeedbackTypeOptions}
+              />
+            ) : (
+              <SignInGate />
+            ))
+          }
+        </form.Subscribe>
+
+        {/* LA Observation picker */}
+        <form.Subscribe
+          selector={(state) => ({
+            role: state.values.role,
+            feedbackType: state.values.feedback_type,
+          })}
+        >
+          {({ role, feedbackType }) =>
+            role === "la" &&
+            feedbackType === "la_observation" &&
+            myObservations && (
+              <ObservationPicker form={form} observations={myObservations} />
             )
           }
         </form.Subscribe>
 
-        {/* Course — hidden until role is selected; hidden for unauthenticated LAs */}
+        {/* LA Head LA picker */}
+        <form.Subscribe
+          selector={(state) => ({
+            role: state.values.role,
+            feedbackType: state.values.feedback_type,
+          })}
+        >
+          {({ role, feedbackType }) =>
+            role === "la" &&
+            feedbackType === "la_head_la" &&
+            myPositions && (
+              <HeadLAPicker form={form} las={las} myPositions={myPositions} />
+            )
+          }
+        </form.Subscribe>
+
+        {/* Course — hidden for LA role */}
         <form.Subscribe selector={(state) => state.values.role}>
           {(role) =>
-            role &&
-            (role !== "la" || session) && (
-              <form.Field
-                name="course"
-                listeners={{
-                  onChange: () => {
-                    form.setFieldValue("la", "");
-                  },
-                }}
-              >
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid;
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>
-                        Course of LA being given feedback{" "}
-                        <span className="text-destructive">*</span>
-                      </FieldLabel>
-                      <Combobox
-                        autoHighlight
-                        onValueChange={(v) => field.handleChange(v as string)}
-                        value={field.state.value}
-                        items={[...new Set(las.map((la) => la.course))].sort()}
-                      >
-                        <ComboboxInput
-                          id={field.name}
-                          placeholder="Select a course"
-                          aria-invalid={isInvalid}
-                        />
-                        <ComboboxContent>
-                          <ComboboxEmpty>No option found.</ComboboxEmpty>
-                          <ComboboxList>
-                            {(c) => (
-                              <ComboboxItem key={c} value={c}>
-                                {c}
-                              </ComboboxItem>
-                            )}
-                          </ComboboxList>
-                        </ComboboxContent>
-                      </Combobox>
-                    </Field>
-                  );
-                }}
-              </form.Field>
-            )
+            role && role !== "la" && <CourseField form={form} las={las} />
           }
         </form.Subscribe>
 
-        {/* LA */}
-        <form.Subscribe selector={(state) => state.values.course}>
-          {(course) =>
-            course && (
-              <form.Field name="la">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid;
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel htmlFor={field.name}>
-                        Please select the name of the LA you are providing
-                        feedback to <span className="text-destructive">*</span>
-                      </FieldLabel>
-                      <Combobox
-                        autoHighlight
-                        onValueChange={(v) => field.handleChange(v as string)}
-                        value={field.state.value}
-                        items={las
-                          .filter((la) => la.course === course)
-                          .sort((a, b) => a.name.localeCompare(b.name))}
-                      >
-                        <ComboboxInput
-                          id={field.name}
-                          placeholder="Select an LA"
-                          aria-invalid={isInvalid}
-                        />
-                        <ComboboxContent>
-                          <ComboboxEmpty>No option found.</ComboboxEmpty>
-                          <ComboboxList>
-                            {(la: LA) => (
-                              <ComboboxItem key={la.name} value={la.name}>
-                                {la.image ? (
-                                  <Image
-                                    src={la.image}
-                                    alt={la.name}
-                                    width={IMAGE_SIZE}
-                                    height={IMAGE_SIZE}
-                                    className="h-24 w-24 rounded-sm"
-                                  />
-                                ) : (
-                                  <UserRound
-                                    className="size-24 rounded-sm"
-                                    strokeWidth={1}
-                                  />
-                                )}
-                                <div className="flex flex-col pl-3">
-                                  <span className="text-sm">{la.name}</span>
-                                  <span className="text-xs text-muted-foreground">
-                                    {LA_POSITION_MAP.get(la.position) ??
-                                      la.position}
-                                  </span>
-                                </div>
-                              </ComboboxItem>
-                            )}
-                          </ComboboxList>
-                        </ComboboxContent>
-                      </Combobox>
-                    </Field>
-                  );
-                }}
-              </form.Field>
-            )
+        {/* LA — hidden for LA role */}
+        <form.Subscribe
+          selector={(state) => ({
+            course: state.values.course,
+            role: state.values.role,
+          })}
+        >
+          {({ course, role }) =>
+            course &&
+            role !== "la" && <LAField form={form} las={las} course={course} />
           }
         </form.Subscribe>
 
@@ -338,99 +241,10 @@ export function FeedbackForm({
           {({ la, role }) =>
             la &&
             role === "student" && (
-              <form.Field name="feedback_type">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid;
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel>
-                        What kind of feedback are you providing?{" "}
-                        <span className="text-destructive">*</span>
-                      </FieldLabel>
-                      <FieldDescription>
-                        Students provide LAs with feedback in the middle of the
-                        quarter (Weeks 5–6) and at the end of the quarter (Weeks
-                        9–10).
-                      </FieldDescription>
-                      <RadioGroup
-                        value={field.state.value}
-                        onValueChange={(v) => {
-                          field.handleChange(v);
-                        }}
-                        onBlur={field.handleBlur}
-                      >
-                        {feedbackTypeOptions.map(({ value, label }) => (
-                          <div key={value} className="flex items-center gap-2">
-                            <RadioGroupItem
-                              id={`type-${value}`}
-                              value={value}
-                              aria-invalid={isInvalid}
-                              type="button"
-                            />
-                            <Label
-                              htmlFor={`type-${value}`}
-                              className="cursor-pointer font-normal"
-                            >
-                              {label}
-                            </Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </Field>
-                  );
-                }}
-              </form.Field>
-            )
-          }
-        </form.Subscribe>
-
-        {/* Feedback Type — LA only */}
-        <form.Subscribe
-          selector={(state) => ({
-            la: state.values.la,
-            role: state.values.role,
-          })}
-        >
-          {({ la, role }) =>
-            la &&
-            role === "la" && (
-              <form.Field name="feedback_type">
-                {(field) => {
-                  const isInvalid =
-                    field.state.meta.isTouched && !field.state.meta.isValid;
-                  return (
-                    <Field data-invalid={isInvalid}>
-                      <FieldLabel>
-                        LAs: What kind of feedback are you providing?{" "}
-                        <span className="text-destructive">*</span>
-                      </FieldLabel>
-                      <RadioGroup
-                        value={field.state.value}
-                        onValueChange={(v) => field.handleChange(v)}
-                        onBlur={field.handleBlur}
-                      >
-                        {laFeedbackTypeOptions.map(({ value, label }) => (
-                          <div key={value} className="flex items-center gap-2">
-                            <RadioGroupItem
-                              id={`type-${value}`}
-                              value={value}
-                              aria-invalid={isInvalid}
-                              type="button"
-                            />
-                            <Label
-                              htmlFor={`type-${value}`}
-                              className="cursor-pointer font-normal"
-                            >
-                              {label}
-                            </Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </Field>
-                  );
-                }}
-              </form.Field>
+              <StudentFeedbackTypeField
+                form={form}
+                feedbackTypeOptions={feedbackTypeOptions}
+              />
             )
           }
         </form.Subscribe>
@@ -478,8 +292,12 @@ export function FeedbackForm({
                 {feedbackType === "end_of_quarter" && (
                   <EndQuarterSection form={form} />
                 )}
-                <FieldSeparator />
-                <ClosingSection form={form} />
+                {feedbackType && (
+                  <>
+                    <FieldSeparator />
+                    <ClosingSection form={form} />
+                  </>
+                )}
               </>
             )
           }
