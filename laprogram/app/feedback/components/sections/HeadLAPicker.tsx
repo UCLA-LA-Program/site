@@ -44,6 +44,12 @@ export const HeadLAPicker = withForm({
               if (la) {
                 form.setFieldValue("course", la.course);
                 form.setFieldValue("la", la.name);
+                const headType = la.position.includes("ped") && la.position.includes("lcc")
+                  ? "ped_lcc"
+                  : la.position.includes("ped")
+                    ? "ped_head"
+                    : "lcc";
+                form.setFieldValue("la_head_type", headType);
               }
             }}
           >
