@@ -83,20 +83,20 @@
 }
 
 .dark {
-  --background: oklch(0.147 0.004 49.25);
-  --foreground: oklch(0.985 0.001 106.423);
-  --card: oklch(0.216 0.006 56.043);
-  --card-foreground: oklch(0.985 0.001 106.423);
-  --popover: oklch(0.216 0.006 56.043);
-  --popover-foreground: oklch(0.985 0.001 106.423);
+  --background: oklch(0.18 0.015 250);
+  --foreground: oklch(0.985 0.005 250);
+  --card: oklch(0.23 0.018 250);
+  --card-foreground: oklch(0.985 0.005 250);
+  --popover: oklch(0.23 0.018 250);
+  --popover-foreground: oklch(0.985 0.005 250);
   --primary: oklch(0.6 0.155 242);
   --primary-foreground: oklch(0.977 0.013 236.62);
-  --secondary: oklch(0.274 0.006 286.033);
+  --secondary: oklch(0.28 0.02 250);
   --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.268 0.007 34.298);
-  --muted-foreground: oklch(0.709 0.01 56.259);
-  --accent: oklch(0.268 0.007 34.298);
-  --accent-foreground: oklch(0.985 0.001 106.423);
+  --muted: oklch(0.3 0.025 250);
+  --muted-foreground: oklch(0.72 0.015 250);
+  --accent: oklch(0.3 0.025 250);
+  --accent-foreground: oklch(0.985 0.005 250);
   --destructive: oklch(0.704 0.191 22.216);
   --border: oklch(1 0 0 / 10%);
   --input: oklch(1 0 0 / 15%);
@@ -295,7 +295,9 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground;
+    background: linear-gradient(180deg, var(--background) 0%, var(--muted) 100%);
+    background-attachment: fixed;
   }
   html {
     @apply font-sans;
