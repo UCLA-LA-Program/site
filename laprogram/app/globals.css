@@ -117,7 +117,7 @@
 }
 
 .pink {
-  --background: oklch(0.94 0.03 350);
+  --background: oklch(0.92 0.035 350);
   --foreground: oklch(0.24 0.06 350);
   --card: oklch(0.96 0.025 350);
   --card-foreground: oklch(0.24 0.06 350);
