@@ -61,7 +61,7 @@ export function FeedbackForm({
     },
   );
   const { data: myObservations } = useSWR(
-    session ? "/api/la/self" : null,
+    session ? "/api/observation" : null,
     (url: string) => fetcher(url).then(hydrateDates<MyObservation>),
     {
       suspense: true,

@@ -44,11 +44,7 @@ export const ObservationPicker = withForm({
         >
           <div className="space-y-2">
             {observations
-              .sort(
-                (a, b) =>
-                  new Date(a.time_start).getTime() -
-                  new Date(b.time_start).getTime(),
-              )
+              .sort((a, b) => a.time_start.getTime() - b.time_start.getTime())
               .map((obs) => (
                 <label
                   key={obs.id}
@@ -78,7 +74,7 @@ export const ObservationPicker = withForm({
                         {LA_POSITION_MAP.get(obs.la_position) ??
                           obs.la_position}{" "}
                         &middot; {obs.course_name} {obs.section_name} &middot;{" "}
-                        {format(new Date(obs.time_start), "M/d")}
+                        {format(obs.time_start, "M/d")}
                       </p>
                     </div>
                   </div>
