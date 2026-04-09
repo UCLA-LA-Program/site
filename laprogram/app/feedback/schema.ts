@@ -25,6 +25,7 @@ import {
   TA_NONSENSITIVE_QUESTIONS,
   TA_NONSENSITIVE_TEXT_FIELDS,
 } from "./questions/ta";
+import { isLS7 } from "@/lib/utils";
 
 const required = (msg: string) => z.string().min(1, msg);
 
@@ -71,6 +72,7 @@ const closingFields = {
       { message: "Please enter a valid 9-digit UID" },
     )
     .optional(),
+  ls7code: z.string().optional(),
   gender: z.string().optional(),
   gender_other: z.string().optional(),
   groups: z.array(z.string()).optional(),
@@ -109,7 +111,6 @@ const laFields = {
 };
 
 const obsFields = {
-  obs_round: required("Please select a round"),
   obs_section: required("Please describe the observed section"),
   obs_la_position: required("Please select an LA position"),
   ...zodFromFields(OBS_NONSENSITIVE_QUESTIONS),

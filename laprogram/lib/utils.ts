@@ -86,3 +86,11 @@ export function parseTimeRange(
     ),
   };
 }
+
+export function isLS7(course: string) {
+  return (
+    course.includes("LS 7A") ||
+    course.includes("LS 7B") ||
+    course.includes("LS 7C")
+  );
+}

@@ -38,6 +38,7 @@ import {
   GENDER_OPTIONS,
   GROUP_OPTIONS,
 } from "../../questions/options";
+import { isLS7 } from "@/lib/utils";
 
 export const ClosingSection = withForm({
   defaultValues,
@@ -134,6 +135,77 @@ export const ClosingSection = withForm({
             );
           }}
         </form.Field>
+
+        <form.Subscribe
+          selector={(state) => ({
+            course: state.values.course,
+            feedbackType: state.values.feedback_type,
+          })}
+        >
+          {({ course, feedbackType }) =>
+            isLS7(course) &&
+            (feedbackType === "mid_quarter" ||
+              feedbackType === "end_of_quarter") && (
+              <form.Field
+                name="ls7code"
+                validators={{
+                  onSubmit: ({ value }) => {
+                    if (!value) {
+                      return { message: "", errorType: "default" };
+                    }
+                    return undefined;
+                  },
+                }}
+              >
+                {(field) => {
+                  const isInvalid =
+                    field.state.meta.isTouched && !field.state.meta.isValid;
+                  return (
+                    <Field data-invalid={isInvalid}>
+                      <FieldLabel htmlFor={field.name}>
+                        Students giving feedback to an LA in LS 7: Complete the
+                        following survey on the accessibility of problem-solving
+                        sessions and enter the code shown on the submission page
+                        below:
+                        <span className="text-destructive">*</span>
+                      </FieldLabel>
+                      <FieldDescription>
+                        Please answer the questions on this{" "}
+                        <a
+                          href={
+                            feedbackType === "mid_quarter"
+                              ? "https://docs.google.com/forms/d/e/1FAIpQLSentHrxMD9Z2CGQhWENaRCslxveI53AEjWTvPYVCJq7_eBLCA/viewform"
+                              : "https://docs.google.com/forms/d/e/1FAIpQLSfdz7x2kqgvKcSSuZ7nifTWwBTkPBBvhys_vBv2p7O3mpCSQw/viewform"
+                          }
+                          className="underline-offset-2 hover:underline text-primary"
+                        >
+                          form
+                        </a>
+                        . Once your response has been submitted, you will see a
+                        code made up of 6 letters and numbers (e.g., A68J2W) on
+                        the submission page. Please enter your UID in the box
+                        above and the code in the box below to receive course
+                        credit.
+                      </FieldDescription>
+                      <Input
+                        id={field.name}
+                        type="text"
+                        maxLength={6}
+                        value={field.state.value}
+                        onChange={(e) => field.handleChange(e.target.value)}
+                        onBlur={field.handleBlur}
+                        aria-invalid={isInvalid}
+                      />
+                      {isInvalid && (
+                        <FieldError errors={field.state.meta.errors} />
+                      )}
+                    </Field>
+                  );
+                }}
+              </form.Field>
+            )
+          }
+        </form.Subscribe>
 
         <form.Field name="gender">
           {(field) => (

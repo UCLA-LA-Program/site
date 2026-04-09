@@ -27,8 +27,8 @@ interface TableDef {
 
 function buildTables(positions: Position[]): TableDef[] {
   const positionSet = new Set(positions.map((p) => p.position));
-  const isPed = positionSet.has("ped_head") || positionSet.has("lcc_ped_head");
-  const isLcc = positionSet.has("lcc") || positionSet.has("lcc_ped_head");
+  const isPed = positionSet.has("ped") || positionSet.has("ped_lcc");
+  const isLcc = positionSet.has("lcc") || positionSet.has("ped_lcc");
 
   const tables: TableDef[] = [
     {

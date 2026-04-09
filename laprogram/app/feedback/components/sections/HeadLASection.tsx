@@ -1,13 +1,7 @@
 "use client";
 
 import type { FeedbackFormValues } from "../../schema";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from "@/components/ui/field";
+import { FieldGroup } from "@/components/ui/field";
 import { LikertField } from "../fields/LikertField";
 import { TextareaFormField } from "../fields/TextareaFormField";
 import { withForm } from "../../form";
@@ -17,45 +11,12 @@ import {
   LA_LCC_NONSENSITIVE_QUESTIONS,
   LA_HEAD_NONSENSITIVE_TEXT_FIELDS,
 } from "../../questions/head_la";
-import { LA_HEAD_TYPE_OPTIONS } from "../../questions/options";
 
 export const HeadLASection = withForm({
   defaultValues,
   validators: { onSubmit: feedbackFormSchema },
   render: ({ form }) => (
     <FieldGroup>
-      <form.Field name="la_head_type">
-        {(field) => {
-          const isInvalid =
-            field.state.meta.isTouched && !field.state.meta.isValid;
-          return (
-            <Field data-invalid={isInvalid}>
-              <FieldLabel>
-                The Head LA I am providing feedback to is a(n)&hellip;{" "}
-                <span className="text-destructive">*</span>
-              </FieldLabel>
-              <RadioGroup
-                value={field.state.value}
-                onValueChange={(value) => {
-                  field.handleChange(value);
-                  field.handleBlur();
-                }}
-              >
-                <FieldGroup className="gap-2.5">
-                  {LA_HEAD_TYPE_OPTIONS.map(({ value, label }) => (
-                    <Field key={value} orientation="horizontal">
-                      <RadioGroupItem value={value} id={value} />
-                      <FieldLabel htmlFor={value}>{label}</FieldLabel>
-                    </Field>
-                  ))}
-                </FieldGroup>
-              </RadioGroup>
-              {isInvalid && <FieldError errors={field.state.meta.errors} />}
-            </Field>
-          );
-        }}
-      </form.Field>
-
       <form.Subscribe selector={(state) => state.values.la_head_type}>
         {(la_head_type) => (
           <>

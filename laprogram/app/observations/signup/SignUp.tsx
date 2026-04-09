@@ -20,7 +20,7 @@ import {
 
 import { OBSERVATION_CHANGE_DAYS_LIMIT } from "@/lib/constants";
 
-function hydrateDates<T extends { time_start: Date; time_end: Date }>(
+export function hydrateDates<T extends { time_start: Date; time_end: Date }>(
   items: T[],
 ): T[] {
   return items.map((item) => ({

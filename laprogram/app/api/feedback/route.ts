@@ -56,7 +56,6 @@ export async function GET() {
       return new Response("Unauthenticated user.", { status: 401 });
     }
 
-    let rows;
     const result = await env.data
       ?.prepare(`SELECT id, feedback FROM feedback WHERE recipientId = ?1`)
       .bind(session.user.id)
@@ -65,7 +64,7 @@ export async function GET() {
     if (!result || result.error) {
       return new Response("Encountered database error.", { status: 500 });
     }
-    rows = result.results;
+    const rows = result.results;
 
     const sorted = sortBy(rows, (r) => r.id);
 

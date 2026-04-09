@@ -30,7 +30,7 @@ export const IMAGE_SIZE = 500;
 
 export const TIMEZONE = "America/Los_Angeles";
 
-export const LA_POSITION_OPTIONS = [
+const LA_POSITION_OPTIONS = [
   { value: "new", label: "New LA" },
   { value: "ret", label: "Returning LA" },
   { value: "ped", label: "Pedagogy Head LA" },

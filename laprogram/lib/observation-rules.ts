@@ -2,13 +2,15 @@
  * Observation sign-up filtering rules and contextual notes.
  */
 
+import { isLS7 } from "./utils";
+
 type ObservationRule = {
   description: string;
   applies: (observerPositions: string[]) => boolean;
   filter: (slot: { la_position: string }) => boolean;
 };
 
-export const OBSERVATION_RULES: ObservationRule[] = [
+const OBSERVATION_RULES: ObservationRule[] = [
   {
     description: "Ped Heads can only observe New LAs.",
     applies: (positions) => positions.some((p) => p.includes("ped")),
@@ -41,20 +43,19 @@ type ObservationNote = {
   applies: (context: { observerCourses: CoursePosition[] }) => boolean;
 };
 
-const isLSCourse = (name: string) => name.startsWith("LS 7A");
 const OBSERVATION_NOTES: ObservationNote[] = [
   {
     text: "LS 7 Ped Heads: Please prioritize observing LS 7 New LAs.",
     applies: ({ observerCourses }) =>
       observerCourses.some(
-        (c) => isLSCourse(c.course_name) && c.position.includes("ped"),
+        (c) => isLS7(c.course_name) && c.position.includes("ped"),
       ),
   },
   {
     text: "LS 7 Returners: Please prioritize observing LS 7 Returners and Ped Heads.",
     applies: ({ observerCourses }) =>
       observerCourses.some(
-        (c) => isLSCourse(c.course_name) && c.position.includes("ret"),
+        (c) => isLS7(c.course_name) && c.position.includes("ret"),
       ),
   },
 ];
