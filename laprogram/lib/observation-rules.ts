@@ -10,7 +10,7 @@ type ObservationRule = {
   filter: (slot: { la_position: string }) => boolean;
 };
 
-export const OBSERVATION_RULES: ObservationRule[] = [
+const OBSERVATION_RULES: ObservationRule[] = [
   {
     description: "Ped Heads can only observe New LAs.",
     applies: (positions) => positions.some((p) => p.includes("ped")),
