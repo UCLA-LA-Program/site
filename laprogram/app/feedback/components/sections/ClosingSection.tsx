@@ -146,7 +146,17 @@ export const ClosingSection = withForm({
             isLS7(course) &&
             (feedbackType === "mid_quarter" ||
               feedbackType === "end_of_quarter") && (
-              <form.Field name="ls7code">
+              <form.Field
+                name="ls7code"
+                validators={{
+                  onSubmit: ({ value }) => {
+                    if (!value) {
+                      return { errorType: "default" };
+                    }
+                    return undefined;
+                  },
+                }}
+              >
                 {(field) => {
                   const isInvalid =
                     field.state.meta.isTouched && !field.state.meta.isValid;

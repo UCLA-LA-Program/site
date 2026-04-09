@@ -226,10 +226,6 @@ const studentSchema = z.discriminatedUnion("feedback_type", [
 
 export const feedbackFormSchema = z
   .object(headerFields)
-  .and(z.discriminatedUnion("role", [studentSchema, taSchema, laSchema]))
-  .refine((data) => {
-    if (data.role === "student" && isLS7(data.course)) {
-      return !!data.ls7code;
-    }
-    return true;
-  }) as unknown as z.ZodType<FeedbackFormValues, FeedbackFormValues>;
+  .and(
+    z.discriminatedUnion("role", [studentSchema, taSchema, laSchema]),
+  ) as unknown as z.ZodType<FeedbackFormValues, FeedbackFormValues>;
