@@ -19,6 +19,7 @@ export const RoleField = withForm({
         onChange: () => {
           form.setFieldValue("course", "");
           form.setFieldValue("la", "");
+          form.setFieldValue("feedback_type", "");
         },
       }}
     >
