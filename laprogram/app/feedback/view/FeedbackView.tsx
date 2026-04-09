@@ -1,6 +1,7 @@
 "use client";
 
 import { FeedbackTable } from "./FeedbackTable";
+import { FeedbackDistribution } from "./FeedbackDistribution";
 import {
   midQuarterColumns,
   endOfQuarterColumns,
@@ -113,10 +114,15 @@ export function FeedbackView() {
         </TabsList>
         {tables.map((t) => (
           <TabsContent key={t.id} value={t.id}>
-            <FeedbackTable
-              columns={t.columns}
-              data={feedback.filter(t.filter)}
-            />
+            {(() => {
+              const rows = feedback.filter(t.filter);
+              return (
+                <>
+                  <FeedbackDistribution columns={t.columns} data={rows} />
+                  <FeedbackTable columns={t.columns} data={rows} />
+                </>
+              );
+            })()}
           </TabsContent>
         ))}
       </Tabs>
