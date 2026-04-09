@@ -25,6 +25,7 @@ import {
   TA_NONSENSITIVE_QUESTIONS,
   TA_NONSENSITIVE_TEXT_FIELDS,
 } from "./questions/ta";
+import { isLS7 } from "@/lib/utils";
 
 const required = (msg: string) => z.string().min(1, msg);
 
@@ -71,6 +72,7 @@ const closingFields = {
       { message: "Please enter a valid 9-digit UID" },
     )
     .optional(),
+  ls7code: z.string().optional(),
   gender: z.string().optional(),
   gender_other: z.string().optional(),
   groups: z.array(z.string()).optional(),
@@ -224,6 +226,10 @@ const studentSchema = z.discriminatedUnion("feedback_type", [
 
 export const feedbackFormSchema = z
   .object(headerFields)
-  .and(
-    z.discriminatedUnion("role", [studentSchema, taSchema, laSchema]),
-  ) as unknown as z.ZodType<FeedbackFormValues, FeedbackFormValues>;
+  .and(z.discriminatedUnion("role", [studentSchema, taSchema, laSchema]))
+  .refine((data) => {
+    if (data.role === "student" && isLS7(data.course)) {
+      return !!data.ls7code;
+    }
+    return true;
+  }) as unknown as z.ZodType<FeedbackFormValues, FeedbackFormValues>;
