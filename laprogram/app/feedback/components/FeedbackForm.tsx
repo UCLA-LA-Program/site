@@ -294,7 +294,8 @@ export function FeedbackForm({
                 {feedbackType === "end_of_quarter" && (
                   <EndQuarterSection form={form} />
                 )}
-                {feedbackType && (
+                {(feedbackType === "mid_quarter" ||
+                  feedbackType === "end_of_quarter") && (
                   <>
                     <FieldSeparator />
                     <ClosingSection form={form} />
