@@ -38,9 +38,11 @@ export const LAField = withForm({
               autoHighlight
               onValueChange={(v) => field.handleChange(v as string)}
               value={field.state.value}
-              items={las
-                .filter((la) => la.course === course)
-                .sort((a, b) => a.name.localeCompare(b.name))}
+              items={[
+                ...las
+                  .filter((la) => la.course === course)
+                  .sort((a, b) => a.name.localeCompare(b.name)),
+              ]}
             >
               <ComboboxInput
                 id={field.name}

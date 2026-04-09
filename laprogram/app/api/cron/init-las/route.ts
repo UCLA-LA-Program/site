@@ -75,6 +75,7 @@ export async function POST(request: Request) {
     const courseMap = await fetchCourseMap();
 
     const db = env.data;
+    const activeCourses: Set<string> = new Set();
     const userStmts: D1PreparedStatement[] = [];
     const courseStmts: D1PreparedStatement[] = [];
     const errors: string[] = [];
@@ -148,12 +149,25 @@ export async function POST(request: Request) {
               )
               .bind(userId, courseName, position),
           );
+          activeCourses.add(courseName);
         }
       } catch (e) {
         errors.push(
           `${name} (${email}): ${e instanceof Error ? e.message : "Failed to resolve courses"}`,
         );
       }
+    }
+
+    // Add "No LA" in each course in case someone needs to give feedback for credit
+    for (const courseName of activeCourses) {
+      courseStmts.push(
+        db
+          .prepare(
+            `INSERT INTO course (userId, course_name, position) VALUES ("no_user_id", ?1, "")
+                ON CONFLICT (userId, course_name) DO UPDATE SET position=""`,
+          )
+          .bind(courseName),
+      );
     }
 
     await db.batch([...userStmts, ...courseStmts]);
