@@ -151,7 +151,7 @@ export const ClosingSection = withForm({
                 validators={{
                   onSubmit: ({ value }) => {
                     if (!value) {
-                      return { errorType: "default" };
+                      return { message: "", errorType: "default" };
                     }
                     return undefined;
                   },
