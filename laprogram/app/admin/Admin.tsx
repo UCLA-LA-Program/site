@@ -31,6 +31,8 @@ import { fetcher } from "@/lib/utils";
 import type { RosterUser } from "@/app/api/admin/roster/route";
 import Image from "next/image";
 import { Checkbox } from "@/components/ui/checkbox";
+import { AvailabilityAudit } from "./components/AvailabilityAudit";
+import { ObservationAudit } from "./components/ObservationAudit";
 
 type ConfigData = Record<string, string>;
 
@@ -176,12 +178,14 @@ export function Admin() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl px-8 py-4">
+    <div className="mx-auto w-full max-w-4xl px-8 py-4">
       <h1 className="mb-3 text-2xl font-bold">Admin Panel</h1>
       <Tabs defaultValue="config">
         <TabsList>
           <TabsTrigger value="config">Configuration</TabsTrigger>
           <TabsTrigger value="roster">Roster</TabsTrigger>
+          <TabsTrigger value="availability">Availability</TabsTrigger>
+          <TabsTrigger value="observations">Observations</TabsTrigger>
           <TabsTrigger value="sync">Airtable Sync</TabsTrigger>
         </TabsList>
 
@@ -533,6 +537,14 @@ export function Admin() {
           ) : (
             <p className="text-sm text-muted-foreground">Loading roster…</p>
           )}
+        </TabsContent>
+
+        <TabsContent value="availability">
+          <AvailabilityAudit />
+        </TabsContent>
+
+        <TabsContent value="observations">
+          <ObservationAudit />
         </TabsContent>
 
         <TabsContent value="sync" className="space-y-3">
