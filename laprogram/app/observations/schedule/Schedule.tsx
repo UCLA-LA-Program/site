@@ -161,12 +161,22 @@ export function Schedule() {
   const { data: config } = useSWR<Record<string, string>>(
     "/api/config",
     fetcher,
+    {
+      suspense: true,
+      fallbackData: {},
+    },
   );
   const currentWeek = getCurrentWeek(config?.[QUARTER_START_KEY]);
-  const { data: sections } = useSWR<SectionData[]>("/api/sections", fetcher);
+  const { data: sections } = useSWR<SectionData[]>("/api/sections", fetcher, {
+    suspense: true,
+    fallbackData: [],
+  });
   const { data: availability, mutate: mutateAvailability } = useSWR<
     AvailabilityRow[]
-  >("/api/availability", fetcher);
+  >("/api/availability", fetcher, {
+    suspense: true,
+    fallbackData: [],
+  });
 
   const [schedules, setSchedules] = useState<Map<
     string,
