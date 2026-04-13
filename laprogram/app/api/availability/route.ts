@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     // grab future existing availability + statuses by week
     const existingAvailability = await db
       .prepare(
-        "SELECT id, week, status FROM availability WHERE la_id = ? AND section_id = ? AND CAST(week AS INTEGER) > ?",
+        "SELECT id, week, status FROM availability WHERE la_id = ? AND section_id = ? AND CAST(week AS INTEGER) >= ?",
       )
       .bind(userId, section_id, currentWeek)
       .all<{ id: string; week: string; status: string }>();
@@ -70,23 +70,21 @@ export async function POST(request: Request) {
 
     // delete all future where it's currently open or hidden
     const deleteIds = existingAvailability.results
-      .filter(
-        (r) =>
-          existingStatusByWeek.get(r.week) === "open" || r.status === "hidden",
-      )
+      .filter((r) => r.status === "open" || r.status === "hidden")
       .map((r) => r.id);
 
     for (const id of deleteIds) {
       stmts.push(db.prepare("DELETE FROM availability WHERE id = ?").bind(id));
     }
 
-    // insert all future where it's currently open or hidden
-    const weeksToInsert = weeks.filter(
-      (w) =>
-        parseInt(w.week, 10) > currentWeek &&
-        (existingStatusByWeek.get(w.week) === "open" ||
-          existingStatusByWeek.get(w.week) === "hidden"),
-    );
+    // insert all future where it's currently open or hidden or not present
+    const weeksToInsert = weeks.filter((w) => {
+      const status = existingStatusByWeek.get(w.week);
+      return (
+        parseInt(w.week, 10) >= currentWeek &&
+        (!status || status === "open" || status === "hidden")
+      );
+    });
 
     for (const w of weeksToInsert) {
       const status = existingStatusByWeek.get(w.week) ?? "open";
