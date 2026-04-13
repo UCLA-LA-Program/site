@@ -1,6 +1,8 @@
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
+import { getCurrentWeek } from "@/lib/utils";
+import { QUARTER_START_KEY } from "@/lib/constants";
 
 interface AvailabilityWeek {
   week: string;
@@ -46,25 +48,71 @@ export async function POST(request: Request) {
       return new Response("No section assignment found", { status: 403 });
     }
 
-    await db
-      .prepare(
-        "DELETE FROM availability WHERE la_id = ? AND section_id = ? AND status = 'open'",
-      )
-      .bind(userId, section_id)
-      .run();
+    // filter to just the availabilities in the future (only those can be edited)
+    const currentWeek = getCurrentWeek(
+      (await env.config.get(QUARTER_START_KEY)) ?? "",
+    );
 
-    if (weeks.length > 0) {
-      const stmts = weeks.map((w) =>
+    // grab future existing availability + statuses by week
+    const existingAvailability = await db
+      .prepare(
+        "SELECT id, week, status FROM availability WHERE la_id = ? AND section_id = ? AND CAST(week AS INTEGER) >= ?",
+      )
+      .bind(userId, section_id, currentWeek)
+      .all<{ id: string; week: string; status: string }>();
+
+    const existingStatusByWeek = new Map<string, string>();
+    for (const r of existingAvailability.results) {
+      existingStatusByWeek.set(r.week, r.status);
+    }
+
+    const stmts: D1PreparedStatement[] = [];
+
+    // delete all future where it's currently open or hidden
+    const deleteIds = existingAvailability.results
+      .filter((r) => r.status === "open" || r.status === "hidden")
+      .map((r) => r.id);
+
+    for (const id of deleteIds) {
+      stmts.push(db.prepare("DELETE FROM availability WHERE id = ?").bind(id));
+    }
+
+    // insert all future where it's currently open or hidden or not present
+    const weeksToInsert = weeks.filter((w) => {
+      const status = existingStatusByWeek.get(w.week);
+      return (
+        parseInt(w.week, 10) >= currentWeek &&
+        (!status || status === "open" || status === "hidden")
+      );
+    });
+
+    for (const w of weeksToInsert) {
+      const status = existingStatusByWeek.get(w.week) ?? "open";
+      stmts.push(
         db
           .prepare(
-            "INSERT INTO availability (id, la_id, section_id, time, week, status) VALUES (?, ?, ?, ?, ?, 'open')",
+            "INSERT INTO availability (id, la_id, section_id, time, week, status) VALUES (?, ?, ?, ?, ?, ?)",
           )
-          .bind(crypto.randomUUID(), userId, section_id, w.time, w.week),
+          .bind(
+            crypto.randomUUID(),
+            userId,
+            section_id,
+            w.time,
+            w.week,
+            status,
+          ),
       );
+    }
+
+    if (stmts.length > 0) {
       await db.batch(stmts);
     }
 
-    return Response.json({ success: true, count: weeks.length });
+    return Response.json({
+      success: true,
+      inserted: weeksToInsert.length,
+      skipped: weeks.length - weeksToInsert.length,
+    });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(`Failed to save availability: ${message}`, {
