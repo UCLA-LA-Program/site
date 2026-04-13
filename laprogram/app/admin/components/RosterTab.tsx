@@ -22,10 +22,7 @@ import Image from "next/image";
 type RosterSortKey = "first_name" | "last_name" | "email" | "courses";
 
 export function RosterTab() {
-  const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
+  const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher);
   const [rosterQuery, setRosterQuery] = useState("");
   const [rosterCourses, setRosterCourses] = useState<string[]>([]);
   const [rosterPositions, setRosterPositions] = useState<string[]>([]);
@@ -34,7 +31,7 @@ export function RosterTab() {
   const [rosterSortDir, setRosterSortDir] = useState<"asc" | "desc">("asc");
 
   if (!roster) {
-    return <p className="text-sm text-muted-foreground">Loading roster…</p>;
+    return <p className="text-sm text-muted-foreground">Loading…</p>;
   }
 
   const courseOptions = Array.from(

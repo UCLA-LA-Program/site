@@ -3,7 +3,6 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
-import { LA_POSITION_MAP } from "@/lib/constants";
 import type { AvailabilityAuditRow } from "@/app/api/admin/audit/availability/route";
 
 type SectionEntry = {
@@ -24,10 +23,6 @@ export function AvailabilityAudit() {
   const { data } = useSWR<AvailabilityAuditRow[]>(
     "/api/admin/audit/availability",
     fetcher,
-    {
-      suspense: true,
-      fallbackData: [],
-    },
   );
 
   if (!data) {

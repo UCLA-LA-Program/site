@@ -19,15 +19,8 @@ export function ObservationAudit() {
   const { data } = useSWR<ObservationAuditData>(
     "/api/admin/audit/observations",
     fetcher,
-    {
-      suspense: true,
-      fallbackData: undefined,
-    },
   );
-  const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
+  const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher);
 
   if (!data || !roster) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;

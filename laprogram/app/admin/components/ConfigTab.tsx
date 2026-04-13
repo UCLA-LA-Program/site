@@ -17,11 +17,7 @@ import {
 type ConfigData = Record<string, string>;
 
 export function ConfigTab() {
-  const { data, mutate } = useSWR<ConfigData>("/api/config", fetcher, {
-    suspense: true,
-    fallbackData: undefined,
-  });
-
+  const { data, mutate } = useSWR<ConfigData>("/api/config", fetcher);
   if (!data) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
   }
