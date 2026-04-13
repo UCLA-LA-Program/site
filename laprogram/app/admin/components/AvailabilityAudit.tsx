@@ -24,6 +24,10 @@ export function AvailabilityAudit() {
   const { data } = useSWR<AvailabilityAuditRow[]>(
     "/api/admin/audit/availability",
     fetcher,
+    {
+      suspense: true,
+      fallbackData: [],
+    },
   );
 
   if (!data) {

@@ -2,7 +2,6 @@
 
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
-import { LA_POSITION_MAP } from "@/lib/constants";
 import type { ObservationAuditData } from "@/app/api/admin/audit/observations/route";
 import type { RosterUser } from "@/app/api/admin/roster/route";
 
@@ -20,8 +19,15 @@ export function ObservationAudit() {
   const { data } = useSWR<ObservationAuditData>(
     "/api/admin/audit/observations",
     fetcher,
+    {
+      suspense: true,
+      fallbackData: undefined,
+    },
   );
-  const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher);
+  const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher, {
+    suspense: true,
+    fallbackData: [],
+  });
 
   if (!data || !roster) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -30,7 +36,10 @@ export function ObservationAudit() {
   const { observations, courses } = data;
 
   // Build course/position per user from full course list
-  const coursesByUser = new Map<string, { course_name: string; position: string }[]>();
+  const coursesByUser = new Map<
+    string,
+    { course_name: string; position: string }[]
+  >();
   for (const c of courses) {
     const existing = coursesByUser.get(c.user_id) ?? [];
     existing.push({ course_name: c.course_name, position: c.position });
@@ -38,7 +47,10 @@ export function ObservationAudit() {
   }
 
   // Build observation counts per observer
-  const obsMap = new Map<string, { weeks: Record<string, number>; total: number }>();
+  const obsMap = new Map<
+    string,
+    { weeks: Record<string, number>; total: number }
+  >();
   const weekSet = new Set<string>();
 
   for (const row of observations) {
@@ -60,7 +72,9 @@ export function ObservationAudit() {
   const entries: ObserverEntry[] = roster
     .filter((u) => u.courses.length > 0)
     .flatMap((u) => {
-      const userCourses = coursesByUser.get(u.id) ?? [{ course_name: "", position: "" }];
+      const userCourses = coursesByUser.get(u.id) ?? [
+        { course_name: "", position: "" },
+      ];
       const obs = obsMap.get(u.id);
       return userCourses.map((c) => ({
         observer_id: u.id,
@@ -75,9 +89,7 @@ export function ObservationAudit() {
     .sort((a, b) => a.observer_name.localeCompare(b.observer_name));
 
   if (entries.length === 0) {
-    return (
-      <p className="text-sm text-muted-foreground">No LAs found.</p>
-    );
+    return <p className="text-sm text-muted-foreground">No LAs found.</p>;
   }
 
   return (
@@ -103,9 +115,7 @@ export function ObservationAudit() {
               key={`${entry.observer_id}|${entry.course_name}`}
               className="border-b last:border-0"
             >
-              <td className="py-1.5 pr-2 font-medium">
-                {entry.observer_name}
-              </td>
+              <td className="py-1.5 pr-2 font-medium">{entry.observer_name}</td>
               <td className="py-1.5 pr-2 text-muted-foreground">
                 {entry.observer_email}
               </td>
