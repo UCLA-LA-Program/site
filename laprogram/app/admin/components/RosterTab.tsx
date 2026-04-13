@@ -228,7 +228,12 @@ export function RosterTab() {
           )}
         </div>
       </div>
-      <table className="w-full text-sm">
+      <table className="w-full table-fixed text-sm">
+        <colgroup>
+          <col className="w-32" />
+          <col className="w-72" />
+          <col />
+        </colgroup>
         <thead>
           <tr className="border-b text-left text-muted-foreground">
             <th className="pb-2 font-medium">Photo</th>
@@ -249,12 +254,6 @@ export function RosterTab() {
             </th>
             <th
               className="cursor-pointer pb-2 font-medium select-none hover:text-foreground"
-              onClick={() => toggleRosterSort("email")}
-            >
-              Email{sortArrow("email")}
-            </th>
-            <th
-              className="cursor-pointer pb-2 font-medium select-none hover:text-foreground"
               onClick={() => toggleRosterSort("courses")}
             >
               Courses{sortArrow("courses")}
@@ -271,10 +270,10 @@ export function RosterTab() {
                     width={IMAGE_SIZE}
                     src={user.image}
                     alt={user.name}
-                    className="h-28 w-28 rounded-md object-cover mr-3"
+                    className="h-28 w-28 shrink-0 rounded-md object-cover"
                   />
                 ) : (
-                  <div className="flex h-28 w-28 items-center justify-center rounded-md bg-muted text-xl mr-3 font-medium">
+                  <div className="flex h-28 w-28 shrink-0 items-center justify-center rounded-md bg-muted text-xl font-medium">
                     {user.name
                       .split(" ")
                       .map((n) => n[0])
@@ -283,16 +282,20 @@ export function RosterTab() {
                   </div>
                 )}
               </td>
-              <td className="py-2 font-medium">
-                {(() => {
-                  const parts = user.name.trim().split(/\s+/);
-                  if (parts.length < 2) return user.name;
-                  const last = parts[parts.length - 1];
-                  const first = parts.slice(0, -1).join(" ");
-                  return `${last}, ${first}`;
-                })()}
+              <td className="py-2">
+                <div className="font-medium">
+                  {(() => {
+                    const parts = user.name.trim().split(/\s+/);
+                    if (parts.length < 2) return user.name;
+                    const last = parts[parts.length - 1];
+                    const first = parts.slice(0, -1).join(" ");
+                    return rosterSortKey === "last_name"
+                      ? `${last}, ${first}`
+                      : `${first} ${last}`;
+                  })()}
+                </div>
+                <div className="text-muted-foreground">{user.email}</div>
               </td>
-              <td className="py-2 text-muted-foreground">{user.email}</td>
               <td className="py-2 text-muted-foreground">
                 {user.courses
                   .map(
