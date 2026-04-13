@@ -96,7 +96,7 @@ export function ObservationAudit() {
             <th className="pb-2 pr-2 font-medium">Position</th>
             {weeks.map((w) => (
               <th key={w} className="pb-2 px-2 text-center font-medium">
-                W{w}
+                {w}
               </th>
             ))}
             <th className="pb-2 px-2 text-center font-medium">Total</th>
