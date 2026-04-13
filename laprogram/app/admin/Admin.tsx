@@ -178,7 +178,7 @@ export function Admin() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-8 py-4">
+    <div className="mx-auto w-full px-8 py-4">
       <h1 className="mb-3 text-2xl font-bold">Admin Panel</h1>
       <Tabs defaultValue="config">
         <TabsList>
@@ -189,7 +189,7 @@ export function Admin() {
           <TabsTrigger value="sync">Airtable Sync</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="config" className="space-y-3">
+        <TabsContent value="config" className="space-y-3 max-w-2xl self-center">
           {/* Quarter start date */}
           <Card size="sm">
             <CardHeader>
@@ -309,7 +309,7 @@ export function Admin() {
           </Card>
         </TabsContent>
 
-        <TabsContent value="roster">
+        <TabsContent value="roster" className="max-w-3xl self-center">
           {roster ? (
             <div className="space-y-3">
               <div className="space-y-3">

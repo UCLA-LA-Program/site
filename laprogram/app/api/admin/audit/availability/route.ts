@@ -5,8 +5,10 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 export type AvailabilityAuditRow = {
   la_id: string;
   la_name: string;
+  la_email: string;
   course_name: string;
   section_name: string;
+  section_time: string;
   section_id: string;
   position: string;
   week: string | null;
@@ -30,8 +32,10 @@ export async function GET() {
       `SELECT
          sa.la_id,
          u.name AS la_name,
+         u.email AS la_email,
          s.course_name,
          s.section_name,
+         s.day || ' ' || s.time AS section_time,
          sa.section_id,
          c.position,
          a.week,
