@@ -12,22 +12,26 @@ const CRON_JOBS = [
     label: "Sync LAs",
     description:
       "Fetch LA roster from Airtable and sync users + course assignments.",
+    requires: [] as string[],
   },
   {
     key: "init-sections",
     label: "Sync Sections",
     description: "Fetch sections from Airtable and sync section data.",
+    requires: ["init-las"],
   },
   {
     key: "init-section-assignments",
     label: "Sync Section Assignments",
     description:
       "Link LAs to their assigned sections. Run after syncing LAs and sections.",
+    requires: ["init-las", "init-sections"],
   },
   {
     key: "process-withdraws",
     label: "Process Withdrawals",
     description: "Process LA withdrawals from Airtable.",
+    requires: ["DISABLED"],
   },
 ] as const;
 
@@ -63,15 +67,16 @@ export function SyncTab() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Trigger Airtable sync jobs manually. Run them in order: LAs first, then
-        sections, then section assignments.
-      </p>
-      <p className="text-2xl font-bold">
-        DO NOT TOUCH THESE UNLESS YOU WANT THINGS TO BREAK
+        Trigger Airtable sync jobs manually. They must be run in order: buttons
+        will remain disabled until previous jobs are ran.
       </p>
       {CRON_JOBS.map((job) => {
         const status = jobStatuses[job.key] ?? "idle";
         const result = jobResults[job.key];
+        const prereqsMet = job.requires.every(
+          (r) => jobStatuses[r] === "success",
+        );
+        const isDisabled = status === "running" || !prereqsMet;
         return (
           <Card size="sm" key={job.key}>
             <CardHeader>
@@ -79,7 +84,7 @@ export function SyncTab() {
                 <CardTitle>{job.label}</CardTitle>
                 <Button
                   size="sm"
-                  disabled={status === "running"}
+                  disabled={isDisabled}
                   onClick={() => runJob(job.key)}
                 >
                   {status === "running" ? (
@@ -94,9 +99,7 @@ export function SyncTab() {
               </div>
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">
-                {job.description}
-              </p>
+              <p className="text-sm text-muted-foreground">{job.description}</p>
               {result && (
                 <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-muted p-2 text-xs">
                   {result}
