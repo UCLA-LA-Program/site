@@ -3,21 +3,13 @@ import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 
 export type ObservationAuditRow = {
-  observer_id: string;
-  observer_name: string;
-  week: string | null;
-  obs_count: number;
-};
-
-export type ObserverCourse = {
   user_id: string;
+  user_name: string;
+  user_email: string;
   course_name: string;
   position: string;
-};
-
-export type ObservationAuditData = {
-  observations: ObservationAuditRow[];
-  courses: ObserverCourse[];
+  week: string | null;
+  obs_count: number;
 };
 
 export async function GET() {
@@ -32,28 +24,24 @@ export async function GET() {
 
   const { env } = await getCloudflareContext({ async: true });
 
-  const [obsResult, courseResult] = await env.data.batch([
-    env.data.prepare(
+  const result = await env.data
+    .prepare(
       `SELECT
-         o.observer_id,
-         u.name AS observer_name,
+         c.userId AS user_id,
+         u.name AS user_name,
+         u.email AS user_email,
+         c.course_name,
+         c.position,
          a.week,
          COUNT(o.id) AS obs_count
-       FROM observation o
-       JOIN "user" u ON u.id = o.observer_id
-       JOIN availability a ON a.id = o.availability_id
-       GROUP BY o.observer_id, a.week
-       ORDER BY u.name COLLATE NOCASE, a.week`,
-    ),
-    env.data.prepare(
-      `SELECT c.userId AS user_id, c.course_name, c.position
        FROM course c
-       ORDER BY c.course_name`,
-    ),
-  ]);
+       JOIN "user" u ON u.id = c.userId
+       LEFT JOIN observation o ON o.observer_id = c.userId
+       LEFT JOIN availability a ON a.id = o.availability_id
+       GROUP BY c.userId, c.course_name, a.week
+       ORDER BY u.name COLLATE NOCASE, c.course_name, a.week`,
+    )
+    .all<ObservationAuditRow>();
 
-  return Response.json({
-    observations: obsResult.results as ObservationAuditRow[],
-    courses: courseResult.results as ObserverCourse[],
-  });
+  return Response.json(result.results);
 }

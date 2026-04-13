@@ -2,13 +2,12 @@
 
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
-import type { ObservationAuditData } from "@/app/api/admin/audit/observations/route";
-import type { RosterUser } from "@/app/api/admin/roster/route";
+import type { ObservationAuditRow } from "@/app/api/admin/audit/observations/route";
 
 type ObserverEntry = {
-  observer_id: string;
-  observer_name: string;
-  observer_email: string;
+  user_id: string;
+  user_name: string;
+  user_email: string;
   course_name: string;
   position: string;
   weeks: Record<string, number>;
@@ -16,41 +15,32 @@ type ObserverEntry = {
 };
 
 export function ObservationAudit() {
-  const { data } = useSWR<ObservationAuditData>(
+  const { data } = useSWR<ObservationAuditRow[]>(
     "/api/admin/audit/observations",
     fetcher,
   );
-  const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher);
 
-  if (!data || !roster) {
+  if (!data) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
   }
 
-  const { observations, courses } = data;
-
-  // Build course/position per user from full course list
-  const coursesByUser = new Map<
-    string,
-    { course_name: string; position: string }[]
-  >();
-  for (const c of courses) {
-    const existing = coursesByUser.get(c.user_id) ?? [];
-    existing.push({ course_name: c.course_name, position: c.position });
-    coursesByUser.set(c.user_id, existing);
-  }
-
-  // Build observation counts per observer
-  const obsMap = new Map<
-    string,
-    { weeks: Record<string, number>; total: number }
-  >();
+  const map = new Map<string, ObserverEntry>();
   const weekSet = new Set<string>();
 
-  for (const row of observations) {
-    let entry = obsMap.get(row.observer_id);
+  for (const row of data) {
+    const key = `${row.user_id}|${row.course_name}`;
+    let entry = map.get(key);
     if (!entry) {
-      entry = { weeks: {}, total: 0 };
-      obsMap.set(row.observer_id, entry);
+      entry = {
+        user_id: row.user_id,
+        user_name: row.user_name,
+        user_email: row.user_email,
+        course_name: row.course_name,
+        position: row.position,
+        weeks: {},
+        total: 0,
+      };
+      map.set(key, entry);
     }
     if (row.week) {
       entry.weeks[row.week] = (entry.weeks[row.week] ?? 0) + row.obs_count;
@@ -59,27 +49,10 @@ export function ObservationAudit() {
     }
   }
 
+  const entries = [...map.values()].sort((a, b) =>
+    a.user_name.localeCompare(b.user_name),
+  );
   const weeks = [...weekSet].sort((a, b) => Number(a) - Number(b));
-
-  // Build entries for ALL LAs — one row per course assignment
-  const entries: ObserverEntry[] = roster
-    .filter((u) => u.courses.length > 0)
-    .flatMap((u) => {
-      const userCourses = coursesByUser.get(u.id) ?? [
-        { course_name: "", position: "" },
-      ];
-      const obs = obsMap.get(u.id);
-      return userCourses.map((c) => ({
-        observer_id: u.id,
-        observer_name: u.name,
-        observer_email: u.email,
-        course_name: c.course_name,
-        position: c.position,
-        weeks: obs?.weeks ?? {},
-        total: obs?.total ?? 0,
-      }));
-    })
-    .sort((a, b) => a.observer_name.localeCompare(b.observer_name));
 
   if (entries.length === 0) {
     return <p className="text-sm text-muted-foreground">No LAs found.</p>;
@@ -105,12 +78,12 @@ export function ObservationAudit() {
         <tbody>
           {entries.map((entry) => (
             <tr
-              key={`${entry.observer_id}|${entry.course_name}`}
+              key={`${entry.user_id}|${entry.course_name}`}
               className="border-b last:border-0"
             >
-              <td className="py-1.5 pr-2 font-medium">{entry.observer_name}</td>
+              <td className="py-1.5 pr-2 font-medium">{entry.user_name}</td>
               <td className="py-1.5 pr-2 text-muted-foreground">
-                {entry.observer_email}
+                {entry.user_email}
               </td>
               <td className="py-1.5 pr-2 text-muted-foreground">
                 {entry.course_name}
