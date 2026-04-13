@@ -9,7 +9,9 @@ import type { RosterUser } from "@/app/api/admin/roster/route";
 type ObserverEntry = {
   observer_id: string;
   observer_name: string;
-  courses: string;
+  observer_email: string;
+  course_name: string;
+  position: string;
   weeks: Record<string, number>;
   total: number;
 };
@@ -27,12 +29,12 @@ export function ObservationAudit() {
 
   const { observations, courses } = data;
 
-  // Build course labels per user from full course list
-  const coursesByUser = new Map<string, string>();
+  // Build course/position per user from full course list
+  const coursesByUser = new Map<string, { course_name: string; position: string }[]>();
   for (const c of courses) {
-    const existing = coursesByUser.get(c.user_id);
-    const label = `${c.course_name} (${LA_POSITION_MAP.get(c.position) ?? c.position})`;
-    coursesByUser.set(c.user_id, existing ? `${existing}, ${label}` : label);
+    const existing = coursesByUser.get(c.user_id) ?? [];
+    existing.push({ course_name: c.course_name, position: c.position });
+    coursesByUser.set(c.user_id, existing);
   }
 
   // Build observation counts per observer
@@ -54,18 +56,21 @@ export function ObservationAudit() {
 
   const weeks = [...weekSet].sort((a, b) => Number(a) - Number(b));
 
-  // Build entries for ALL LAs (anyone with course assignments)
+  // Build entries for ALL LAs — one row per course assignment
   const entries: ObserverEntry[] = roster
     .filter((u) => u.courses.length > 0)
-    .map((u) => {
+    .flatMap((u) => {
+      const userCourses = coursesByUser.get(u.id) ?? [{ course_name: "", position: "" }];
       const obs = obsMap.get(u.id);
-      return {
+      return userCourses.map((c) => ({
         observer_id: u.id,
         observer_name: u.name,
-        courses: coursesByUser.get(u.id) ?? "",
+        observer_email: u.email,
+        course_name: c.course_name,
+        position: c.position,
         weeks: obs?.weeks ?? {},
         total: obs?.total ?? 0,
-      };
+      }));
     })
     .sort((a, b) => a.observer_name.localeCompare(b.observer_name));
 
@@ -80,8 +85,10 @@ export function ObservationAudit() {
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left text-muted-foreground">
-            <th className="pb-2 pr-4 font-medium">LA</th>
-            <th className="pb-2 pr-4 font-medium">Courses</th>
+            <th className="pb-2 pr-2 font-medium">LA</th>
+            <th className="pb-2 pr-2 font-medium">Email</th>
+            <th className="pb-2 pr-2 font-medium">Course</th>
+            <th className="pb-2 pr-2 font-medium">Position</th>
             {weeks.map((w) => (
               <th key={w} className="pb-2 px-2 text-center font-medium">
                 W{w}
@@ -93,14 +100,20 @@ export function ObservationAudit() {
         <tbody>
           {entries.map((entry) => (
             <tr
-              key={entry.observer_id}
+              key={`${entry.observer_id}|${entry.course_name}`}
               className="border-b last:border-0"
             >
-              <td className="py-1.5 pr-4 font-medium">
+              <td className="py-1.5 pr-2 font-medium">
                 {entry.observer_name}
               </td>
-              <td className="py-1.5 pr-4 text-muted-foreground">
-                {entry.courses}
+              <td className="py-1.5 pr-2 text-muted-foreground">
+                {entry.observer_email}
+              </td>
+              <td className="py-1.5 pr-2 text-muted-foreground">
+                {entry.course_name}
+              </td>
+              <td className="py-1.5 pr-2 text-muted-foreground">
+                {entry.position}
               </td>
               {weeks.map((w) => (
                 <td key={w} className="py-1.5 px-2 text-center">
