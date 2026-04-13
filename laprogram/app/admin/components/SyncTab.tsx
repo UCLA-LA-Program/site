@@ -11,26 +11,27 @@ const CRON_JOBS = [
     key: "init-las",
     label: "Sync LAs",
     description:
-      "Fetch LA roster from Airtable and sync users + course assignments.",
+      "Fetch LAs and their courses. Needs to be run when an LA/their course is missing from the system.",
     requires: [] as string[],
   },
   {
     key: "init-sections",
     label: "Sync Sections",
-    description: "Fetch sections from Airtable and sync section data.",
+    description:
+      "Fetch section data. Needs to be run when a section is missing or has outdated information.",
     requires: ["init-las"],
   },
   {
     key: "init-section-assignments",
     label: "Sync Section Assignments",
     description:
-      "Link LAs to their assigned sections. Run after syncing LAs and sections.",
+      "Link LAs to sections. Needs to be run when section assignments are incorrect.",
     requires: ["init-las", "init-sections"],
   },
   {
     key: "process-withdraws",
     label: "Process Withdrawals",
-    description: "Process LA withdrawals from Airtable.",
+    description: "Process LA withdrawals from Airtable. Currently disabled.",
     requires: ["DISABLED"],
   },
 ] as const;
@@ -67,8 +68,8 @@ export function SyncTab() {
   return (
     <div className="space-y-3">
       <p className="text-sm text-muted-foreground">
-        Trigger Airtable sync jobs manually. They must be run in order: buttons
-        will remain disabled until previous jobs are ran.
+        Trigger Airtable sync jobs manually. These can be dangerous: do not
+        execute without permission.
       </p>
       {CRON_JOBS.map((job) => {
         const status = jobStatuses[job.key] ?? "idle";
@@ -100,6 +101,14 @@ export function SyncTab() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">{job.description}</p>
+              {job.requires.length > 0 && job.requires[0] !== "DISABLED" && (
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Requires:{" "}
+                  {job.requires
+                    .map((r) => CRON_JOBS.find((j) => j.key === r)?.label ?? r)
+                    .join(", ")}
+                </p>
+              )}
               {result && (
                 <pre className="mt-2 max-h-40 overflow-auto rounded-md bg-muted p-2 text-xs">
                   {result}
