@@ -10,21 +10,17 @@ import { SyncTab } from "./components/SyncTab";
 export function Admin() {
   return (
     <div className="mx-auto w-full px-8 py-4">
-      <Tabs defaultValue="config">
+      <Tabs defaultValue="roster">
         <div className="mb-3 flex flex-col items-center gap-2">
           <h1 className="text-2xl font-bold">Admin Panel</h1>
           <TabsList>
-            <TabsTrigger value="config">Configuration</TabsTrigger>
             <TabsTrigger value="roster">Roster</TabsTrigger>
             <TabsTrigger value="availability">Availability</TabsTrigger>
             <TabsTrigger value="observations">Observations</TabsTrigger>
+            <TabsTrigger value="config">Configuration</TabsTrigger>
             <TabsTrigger value="sync">Airtable Sync</TabsTrigger>
           </TabsList>
         </div>
-
-        <TabsContent value="config" className="flex justify-center">
-          <ConfigTab />
-        </TabsContent>
 
         <TabsContent value="roster" className="flex justify-center">
           <RosterTab />
@@ -36,6 +32,10 @@ export function Admin() {
 
         <TabsContent value="observations" className="flex justify-center">
           <ObservationAudit />
+        </TabsContent>
+
+        <TabsContent value="config" className="flex justify-center">
+          <ConfigTab />
         </TabsContent>
 
         <TabsContent value="sync" className="flex justify-center">
