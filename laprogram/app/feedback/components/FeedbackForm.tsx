@@ -28,7 +28,6 @@ import { useAppForm } from "../form";
 import { defaultValues, feedbackFormSchema } from "../schema";
 import type { LA, Position } from "@/types/db";
 import { useState } from "react";
-import useSWR from "swr";
 import useSWRImmutable from "swr";
 import { fetcher } from "@/lib/utils";
 import { toast } from "sonner";
