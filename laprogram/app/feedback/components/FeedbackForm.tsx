@@ -29,6 +29,7 @@ import { defaultValues, feedbackFormSchema } from "../schema";
 import type { LA, Position } from "@/types/db";
 import { useState } from "react";
 import useSWR from "swr";
+import useSWRImmutable from "swr";
 import { fetcher } from "@/lib/utils";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
@@ -51,11 +52,11 @@ export function FeedbackForm({
 }: FeedbackFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const { data: session } = authClient.useSession();
-  const { data: las } = useSWR<LA[]>("/api/la", fetcher, {
+  const { data: las } = useSWRImmutable<LA[]>("/api/la", fetcher, {
     suspense: true,
     fallbackData: [],
   });
-  const { data: myPositions } = useSWR<Position[]>(
+  const { data: myPositions } = useSWRImmutable<Position[]>(
     session ? "/api/la/self" : null,
     fetcher,
     {
@@ -63,7 +64,7 @@ export function FeedbackForm({
       fallbackData: [],
     },
   );
-  const { data: myObservations } = useSWR(
+  const { data: myObservations } = useSWRImmutable(
     session ? "/api/observation" : null,
     (url: string) => fetcher(url).then(hydrateDates<MyObservation>),
     {
