@@ -164,19 +164,23 @@ export function FeedbackView() {
                 { value: "bars", icon: BarChart3, label: "Bar charts" },
                 { value: "pie", icon: ChartPie, label: "Pie charts" },
               ] as const
-            ).map((opt) => (
+            ).map((opt) => {
+              const active = graphMode === opt.value;
+              return (
               <button
                 key={opt.value}
                 type="button"
                 onClick={() => setGraphMode(opt.value)}
-                className={`rounded-md p-1.5 transition-colors ${
-                  graphMode === opt.value ? "bg-accent" : "hover:bg-accent/50"
+                className={`flex items-center gap-1 rounded-md p-1.5 text-xs transition-colors ${
+                  active ? "bg-accent" : "hover:bg-accent/50"
                 }`}
                 title={opt.label}
               >
                 <opt.icon className="h-4 w-4" />
+                {active && <span>{opt.label}</span>}
               </button>
-            ))}
+              );
+            })}
           </div>
         </div>
         {tables.map((t) => (
