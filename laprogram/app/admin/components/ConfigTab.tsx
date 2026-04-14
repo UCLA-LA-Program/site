@@ -17,7 +17,7 @@ import {
 type ConfigData = Record<string, string>;
 
 export function ConfigTab() {
-  const { data, mutate } = useSWR<ConfigData>("/api/config", fetcher);
+  const { data, mutate } = useSWR<ConfigData>("/admin/flag", fetcher);
   if (!data) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
   }

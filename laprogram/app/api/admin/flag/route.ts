@@ -6,19 +6,21 @@ import {
   OBSERVATION_ROUND_WEEKS_PREFIX,
   QUARTER_START_KEY,
 } from "@/lib/constants";
+import { headers } from "next/headers";
+import { getAuth } from "@/lib/auth";
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   const { env } = await getCloudflareContext({ async: true });
 
-  // Fetch only a single key
-  const { searchParams } = new URL(request.url);
-  const key = searchParams.get("key");
-  if (key) {
-    const value = (await env.config.get(key)) ?? "";
-    return NextResponse.json({ key, value });
+  const auth = await getAuth();
+  const session = await auth.api.getSession({
+    headers: await headers(),
+  });
+
+  if (!session || session.user.role !== "admin") {
+    return new Response("Unauthorized", { status: 403 });
   }
 
-  // Fetch all known keys
   const keys = [
     ...FEATURE_FLAGS.map((f) => f.key),
     QUARTER_START_KEY,
