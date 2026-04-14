@@ -7,11 +7,7 @@ import { AvailabilityAudit } from "./components/AvailabilityAudit";
 import { ObservationAudit } from "./components/ObservationAudit";
 import { SyncTab } from "./components/SyncTab";
 
-export function Admin({
-  initialConfig,
-}: {
-  initialConfig: Record<string, string>;
-}) {
+export function Admin() {
   return (
     <div className="mx-auto w-full px-8 py-4">
       <Tabs defaultValue="roster">
@@ -39,7 +35,7 @@ export function Admin({
         </TabsContent>
 
         <TabsContent value="config" className="flex justify-center">
-          <ConfigTab initialConfig={initialConfig} />
+          <ConfigTab />
         </TabsContent>
 
         <TabsContent value="sync" className="flex justify-center">

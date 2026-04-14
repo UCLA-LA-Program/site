@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import useSWRImmutable from "swr/immutable";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -8,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { Loader2 } from "lucide-react";
+import { fetcher } from "@/lib/utils";
 import {
   FEATURE_FLAGS,
   OBSERVATION_ACTIVE_ROUND_KEY,
@@ -17,10 +19,25 @@ import {
 
 type ConfigData = Record<string, string>;
 
-export function ConfigTab({ initialConfig }: { initialConfig: ConfigData }) {
-  const [data, setData] = useState<ConfigData>(initialConfig);
-  const [saved, setSaved] = useState<ConfigData>(initialConfig);
+export function ConfigTab() {
+  const { data: fetched, mutate } = useSWRImmutable<ConfigData>(
+    "/api/admin/flag",
+    fetcher,
+  );
+  const [data, setData] = useState<ConfigData>({});
+  const [saved, setSaved] = useState<ConfigData>({});
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (fetched) {
+      setData(fetched);
+      setSaved(fetched);
+    }
+  }, [fetched]);
+
+  if (!fetched) {
+    return <p className="text-sm text-muted-foreground">Loading…</p>;
+  }
 
   const dirty = Object.keys(data).some((k) => data[k] !== saved[k]);
 
@@ -44,7 +61,9 @@ export function ConfigTab({ initialConfig }: { initialConfig: ConfigData }) {
         body: JSON.stringify(changed),
       });
       if (!res.ok) throw new Error();
-      setSaved({ ...data });
+      const updated = { ...data };
+      setSaved(updated);
+      await mutate(updated, { revalidate: false });
       toast.success("Configuration saved");
     } catch {
       toast.error("Failed to save");
