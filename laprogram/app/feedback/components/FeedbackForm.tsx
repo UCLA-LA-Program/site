@@ -27,12 +27,14 @@ import { StudentFeedbackTypeField } from "./sections/StudentFeedbackTypeField";
 import { useAppForm } from "../form";
 import { defaultValues, feedbackFormSchema } from "../schema";
 import type { LA, Position } from "@/types/db";
+import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { hydrateDates } from "@/app/observations/signup/SignUp";
 import { MyObservation } from "@/app/observations/signup/types";
+import { CheckCircle2 } from "lucide-react";
 
 type Option = { value: string; label: string };
 
@@ -47,6 +49,7 @@ export function FeedbackForm({
   feedbackTypeOptions,
   laFeedbackTypeOptions,
 }: FeedbackFormProps) {
+  const [submitted, setSubmitted] = useState(false);
   const { data: session } = authClient.useSession();
   const { data: las } = useSWR<LA[]>("/api/la", fetcher, {
     suspense: true,
@@ -82,7 +85,7 @@ export function FeedbackForm({
 
       if (response.ok) {
         form.reset();
-        toast.success("Feedback has been submitted!");
+        setSubmitted(true);
       } else {
         toast.error("Error submitting feedback. Try again later.");
       }
@@ -95,6 +98,19 @@ export function FeedbackForm({
   });
 
   if (!las) return <></>;
+
+  if (submitted) {
+    return (
+      <div className="flex flex-col items-center justify-center gap-6 py-24 text-center">
+        <CheckCircle2 className="h-16 w-16 text-green-500" />
+        <h2 className="text-2xl font-semibold">Your feedback was received!</h2>
+        <p className="text-muted-foreground">
+          Thank you for taking the time to share your thoughts.
+        </p>
+        <Button onClick={() => setSubmitted(false)}>Submit Another</Button>
+      </div>
+    );
+  }
 
   return (
     <form
