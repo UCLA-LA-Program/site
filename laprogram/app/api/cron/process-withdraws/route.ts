@@ -71,6 +71,7 @@ export async function POST(request: Request) {
     }
 
     const errors: string[] = [];
+    const messages: string[] = [];
     const affectedObservers: Map<string, string[]> = new Map();
     const observerNames: Map<string, string> = new Map();
     let removedCount = 0;
@@ -180,6 +181,7 @@ export async function POST(request: Request) {
         */
       ]);
 
+      messages.push(`removed withdrawn ${withdrewLAEmail}`);
       removedCount++;
     }
 
@@ -208,7 +210,8 @@ export async function POST(request: Request) {
     */
 
     const summary =
-      `Processed ${withdrewLARecords.length} withdrawn LAs. Removed: ${removedCount}. Notified: ${affectedObservers.size} observers.` +
+      `Processed ${withdrewLARecords.length} withdrawn LAs. Removed: ${removedCount}.\n` +
+      messages.join("\n") +
       (errors.length > 0 ? `\nErrors:\n${errors.join("\n")}` : "");
 
     return new Response(summary, { status: 200 });
