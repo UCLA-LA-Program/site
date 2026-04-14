@@ -346,8 +346,8 @@ export function SignUp({
         </div>
 
         {/* Sidebar (top on mobile, right on desktop) */}
-        <div className="order-first w-full shrink-0 lg:order-last lg:w-[32rem]">
-          <div className="space-y-4 lg:sticky lg:top-24">
+        <div className="order-first w-full shrink-0 lg:order-last lg:w-[32rem] lg:sticky lg:top-[7.25rem] lg:self-start lg:max-h-[calc(100vh-7.5rem)] lg:overflow-y-auto">
+          <div className="space-y-4">
             <PendingChanges
               addSlots={pendingAddSlots}
               removeSlots={pendingRemoveSlots}
