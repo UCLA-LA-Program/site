@@ -3,7 +3,26 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
+import { LA_POSITION_MAP } from "@/lib/constants";
+import {
+  Combobox,
+  ComboboxCollection,
+  ComboboxContent,
+  ComboboxEmpty,
+  ComboboxInput,
+  ComboboxItem,
+  ComboboxList,
+} from "@/components/ui/combobox";
+import { Button } from "@/components/ui/button";
+import { X } from "lucide-react";
 import type { AvailabilityAuditRow } from "@/app/api/admin/audit/availability/route";
+
+type SortKey =
+  | "first_name"
+  | "last_name"
+  | "unavailable_desc"
+  | "unavailable_asc"
+  | "position";
 
 type SectionEntry = {
   la_id: string;
@@ -20,6 +39,9 @@ type SectionEntry = {
 export function AvailabilityAudit() {
   const [maxWeeks, setMaxWeeks] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("first_name");
+  const [compact, setCompact] = useState(false);
+  const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const { data } = useSWR<AvailabilityAuditRow[]>(
     "/api/admin/audit/availability",
     fetcher,
@@ -58,13 +80,44 @@ export function AvailabilityAudit() {
 
   const allEntries = [...map.values()];
   const weeks = [...weekSet].sort((a, b) => Number(a) - Number(b));
+  const positionOptions = [
+    ...new Set(allEntries.map((e) => e.position)),
+  ].sort();
 
-  const entries = maxWeeks
-    ? allEntries.filter((e) => {
-        const unavailable = weeks.filter((w) => !e.weeks[w]).length;
-        return unavailable >= parseInt(maxWeeks, 10);
-      })
-    : allEntries;
+  function getUnavailable(e: SectionEntry) {
+    return weeks.filter((w) => !e.weeks[w]).length;
+  }
+
+  function getNamePart(name: string, part: "first" | "last") {
+    const parts = name.trim().split(/\s+/);
+    return part === "first" ? (parts[0] ?? "") : (parts[parts.length - 1] ?? "");
+  }
+
+  const filtered = allEntries.filter((e) => {
+    if (maxWeeks && getUnavailable(e) < parseInt(maxWeeks, 10)) return false;
+    if (positionFilter.length > 0 && !positionFilter.includes(e.position)) return false;
+    return true;
+  });
+
+  const entries = [...filtered].sort((a, b) => {
+    if (sortKey === "unavailable_desc")
+      return getUnavailable(b) - getUnavailable(a);
+    if (sortKey === "unavailable_asc")
+      return getUnavailable(a) - getUnavailable(b);
+    if (sortKey === "position")
+      return a.position.localeCompare(b.position);
+    if (sortKey === "last_name")
+      return getNamePart(a.la_name, "last").localeCompare(
+        getNamePart(b.la_name, "last"),
+      );
+    return getNamePart(a.la_name, "first").localeCompare(
+      getNamePart(b.la_name, "first"),
+    );
+  });
+
+  function sortArrow(key: SortKey) {
+    return sortKey === key ? " ↓" : "";
+  }
 
   if (allEntries.length === 0) {
     return (
@@ -76,7 +129,7 @@ export function AvailabilityAudit() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="max-weeks" className="text-sm text-muted-foreground">
           Show LAs with at least
         </label>
@@ -91,6 +144,16 @@ export function AvailabilityAudit() {
           className="w-16 rounded-md border px-2 py-1 text-sm"
         />
         <span className="text-sm text-muted-foreground">weeks unavailable</span>
+        <div className="ml-auto flex items-center gap-2">
+        <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+          <input
+            type="checkbox"
+            checked={compact}
+            onChange={(e) => setCompact(e.target.checked)}
+            className="rounded"
+          />
+          Compact
+        </label>
         <button
           type="button"
           className="ml-auto rounded-md border px-3 py-1 text-sm hover:bg-muted"
@@ -108,17 +171,124 @@ export function AvailabilityAudit() {
             ? "Copied!"
             : `Copy emails (${new Set(entries.map((e) => e.la_email)).size})`}
         </button>
+        </div>
       </div>
+      <div className="flex flex-wrap items-center gap-2">
+        <Combobox
+          items={positionOptions}
+          multiple
+          value={positionFilter}
+          onValueChange={(v: string[]) => setPositionFilter(v)}
+          filter={(item: string, query: string) => {
+            const label = LA_POSITION_MAP.get(item) ?? item;
+            return (
+              item.toLowerCase().includes(query.toLowerCase()) ||
+              label.toLowerCase().includes(query.toLowerCase())
+            );
+          }}
+        >
+          <ComboboxInput
+            placeholder="Filter roles…"
+            className="w-48"
+          />
+          <ComboboxContent>
+            <ComboboxEmpty>No roles</ComboboxEmpty>
+            <ComboboxList>
+              <ComboboxCollection>
+                {(item: string) => (
+                  <ComboboxItem key={item} value={item}>
+                    {LA_POSITION_MAP.get(item) ?? item}
+                  </ComboboxItem>
+                )}
+              </ComboboxCollection>
+            </ComboboxList>
+          </ComboboxContent>
+        </Combobox>
+        {positionFilter.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setPositionFilter([])}
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+      {positionFilter.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {positionFilter.map((p) => (
+            <button
+              key={p}
+              type="button"
+              onClick={() =>
+                setPositionFilter(positionFilter.filter((x) => x !== p))
+              }
+              className="inline-flex items-center gap-1 rounded-sm bg-muted px-2 py-1 text-xs font-medium hover:bg-muted/70"
+            >
+              {LA_POSITION_MAP.get(p) ?? p}
+              <X className="h-3 w-3 opacity-60" />
+            </button>
+          ))}
+        </div>
+      )}
 
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
+      <div>
+        <table
+          className="w-full text-sm max-w-6xl"
+          style={{ tableLayout: "fixed" }}
+        >
+          <colgroup>
+            <col style={{ width: "200px" }} />
+            <col style={{ width: "200px" }} />
+            <col />
+            <col style={{ width: "56px" }} />
+            <col style={{ width: "64px" }} />
+            {weeks.map((w) => (
+              <col key={w} style={{ width: "26px" }} />
+            ))}
+          </colgroup>
           <thead>
             <tr className="border-b text-left text-muted-foreground">
-              <th className="pb-2 pr-2 font-medium">LA</th>
+              <th className="cursor-pointer pb-2 pr-2 font-medium select-none">
+                <span
+                  className="hover:text-foreground"
+                  onClick={() => setSortKey("first_name")}
+                >
+                  First{sortArrow("first_name")}
+                </span>
+                <span className="mx-1 text-muted-foreground/50">/</span>
+                <span
+                  className="hover:text-foreground"
+                  onClick={() => setSortKey("last_name")}
+                >
+                  Last{sortArrow("last_name")}
+                </span>
+              </th>
               <th className="pb-2 pr-2 font-medium">Email</th>
               <th className="pb-2 pr-2 font-medium">Section</th>
-              <th className="pb-2 pr-2 font-medium">Position</th>
-              <th className="pb-2 px-1 text-center font-medium">Unavail.</th>
+              <th
+                className="cursor-pointer whitespace-nowrap pb-2 pr-2 font-medium"
+                onClick={() => setSortKey("position")}
+              >
+                Position{sortArrow("position")}
+              </th>
+              <th
+                className="cursor-pointer whitespace-nowrap pb-2 px-1 text-center font-medium"
+                onClick={() =>
+                  setSortKey(
+                    sortKey === "unavailable_desc"
+                      ? "unavailable_asc"
+                      : "unavailable_desc",
+                  )
+                }
+              >
+                Total
+                {sortKey === "unavailable_desc"
+                  ? " ↓"
+                  : sortKey === "unavailable_asc"
+                    ? " ↑"
+                    : ""}
+              </th>
               {weeks.map((w) => (
                 <th key={w} className="pb-2 px-1 text-center font-medium">
                   {w}
@@ -128,21 +298,30 @@ export function AvailabilityAudit() {
           </thead>
           <tbody>
             {entries.map((entry) => {
-              const unavailable = weeks.filter((w) => !entry.weeks[w]).length;
+              const unavailable = getUnavailable(entry);
+              const parts = entry.la_name.trim().split(/\s+/);
+              const last = parts[parts.length - 1];
+              const first = parts.slice(0, -1).join(" ");
+              const displayName =
+                sortKey === "last_name"
+                  ? `${last}, ${first}`
+                  : `${first} ${last}`;
               return (
                 <tr
                   key={`${entry.la_id}|${entry.section_id}`}
                   className="border-b last:border-0"
                 >
-                  <td className="py-1.5 pr-2 font-medium">{entry.la_name}</td>
-                  <td className="py-1.5 pr-2 text-muted-foreground">
+                  <td className="truncate py-1.5 pr-2 font-medium">
+                    {displayName}
+                  </td>
+                  <td className="truncate py-1.5 pr-2 text-muted-foreground">
                     {entry.la_email}
                   </td>
-                  <td className="py-1.5 pr-2 text-muted-foreground">
+                  <td className="truncate py-1.5 pr-2 text-muted-foreground">
                     {entry.course_name} {entry.section_name} (
                     {entry.section_time})
                   </td>
-                  <td className="py-1.5 pr-2 text-muted-foreground">
+                  <td className="truncate py-1.5 pr-2 text-muted-foreground">
                     {entry.position}
                   </td>
                   <td className="py-1.5 px-1 text-center">
@@ -160,7 +339,13 @@ export function AvailabilityAudit() {
                     const count = entry.weeks[w] ?? 0;
                     return (
                       <td key={w} className="py-1.5 px-1 text-center">
-                        {count > 0 ? (
+                        {compact ? (
+                          <span
+                            className={`inline-block size-3 rounded-full ${
+                              count > 0 ? "bg-green-500/60" : "bg-red-500/60"
+                            }`}
+                          />
+                        ) : count > 0 ? (
                           <span className="inline-block size-5 rounded-full bg-green-500/20 text-xs leading-5 text-green-700 dark:text-green-400">
                             {count}
                           </span>
