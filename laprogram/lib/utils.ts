@@ -54,7 +54,7 @@ export function daysUntil(target: TZDate): number {
 
 export function getCurrentWeek(quarterStart: string | undefined): number {
   if (!quarterStart) return 11;
-  const start = new TZDate(quarterStart + "T00:00:00", TIMEZONE);
+  const start = new TZDate(quarterStart, TIMEZONE);
   const now = nowLA();
   const diff = now.getTime() - start.getTime();
   return Math.max(1, Math.floor(diff / (7 * 24 * 60 * 60 * 1000)) + 1);
@@ -78,8 +78,6 @@ export function parseTimeRange(
       baseDate.getDate(),
       sh,
       sm,
-      0,
-      0,
       TIMEZONE,
     ),
     time_end: new TZDate(
@@ -88,8 +86,6 @@ export function parseTimeRange(
       baseDate.getDate(),
       eh,
       em,
-      0,
-      0,
       TIMEZONE,
     ),
   };
