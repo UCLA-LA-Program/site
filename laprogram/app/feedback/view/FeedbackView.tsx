@@ -13,10 +13,13 @@ import {
 } from "./columns";
 import type { Column } from "./columns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Download } from "lucide-react";
 import { fetcher } from "@/lib/utils";
 import useSWRImmutable from "swr";
 import type { AnonFeedback } from "./columns";
 import { Position } from "@/types/db";
+import * as XLSX from "xlsx";
 
 interface TableDef {
   id: string;
@@ -28,7 +31,10 @@ interface TableDef {
 function buildTables(positions: Position[]): TableDef[] {
   const positionSet = new Set(positions.map((p) => p.position));
   const isPed = positionSet.has("ped") || positionSet.has("ped_lcc");
-  const isLcc = positionSet.has("lcc") || positionSet.has("ped_lcc");
+  const isLcc =
+    positionSet.has("lcc") ||
+    positionSet.has("ped_lcc") ||
+    positionSet.has("ret_lcc");
 
   const tables: TableDef[] = [
     {
@@ -86,6 +92,24 @@ function buildTables(positions: Position[]): TableDef[] {
   return tables;
 }
 
+function downloadExcel(tables: TableDef[], feedback: AnonFeedback[]) {
+  const wb = XLSX.utils.book_new();
+  for (const t of tables) {
+    const rows = feedback.filter(t.filter);
+    const data = rows.map((row) => {
+      const obj: Record<string, unknown> = {};
+      for (const col of t.columns) {
+        const raw = (row as Record<string, unknown>)[col.key];
+        obj[col.header] = col.render ? col.render(raw) : raw;
+      }
+      return obj;
+    });
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, t.label.slice(0, 31));
+  }
+  XLSX.writeFile(wb, "feedback.xlsx");
+}
+
 export function FeedbackView() {
   const { data: feedback } = useSWRImmutable<AnonFeedback[]>(
     "/api/feedback",
@@ -109,9 +133,19 @@ export function FeedbackView() {
 
   return (
     <div className="mx-auto w-full px-8 py-5 animate-fade-up">
-      <h1 className="mb-5 text-2xl font-bold tracking-tight">
-        Feedback Responses
-      </h1>
+      <div className="mb-5 flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">
+          Feedback Responses
+        </h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => downloadExcel(tables, feedback)}
+        >
+          <Download className="mr-1.5 h-4 w-4" />
+          Export Excel
+        </Button>
+      </div>
       <Tabs defaultValue="mid_quarter">
         <TabsList>
           {tables.map((t) => (
