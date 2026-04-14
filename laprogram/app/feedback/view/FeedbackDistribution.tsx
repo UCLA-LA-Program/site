@@ -36,7 +36,7 @@ function DistributionCard({ col, counts, total, mode }: CardProps) {
     <div className="flex flex-col rounded-lg border bg-card p-3 text-card-foreground">
       <h3 className="mb-2 text-xs font-medium leading-snug">{col.header}</h3>
 
-      <div className="flex flex-1 flex-col justify-center">
+      <div className="flex flex-1 flex-col justify-end">
         {mode === "bars" ? (
           <ul className="space-y-1">
             {options.map((opt) => {
@@ -81,10 +81,11 @@ function PieView({
   const cx = 60;
   const cy = 60;
   let acc = 0;
-  const slices = options
-    .map((opt, i) => {
-      const count = counts.get(opt.value) ?? 0;
-      if (count === 0) return null;
+  const entries = options.map((opt, i) => {
+    const count = counts.get(opt.value) ?? 0;
+    const pct = total ? (count / total) * 100 : 0;
+    let d: string | null = null;
+    if (count > 0) {
       const startAngle = (acc / total) * Math.PI * 2 - Math.PI / 2;
       acc += count;
       const endAngle = (acc / total) * Math.PI * 2 - Math.PI / 2;
@@ -93,37 +94,38 @@ function PieView({
       const y1 = cy + radius * Math.sin(startAngle);
       const x2 = cx + radius * Math.cos(endAngle);
       const y2 = cy + radius * Math.sin(endAngle);
-      const pct = (count / total) * 100;
-      // Full-circle fallback when a single option has all responses
-      const d =
+      d =
         count === total
           ? `M ${cx - radius} ${cy} A ${radius} ${radius} 0 1 1 ${cx + radius} ${cy} A ${radius} ${radius} 0 1 1 ${cx - radius} ${cy} Z`
           : `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${large} 1 ${x2} ${y2} Z`;
-      return {
-        d,
-        color: SLICE_COLORS[i % SLICE_COLORS.length],
-        label: opt.label,
-        count,
-        pct,
-      };
-    })
-    .filter((s): s is NonNullable<typeof s> => s !== null);
+    }
+    return {
+      d,
+      color: SLICE_COLORS[i % SLICE_COLORS.length],
+      label: opt.label,
+      count,
+      pct,
+    };
+  });
 
   return (
     <div className="flex flex-col items-center gap-2">
       <svg viewBox="0 0 120 120" className="h-24 w-24 shrink-0">
-        {slices.map((s, i) => (
-          <path
-            key={i}
-            d={s.d}
-            fill={s.color}
-            stroke="var(--card)"
-            strokeWidth="1"
-          />
-        ))}
+        {entries.map(
+          (s, i) =>
+            s.d && (
+              <path
+                key={i}
+                d={s.d}
+                fill={s.color}
+                stroke="var(--card)"
+                strokeWidth="1"
+              />
+            ),
+        )}
       </svg>
-      <ul className="w-full space-y-0.5 text-[10px]">
-        {slices.map((s, i) => (
+      <ul className="w-full space-y-0.5 text-[11px]">
+        {entries.map((s, i) => (
           <li key={i} className="flex items-center gap-1.5">
             <span
               className="inline-block h-2 w-2 shrink-0 rounded-sm"
