@@ -171,13 +171,21 @@ export function FeedbackView() {
                 key={opt.value}
                 type="button"
                 onClick={() => setGraphMode(opt.value)}
-                className={`flex items-center gap-1 rounded-md p-1.5 text-xs transition-colors ${
+                className={`flex items-center gap-1 rounded-md p-1.5 text-xs transition-all duration-200 ${
                   active ? "bg-accent" : "hover:bg-accent/50"
                 }`}
                 title={opt.label}
               >
-                <opt.icon className="h-4 w-4" />
-                {active && <span>{opt.label}</span>}
+                <opt.icon className="h-4 w-4 shrink-0" />
+                <span
+                  className="overflow-hidden whitespace-nowrap transition-all duration-200"
+                  style={{
+                    maxWidth: active ? "6rem" : "0",
+                    opacity: active ? 1 : 0,
+                  }}
+                >
+                  {opt.label}
+                </span>
               </button>
               );
             })}
