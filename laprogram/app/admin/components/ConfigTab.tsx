@@ -1,11 +1,14 @@
 "use client";
 
-import useSWR from "swr";
+import { useState, useEffect } from "react";
+import useSWRImmutable from "swr/immutable";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { Loader2 } from "lucide-react";
 import { fetcher } from "@/lib/utils";
 import {
   FEATURE_FLAGS,
@@ -17,24 +20,58 @@ import {
 type ConfigData = Record<string, string>;
 
 export function ConfigTab() {
-  const { data, mutate } = useSWR<ConfigData>("/api/config", fetcher);
-  if (!data) {
+  const { data: fetched, mutate } = useSWRImmutable<ConfigData>(
+    "/api/admin/flag",
+    fetcher,
+  );
+  const [data, setData] = useState<ConfigData>({});
+  const [saved, setSaved] = useState<ConfigData>({});
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (fetched) {
+      setData(fetched);
+      setSaved(fetched);
+    }
+  }, [fetched]);
+
+  if (!fetched) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
   }
 
-  async function setValue(key: string, value: string) {
-    mutate({ ...data!, [key]: value }, { revalidate: false });
+  const dirty = Object.keys(data).some((k) => data[k] !== saved[k]);
+
+  function setValue(key: string, value: string) {
+    setData((prev) => ({ ...prev, [key]: value }));
+  }
+
+  async function save() {
+    const changed = Object.fromEntries(
+      Object.keys(data)
+        .filter((k) => data[k] !== saved[k])
+        .map((k) => [k, data[k]]),
+    );
+    if (Object.keys(changed).length === 0) return;
+
+    setSaving(true);
     try {
-      const res = await fetch(`/api/admin/flag/${encodeURIComponent(key)}`, {
+      const res = await fetch("/api/admin/flag", {
         method: "POST",
-        body: value,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(changed),
       });
       if (!res.ok) throw new Error();
+      const updated = { ...data };
+      setSaved(updated);
+      await mutate(updated, { revalidate: false });
+      toast.success("Configuration saved");
     } catch {
       toast.error("Failed to save");
+    } finally {
+      setSaving(false);
     }
-    mutate();
   }
+
   return (
     <div className="space-y-3 max-w-2xl self-center">
       <Card size="sm">
@@ -147,6 +184,13 @@ export function ConfigTab() {
           })}
         </CardContent>
       </Card>
+
+      <div className="flex justify-end">
+        <Button disabled={!dirty || saving} onClick={save}>
+          {saving && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
+          Save Changes
+        </Button>
+      </div>
     </div>
   );
 }

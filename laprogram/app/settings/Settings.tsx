@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Camera, UserRound } from "lucide-react";
 import Image from "next/image";
 import { toast } from "sonner";
-import useSWR from "swr";
+import useSWRImmutable from "swr";
 import { fetcher } from "@/lib/utils";
 import type { Position } from "@/types/db";
 import { ContactUs } from "@/components/ContactUs";
@@ -17,10 +17,14 @@ import { LA_POSITION_MAP } from "@/lib/constants";
 
 export function Settings() {
   const { data: session, isPending } = authClient.useSession();
-  const { data: positions } = useSWR<Position[]>("/api/la/self", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
+  const { data: positions } = useSWRImmutable<Position[]>(
+    "/api/la/self",
+    fetcher,
+    {
+      suspense: true,
+      fallbackData: [],
+    },
+  );
   const fileRef = useRef<HTMLInputElement>(null);
   const { theme, setTheme } = useTheme();
 

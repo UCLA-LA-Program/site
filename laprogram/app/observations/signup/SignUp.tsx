@@ -59,18 +59,24 @@ export function SignUp({
     slots: Availability[];
     filters: string[];
     notes: string[];
-  }>("/api/observation/open", (url: string) =>
-    fetcher(url).then(
-      (data: {
-        slots: Availability[];
-        filters: string[];
-        notes: string[];
-      }) => ({
-        slots: hydrateDates(data.slots),
-        filters: data.filters,
-        notes: data.notes,
-      }),
-    ),
+  }>(
+    "/api/observation/open",
+    (url: string) =>
+      fetcher(url).then(
+        (data: {
+          slots: Availability[];
+          filters: string[];
+          notes: string[];
+        }) => ({
+          slots: hydrateDates(data.slots),
+          filters: data.filters,
+          notes: data.notes,
+        }),
+      ),
+    {
+      suspense: true,
+      fallbackData: { slots: [], filters: [], notes: [] },
+    },
   );
   const openSlots = openData?.slots;
   const activeFilters = openData?.filters ?? [];
@@ -91,6 +97,7 @@ export function SignUp({
   const { data: myObservations, mutate: mutateObservations } = useSWR(
     "/api/observation",
     (url: string) => fetcher(url).then(hydrateDates<MyObservation>),
+    { suspense: true, fallbackData: [] },
   );
 
   const [pendingAdds, setPendingAdds] = useState<Set<string>>(new Set());

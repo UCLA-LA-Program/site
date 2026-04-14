@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import useSWR from "swr";
+import useSWRImmutable from "swr/immutable";
 import {
   Card,
   CardHeader,
@@ -12,12 +12,11 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, Lock, Users } from "lucide-react";
+import { CheckCircle2, Loader2, Lock, Users } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ContactUs } from "@/components/ContactUs";
-import { fetcher, getCurrentWeek } from "@/lib/utils";
-import { QUARTER_START_KEY } from "@/lib/constants";
+import { fetcher } from "@/lib/utils";
 
 const WEEKS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
 const STEP = 10; // minutes
@@ -86,59 +85,63 @@ function minutesToTimeStr(minutes: number): string {
   return `${h}:${m.toString().padStart(2, "0")}`;
 }
 
+function buildSectionSchedule(
+  section: SectionData,
+  availability: AvailabilityRow[],
+  currentWeek: number,
+): CourseSchedule {
+  const [sectionStart, sectionEnd] = parseSectionTime(section.time);
+  const sectionAvail = availability.filter(
+    (a) => a.section_id === section.section_id,
+  );
+
+  const weekSlots = new Map<number, WeekSlot>();
+  let defaultStart = sectionEnd - 30;
+  let defaultEnd = sectionEnd;
+
+  const futureAvail = sectionAvail.find((a) => parseInt(a.week) >= currentWeek);
+  if (futureAvail) {
+    const [s, e] = futureAvail.time.split("-").map(parseTime);
+    defaultStart = s;
+    defaultEnd = e;
+  }
+
+  for (const week of WEEKS) {
+    const weekAvail = sectionAvail.find((a) => a.week === String(week));
+    if (weekAvail) {
+      const [s, e] = weekAvail.time.split("-").map(parseTime);
+      weekSlots.set(week, { selected: true, timeRange: [s, e] });
+    } else {
+      weekSlots.set(week, {
+        selected: false,
+        timeRange: [defaultStart, defaultEnd],
+      });
+    }
+  }
+
+  return {
+    sectionId: section.section_id,
+    sectionStart,
+    sectionEnd,
+    day: section.day,
+    position: section.position,
+    weekSlots,
+    timeRange: [defaultStart, defaultEnd],
+  };
+}
+
 function buildSchedules(
   sections: SectionData[],
   availability: AvailabilityRow[],
   currentWeek: number,
 ): Map<string, CourseSchedule> {
   const map = new Map<string, CourseSchedule>();
-
   for (const section of sections) {
-    const [sectionStart, sectionEnd] = parseSectionTime(section.time);
-    const sectionAvail = availability.filter(
-      (a) => a.section_id === section.section_id,
+    map.set(
+      section.section_id,
+      buildSectionSchedule(section, availability, currentWeek),
     );
-
-    const weekSlots = new Map<number, WeekSlot>();
-    // Default time range from first future available slot, or section midpoint
-    let defaultStart = sectionEnd - 30;
-    let defaultEnd = sectionEnd;
-
-    // Check if there's existing availability to derive default range
-    const futureAvail = sectionAvail.find(
-      (a) => parseInt(a.week) >= currentWeek,
-    );
-    if (futureAvail) {
-      const [s, e] = futureAvail.time.split("-").map(parseTime);
-      defaultStart = s;
-      defaultEnd = e;
-    }
-
-    for (const week of WEEKS) {
-      const weekAvail = sectionAvail.find((a) => a.week === String(week));
-      if (weekAvail) {
-        const [s, e] = weekAvail.time.split("-").map(parseTime);
-        weekSlots.set(week, { selected: true, timeRange: [s, e] });
-      } else {
-        weekSlots.set(week, {
-          selected: false,
-          timeRange: [defaultStart, defaultEnd],
-        });
-      }
-    }
-
-    const key = section.section_id;
-    map.set(key, {
-      sectionId: section.section_id,
-      sectionStart,
-      sectionEnd,
-      day: section.day,
-      position: section.position,
-      weekSlots,
-      timeRange: [defaultStart, defaultEnd],
-    });
   }
-
   return map;
 }
 
@@ -157,14 +160,12 @@ function signupCountsFromAvailability(
   return counts;
 }
 
-export function Schedule() {
-  const { data: config } = useSWR<Record<string, string>>(
-    "/api/config",
+export function Schedule({ currentWeek }: { currentWeek: number }) {
+  const { data: sections } = useSWRImmutable<SectionData[]>(
+    "/api/sections",
     fetcher,
   );
-  const currentWeek = getCurrentWeek(config?.[QUARTER_START_KEY]);
-  const { data: sections } = useSWR<SectionData[]>("/api/sections", fetcher);
-  const { data: availability, mutate: mutateAvailability } = useSWR<
+  const { data: availability, mutate: mutateAvailability } = useSWRImmutable<
     AvailabilityRow[]
   >("/api/availability", fetcher);
 
@@ -175,6 +176,7 @@ export function Schedule() {
   const [showPast, setShowPast] = useState<Set<string>>(new Set());
   const [dirty, setDirty] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState<Set<string>>(new Set());
+  const [saved, setSaved] = useState<Set<string>>(new Set());
 
   function toggleShowPast(sectionId: string) {
     setShowPast((prev) => {
@@ -224,12 +226,33 @@ export function Schedule() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ section_id: sectionId, weeks }),
       });
-      await mutateAvailability();
+      const freshAvailability = await mutateAvailability();
+      if (sections && freshAvailability) {
+        const section = sections.find((s) => s.section_id === sectionId);
+        if (section) {
+          setSchedules((prev) => {
+            const next = new Map(prev);
+            next.set(
+              sectionId,
+              buildSectionSchedule(section, freshAvailability, currentWeek),
+            );
+            return next;
+          });
+        }
+      }
       setDirty((prev) => {
         const next = new Set(prev);
         next.delete(sectionId);
         return next;
       });
+      setSaved((prev) => new Set(prev).add(sectionId));
+      setTimeout(() => {
+        setSaved((prev) => {
+          const next = new Set(prev);
+          next.delete(sectionId);
+          return next;
+        });
+      }, 2000);
     } finally {
       setSaving((prev) => {
         const next = new Set(prev);
@@ -380,10 +403,14 @@ export function Schedule() {
                         disabled={!dirty.has(key) || saving.has(key)}
                         onClick={() => saveSection(key)}
                       >
-                        {saving.has(key) && (
+                        {saving.has(key) ? (
                           <Loader2 className="size-3.5 animate-spin" />
-                        )}
-                        Save Changes
+                        ) : saved.has(key) && !dirty.has(key) ? (
+                          <CheckCircle2 className="size-3.5 text-green-500" />
+                        ) : null}
+                        {saved.has(key) && !dirty.has(key)
+                          ? "Saved"
+                          : "Save Changes"}
                       </Button>
                     </div>
                   </CardAction>
