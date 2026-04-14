@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Slider } from "@/components/ui/slider";
-import { Loader2, Lock, Users } from "lucide-react";
+import { CheckCircle2, Loader2, Lock, Users } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ContactUs } from "@/components/ContactUs";
@@ -99,9 +99,7 @@ function buildSectionSchedule(
   let defaultStart = sectionEnd - 30;
   let defaultEnd = sectionEnd;
 
-  const futureAvail = sectionAvail.find(
-    (a) => parseInt(a.week) >= currentWeek,
-  );
+  const futureAvail = sectionAvail.find((a) => parseInt(a.week) >= currentWeek);
   if (futureAvail) {
     const [s, e] = futureAvail.time.split("-").map(parseTime);
     defaultStart = s;
@@ -178,6 +176,7 @@ export function Schedule({ currentWeek }: { currentWeek: number }) {
   const [showPast, setShowPast] = useState<Set<string>>(new Set());
   const [dirty, setDirty] = useState<Set<string>>(new Set());
   const [saving, setSaving] = useState<Set<string>>(new Set());
+  const [saved, setSaved] = useState<Set<string>>(new Set());
 
   function toggleShowPast(sectionId: string) {
     setShowPast((prev) => {
@@ -246,6 +245,14 @@ export function Schedule({ currentWeek }: { currentWeek: number }) {
         next.delete(sectionId);
         return next;
       });
+      setSaved((prev) => new Set(prev).add(sectionId));
+      setTimeout(() => {
+        setSaved((prev) => {
+          const next = new Set(prev);
+          next.delete(sectionId);
+          return next;
+        });
+      }, 2000);
     } finally {
       setSaving((prev) => {
         const next = new Set(prev);
@@ -396,10 +403,14 @@ export function Schedule({ currentWeek }: { currentWeek: number }) {
                         disabled={!dirty.has(key) || saving.has(key)}
                         onClick={() => saveSection(key)}
                       >
-                        {saving.has(key) && (
+                        {saving.has(key) ? (
                           <Loader2 className="size-3.5 animate-spin" />
-                        )}
-                        Save Changes
+                        ) : saved.has(key) && !dirty.has(key) ? (
+                          <CheckCircle2 className="size-3.5 text-green-500" />
+                        ) : null}
+                        {saved.has(key) && !dirty.has(key)
+                          ? "Saved"
+                          : "Save Changes"}
                       </Button>
                     </div>
                   </CardAction>
