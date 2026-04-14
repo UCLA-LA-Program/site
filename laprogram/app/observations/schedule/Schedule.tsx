@@ -16,8 +16,7 @@ import { Loader2, Lock, Users } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ContactUs } from "@/components/ContactUs";
-import { fetcher, getCurrentWeek } from "@/lib/utils";
-import { QUARTER_START_KEY } from "@/lib/constants";
+import { fetcher } from "@/lib/utils";
 
 const WEEKS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
 const STEP = 10; // minutes
@@ -157,16 +156,7 @@ function signupCountsFromAvailability(
   return counts;
 }
 
-export function Schedule() {
-  const { data: config } = useSWR<Record<string, string>>(
-    "/api/config",
-    fetcher,
-    {
-      suspense: true,
-      fallbackData: {},
-    },
-  );
-  const currentWeek = getCurrentWeek(config?.[QUARTER_START_KEY]);
+export function Schedule({ currentWeek }: { currentWeek: number }) {
   const { data: sections } = useSWR<SectionData[]>("/api/sections", fetcher, {
     suspense: true,
     fallbackData: [],
