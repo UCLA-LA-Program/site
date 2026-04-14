@@ -18,7 +18,7 @@ import {
   FutureObservationsCard,
 } from "./components/ObservationCard";
 
-import { OBSERVATION_CHANGE_DAYS_LIMIT } from "@/lib/constants";
+import { OBSERVATION_CHANGE_DAYS_LIMIT, TIMEZONE } from "@/lib/constants";
 import { TZDate } from "@date-fns/tz";
 
 function hydrateDates<T extends { time_start: TZDate; time_end: TZDate }>(
@@ -26,8 +26,8 @@ function hydrateDates<T extends { time_start: TZDate; time_end: TZDate }>(
 ): T[] {
   return items.map((item) => ({
     ...item,
-    time_start: new TZDate(item.time_start),
-    time_end: new TZDate(item.time_end),
+    time_start: new TZDate(item.time_start, TIMEZONE),
+    time_end: new TZDate(item.time_end, TIMEZONE),
   }));
 }
 
