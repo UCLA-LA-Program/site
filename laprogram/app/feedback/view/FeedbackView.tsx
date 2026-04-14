@@ -14,7 +14,8 @@ import {
 import type { Column } from "./columns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Download } from "lucide-react";
+import { Download, BarChart3, ChartPie, X } from "lucide-react";
+import { useState } from "react";
 import { fetcher } from "@/lib/utils";
 import useSWRImmutable from "swr";
 import type { AnonFeedback } from "./columns";
@@ -111,6 +112,7 @@ function downloadExcel(tables: TableDef[], feedback: AnonFeedback[]) {
 }
 
 export function FeedbackView() {
+  const [graphMode, setGraphMode] = useState<"none" | "bars" | "pie">("bars");
   const { data: feedback } = useSWRImmutable<AnonFeedback[]>(
     "/api/feedback",
     fetcher,
@@ -147,20 +149,61 @@ export function FeedbackView() {
         </Button>
       </div>
       <Tabs defaultValue="mid_quarter">
-        <TabsList>
-          {tables.map((t) => (
-            <TabsTrigger key={t.id} value={t.id}>
-              {t.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+        <div className="flex items-center gap-2">
+          <TabsList>
+            {tables.map((t) => (
+              <TabsTrigger key={t.id} value={t.id}>
+                {t.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <div className="flex gap-0.5 rounded-lg border p-0.5">
+            {(
+              [
+                { value: "none", icon: X, label: "Hide graphs" },
+                { value: "bars", icon: BarChart3, label: "Bar charts" },
+                { value: "pie", icon: ChartPie, label: "Pie charts" },
+              ] as const
+            ).map((opt) => {
+              const active = graphMode === opt.value;
+              return (
+              <button
+                key={opt.value}
+                type="button"
+                onClick={() => setGraphMode(opt.value)}
+                className={`flex items-center gap-1 rounded-md p-1.5 text-xs transition-all duration-200 ${
+                  active ? "bg-accent" : "hover:bg-accent/50"
+                }`}
+                title={opt.label}
+              >
+                <opt.icon className="h-4 w-4 shrink-0" />
+                <span
+                  className="overflow-hidden whitespace-nowrap transition-all duration-200"
+                  style={{
+                    maxWidth: active ? "6rem" : "0",
+                    opacity: active ? 1 : 0,
+                  }}
+                >
+                  {opt.label}
+                </span>
+              </button>
+              );
+            })}
+          </div>
+        </div>
         {tables.map((t) => (
           <TabsContent key={t.id} value={t.id}>
             {(() => {
               const rows = feedback.filter(t.filter);
               return (
                 <>
-                  <FeedbackDistribution columns={t.columns} data={rows} />
+                  {graphMode !== "none" && (
+                    <FeedbackDistribution
+                      columns={t.columns}
+                      data={rows}
+                      defaultMode={graphMode}
+                    />
+                  )}
                   <FeedbackTable columns={t.columns} data={rows} />
                 </>
               );
