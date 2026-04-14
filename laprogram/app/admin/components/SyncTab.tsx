@@ -31,8 +31,8 @@ const CRON_JOBS = [
   {
     key: "process-withdraws",
     label: "Process Withdrawals",
-    description: "Process LA withdrawals from Airtable. Currently disabled.",
-    requires: ["DISABLED"],
+    description: "Process LA withdrawals from Airtable.",
+    requires: ["init-las", "init-sections", "init-section-assignments"],
   },
 ] as const;
 
