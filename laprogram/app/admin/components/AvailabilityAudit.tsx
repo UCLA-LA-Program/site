@@ -2,8 +2,30 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { toast } from "sonner";
+import { ChevronDown } from "lucide-react";
 import { fetcher } from "@/lib/utils";
+import { LA_POSITION_MAP } from "@/lib/constants";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import type { AvailabilityAuditRow } from "@/app/api/admin/audit/availability/route";
+
+const RESET_POSITIONS = [...LA_POSITION_MAP.entries()].map(
+  ([value, label]) => ({ value, label }),
+);
 
 type SectionEntry = {
   la_id: string;
@@ -20,10 +42,57 @@ type SectionEntry = {
 export function AvailabilityAudit() {
   const [maxWeeks, setMaxWeeks] = useState<string>("");
   const [copied, setCopied] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetPositions, setResetPositions] = useState<Set<string>>(new Set());
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const { data } = useSWR<AvailabilityAuditRow[]>(
     "/api/admin/audit/availability",
     fetcher,
   );
+
+  const selected = [...resetPositions];
+  const scopeLabel =
+    selected.length === 0
+      ? "all roles"
+      : selected.map((p) => LA_POSITION_MAP.get(p) ?? p).join(", ");
+  const triggerLabel =
+    resetPositions.size === 0
+      ? "All roles"
+      : `${resetPositions.size} role${resetPositions.size === 1 ? "" : "s"}`;
+
+  function togglePosition(value: string) {
+    setResetPositions((prev) => {
+      const next = new Set(prev);
+      if (next.has(value)) next.delete(value);
+      else next.add(value);
+      return next;
+    });
+  }
+
+  async function runReset() {
+    setResetting(true);
+    try {
+      const res = await fetch("/api/admin/availability/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ positions: selected }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        toast.error(`Reset failed: ${text}`);
+        return;
+      }
+      const { reset } = (await res.json()) as { reset: number };
+      toast.success(
+        `Reset ${reset} hidden slot${reset === 1 ? "" : "s"} (${scopeLabel}).`,
+      );
+      setConfirmOpen(false);
+    } catch {
+      toast.error("Reset failed.");
+    } finally {
+      setResetting(false);
+    }
+  }
 
   if (!data) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -109,6 +178,81 @@ export function AvailabilityAudit() {
             : `Copy emails (${new Set(entries.map((e) => e.la_email)).size})`}
         </button>
       </div>
+
+      <div className="rounded-md border bg-muted/30 p-3">
+        <div className="mb-1 text-sm font-medium">Reset hidden slots</div>
+        <p className="mb-2 text-xs text-muted-foreground">
+          Manually unhide availability slots so they become visible again for
+          observer sign-up.
+        </p>
+        <div className="inline-flex overflow-hidden rounded-md border bg-background shadow-xs">
+          <Popover>
+            <PopoverTrigger asChild>
+              <button
+                type="button"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm hover:bg-muted"
+                aria-label="Reset scope"
+              >
+                {triggerLabel}
+                <ChevronDown className="size-3.5 text-muted-foreground" />
+              </button>
+            </PopoverTrigger>
+            <PopoverContent align="start" className="w-56 gap-2">
+              <p className="text-xs text-muted-foreground">
+                Select roles to reset. Leave empty to reset all.
+              </p>
+              <div className="flex flex-col gap-1.5">
+                {RESET_POSITIONS.map((opt) => (
+                  <label
+                    key={opt.value}
+                    className="flex cursor-pointer items-center gap-2 rounded-sm px-1 py-0.5 hover:bg-muted"
+                  >
+                    <Checkbox
+                      checked={resetPositions.has(opt.value)}
+                      onCheckedChange={() => togglePosition(opt.value)}
+                    />
+                    <span className="text-sm">{opt.label}</span>
+                  </label>
+                ))}
+              </div>
+            </PopoverContent>
+          </Popover>
+          <div className="w-px bg-border" />
+          <button
+            type="button"
+            disabled={resetting}
+            className="px-3 py-1.5 text-sm font-medium hover:bg-muted disabled:opacity-50"
+            onClick={() => setConfirmOpen(true)}
+          >
+            Reset
+          </button>
+        </div>
+      </div>
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reset hidden slots?</DialogTitle>
+            <DialogDescription>
+              This will unhide every hidden availability slot for{" "}
+              <span className="font-medium text-foreground">{scopeLabel}</span>
+              . Observers will see those slots again on their next load.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setConfirmOpen(false)}
+              disabled={resetting}
+            >
+              Cancel
+            </Button>
+            <Button onClick={runReset} disabled={resetting}>
+              {resetting ? "Resetting…" : "Confirm reset"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
