@@ -14,7 +14,7 @@ import {
 import type { Column } from "./columns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetcher } from "@/lib/utils";
-import useSWR from "swr";
+import useSWRImmutable from "swr";
 import type { AnonFeedback } from "./columns";
 import { Position } from "@/types/db";
 
@@ -87,14 +87,22 @@ function buildTables(positions: Position[]): TableDef[] {
 }
 
 export function FeedbackView() {
-  const { data: feedback } = useSWR<AnonFeedback[]>("/api/feedback", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
-  const { data: positions } = useSWR<Position[]>("/api/la/self", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
+  const { data: feedback } = useSWRImmutable<AnonFeedback[]>(
+    "/api/feedback",
+    fetcher,
+    {
+      suspense: true,
+      fallbackData: [],
+    },
+  );
+  const { data: positions } = useSWRImmutable<Position[]>(
+    "/api/la/self",
+    fetcher,
+    {
+      suspense: true,
+      fallbackData: [],
+    },
+  );
 
   if (!feedback || !positions) return <></>;
   const tables = buildTables(positions ?? []);

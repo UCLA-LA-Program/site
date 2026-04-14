@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import useSWR from "swr";
+import useSWRImmutable from "swr/immutable";
 import {
   Card,
   CardHeader,
@@ -157,16 +157,13 @@ function signupCountsFromAvailability(
 }
 
 export function Schedule({ currentWeek }: { currentWeek: number }) {
-  const { data: sections } = useSWR<SectionData[]>("/api/sections", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
-  const { data: availability, mutate: mutateAvailability } = useSWR<
+  const { data: sections } = useSWRImmutable<SectionData[]>(
+    "/api/sections",
+    fetcher,
+  );
+  const { data: availability, mutate: mutateAvailability } = useSWRImmutable<
     AvailabilityRow[]
-  >("/api/availability", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
+  >("/api/availability", fetcher);
 
   const [schedules, setSchedules] = useState<Map<
     string,
