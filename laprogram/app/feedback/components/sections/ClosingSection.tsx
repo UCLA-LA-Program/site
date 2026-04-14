@@ -66,15 +66,19 @@ export const ClosingSection = withForm({
                 <FieldDescription>
                   You can sign up for our mailing list{" "}
                   <a
-                    href="https://www.laprogramucla.com"
-                    className="underline-offset-4 hover:underline"
+                    href="https://docs.google.com/forms/d/e/1FAIpQLSdS_wUgIL52eYGcHsnf4J3jfSlyyo1zx-bHPN4CjJi4QSRHyw/viewform?usp=dialog"
+                    className="underline-offset-2 hover:underline text-primary"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     here
                   </a>
                   . And you can learn more about the LA Program{" "}
                   <a
-                    href="https://www.laprogramucla.com"
-                    className="underline-offset-4 hover:underline"
+                    href="https://ceils.ucla.edu/learning-communities-trainings/learning-assistant-program/"
+                    className="underline-offset-2 hover:underline text-primary"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
                     here
                   </a>
@@ -178,6 +182,8 @@ export const ClosingSection = withForm({
                               : "https://docs.google.com/forms/d/e/1FAIpQLSfdz7x2kqgvKcSSuZ7nifTWwBTkPBBvhys_vBv2p7O3mpCSQw/viewform"
                           }
                           className="underline-offset-2 hover:underline text-primary"
+                          target="_blank"
+                          rel="noopener noreferrer"
                         >
                           form
                         </a>
