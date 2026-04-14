@@ -55,32 +55,32 @@ function DistributionCard({ col, counts, total }: CardProps) {
         className="flex flex-1 flex-col justify-center"
         style={{ minHeight: `${options.length * 2.25 + 1}rem` }}
       >
-      {mode === "bars" ? (
-        <ul className="space-y-1.5">
-          {options.map((opt) => {
-            const count = counts.get(opt.value) ?? 0;
-            const pct = total ? (count / total) * 100 : 0;
-            return (
-              <li key={opt.value} className="text-xs">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground">{opt.label}</span>
-                  <span className="tabular-nums text-muted-foreground">
-                    {count} · {pct.toFixed(0)}%
-                  </span>
-                </div>
-                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <PieView options={options} counts={counts} total={total} />
-      )}
+        {mode === "bars" ? (
+          <ul className="space-y-1.5">
+            {options.map((opt) => {
+              const count = counts.get(opt.value) ?? 0;
+              const pct = total ? (count / total) * 100 : 0;
+              return (
+                <li key={opt.value} className="text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">{opt.label}</span>
+                    <span className="tabular-nums text-muted-foreground">
+                      {count} · {pct.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <PieView options={options} counts={counts} total={total} />
+        )}
       </div>
 
       <p className="mt-3 text-[10px] text-muted-foreground">
@@ -135,7 +135,13 @@ function PieView({
     <div className="flex items-center gap-3">
       <svg viewBox="0 0 120 120" className="h-28 w-28 shrink-0">
         {slices.map((s, i) => (
-          <path key={i} d={s.d} fill={s.color} stroke="var(--card)" strokeWidth="1" />
+          <path
+            key={i}
+            d={s.d}
+            fill={s.color}
+            stroke="var(--card)"
+            strokeWidth="1"
+          />
         ))}
       </svg>
       <ul className="flex-1 space-y-1 text-[10px]">
@@ -161,6 +167,7 @@ export function FeedbackDistribution({ columns, data }: Props) {
   if (scored.length === 0 || data.length === 0) return null;
 
   const cards = scored
+    .map((col) => ({ ...col, options: col.options?.toReversed() }))
     .map((col) => {
       const counts = new Map<string, number>();
       let total = 0;
@@ -186,7 +193,12 @@ export function FeedbackDistribution({ columns, data }: Props) {
       }}
     >
       {cards.map(({ col, counts, total }) => (
-        <DistributionCard key={col.key} col={col} counts={counts} total={total} />
+        <DistributionCard
+          key={col.key}
+          col={col}
+          counts={counts}
+          total={total}
+        />
       ))}
     </div>
   );
