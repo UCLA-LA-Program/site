@@ -16,7 +16,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Download } from "lucide-react";
 import { fetcher } from "@/lib/utils";
-import useSWR from "swr";
+import useSWRImmutable from "swr";
 import type { AnonFeedback } from "./columns";
 import { Position } from "@/types/db";
 import * as XLSX from "xlsx";
@@ -111,14 +111,22 @@ function downloadExcel(tables: TableDef[], feedback: AnonFeedback[]) {
 }
 
 export function FeedbackView() {
-  const { data: feedback } = useSWR<AnonFeedback[]>("/api/feedback", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
-  const { data: positions } = useSWR<Position[]>("/api/la/self", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
+  const { data: feedback } = useSWRImmutable<AnonFeedback[]>(
+    "/api/feedback",
+    fetcher,
+    {
+      suspense: true,
+      fallbackData: [],
+    },
+  );
+  const { data: positions } = useSWRImmutable<Position[]>(
+    "/api/la/self",
+    fetcher,
+    {
+      suspense: true,
+      fallbackData: [],
+    },
+  );
 
   if (!feedback || !positions) return <></>;
   const tables = buildTables(positions ?? []);
