@@ -2,7 +2,28 @@
 --   npx wrangler d1 execute data --local --file scripts/test-feedback.sql
 -- Then log in as play@test.com and visit /feedback/view.
 
+-- Create test users (idempotent via INSERT OR IGNORE)
+INSERT OR IGNORE INTO user
+  (id, name, email, emailVerified, createdAt, updatedAt)
+VALUES
+  ('play_user',    'Play PedLcc', 'play@test.com',         1, datetime('now'), datetime('now')),
+  ('fb_new_user',  'Play New',    'play+new@test.com',     1, datetime('now'), datetime('now')),
+  ('fb_ret_user',  'Play Ret',    'play+ret@test.com',     1, datetime('now'), datetime('now')),
+  ('fb_ped_user',  'Play Ped',    'play+ped@test.com',     1, datetime('now'), datetime('now')),
+  ('fb_lcc_user',  'Play Lcc',    'play+lcc@test.com',     1, datetime('now'), datetime('now')),
+  ('fb_rlcc_user', 'Play RetLcc', 'play+ret_lcc@test.com', 1, datetime('now'), datetime('now'));
+
+-- Course positions
+INSERT OR IGNORE INTO course (userId, course_name, position) VALUES
+  ('play_user',    'TEST 99', 'ped_lcc'),
+  ('fb_new_user',  'TEST 99', 'new'),
+  ('fb_ret_user',  'TEST 99', 'ret'),
+  ('fb_ped_user',  'TEST 99', 'ped'),
+  ('fb_lcc_user',  'TEST 99', 'lcc'),
+  ('fb_rlcc_user', 'TEST 99', 'ret_lcc');
+
 DELETE FROM feedback WHERE id LIKE 'fb_%';
+
 
 -- Mid-quarter (10 rows, varied AGREEMENT responses)
 INSERT INTO feedback (id, recipientId, feedback) VALUES
@@ -34,9 +55,151 @@ INSERT INTO feedback (id, recipientId, feedback) VALUES
 ('fb_ob_4','play_user','{"feedback_type":"la_observation","obs_approachable":"always","obs_engaging":"always","obs_questioning":"always","obs_checkin":"always","obs_supportive":"always","obs_name":"most_instructor","obs_belonging":"always","obs_small_groups":"always","obs_wait_time":"most_instructor","obs_equity":"always","obs_prompt":"always","obs_strengths":"Exemplary.","obs_improve":"None.","obs_notes":"Model observation."}'),
 ('fb_ob_5','play_user','{"feedback_type":"la_observation","obs_approachable":"most_instructor","obs_engaging":"sometimes","obs_questioning":"most_missed","obs_checkin":"sometimes","obs_supportive":"most_instructor","obs_name":"sometimes","obs_belonging":"most_instructor","obs_small_groups":"most_instructor","obs_wait_time":"sometimes","obs_equity":"most_instructor","obs_prompt":"most_instructor","obs_strengths":"Organized.","obs_improve":"Push deeper.","obs_notes":""}');
 
+-- Head LA feedback (4 rows — mix of ped + lcc fields)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_hl_1','play_user','{"feedback_type":"la_head_la","la_ped_seminars":"strongly_agree","la_ped_applies":"agree","la_ped_discusses":"strongly_agree","la_ped_feedback":"agree","la_ped_content_meeting":"strongly_agree","la_lcc_emails":"agree","la_lcc_comfortable":"strongly_agree","la_lcc_answers":"strongly_agree","la_lcc_announcements":"agree","la_lcc_expectations":"strongly_agree","la_head_strengths":"Very organized and supportive.","la_head_improve":"Nothing comes to mind."}'),
+('fb_hl_2','play_user','{"feedback_type":"la_head_la","la_ped_seminars":"agree","la_ped_applies":"agree","la_ped_discusses":"agree","la_ped_feedback":"disagree","la_ped_content_meeting":"agree","la_lcc_emails":"strongly_agree","la_lcc_comfortable":"agree","la_lcc_answers":"agree","la_lcc_announcements":"strongly_agree","la_lcc_expectations":"agree","la_head_strengths":"Good communicator.","la_head_improve":"Give more direct feedback."}'),
+('fb_hl_3','play_user','{"feedback_type":"la_head_la","la_ped_seminars":"strongly_agree","la_ped_applies":"strongly_agree","la_ped_discusses":"strongly_agree","la_ped_feedback":"strongly_agree","la_ped_content_meeting":"strongly_agree","la_lcc_emails":"strongly_agree","la_lcc_comfortable":"strongly_agree","la_lcc_answers":"strongly_agree","la_lcc_announcements":"strongly_agree","la_lcc_expectations":"strongly_agree","la_head_strengths":"Amazing Head LA overall.","la_head_improve":"Honestly nothing."}'),
+('fb_hl_4','play_user','{"feedback_type":"la_head_la","la_ped_seminars":"disagree","la_ped_applies":"agree","la_ped_discusses":"agree","la_ped_feedback":"agree","la_ped_content_meeting":"disagree","la_lcc_emails":"agree","la_lcc_comfortable":"agree","la_lcc_answers":"disagree","la_lcc_announcements":"agree","la_lcc_expectations":"agree","la_head_strengths":"Approachable.","la_head_improve":"Better seminar facilitation."}');
+
 -- TA feedback (4 rows)
 INSERT INTO feedback (id, recipientId, feedback) VALUES
 ('fb_ta_1','play_user','{"role":"ta","ta_prepared":"strongly_agree","ta_engaged":"agree","ta_professional":"strongly_agree","ta_communication":"agree","ta_questions":"agree","ta_group_work":"strongly_agree","ta_equity":"agree","ta_feedback":"strongly_agree","ta_reliable":"strongly_agree","ta_growth":"agree","ta_strengths":"Great teammate.","ta_improve":"Nothing.","ta_notes":""}'),
 ('fb_ta_2','play_user','{"role":"ta","ta_prepared":"agree","ta_engaged":"strongly_agree","ta_professional":"strongly_agree","ta_communication":"strongly_agree","ta_questions":"strongly_agree","ta_group_work":"agree","ta_equity":"strongly_agree","ta_feedback":"agree","ta_reliable":"strongly_agree","ta_growth":"strongly_agree","ta_strengths":"Attentive.","ta_improve":"None.","ta_notes":""}'),
 ('fb_ta_3','play_user','{"role":"ta","ta_prepared":"disagree","ta_engaged":"agree","ta_professional":"agree","ta_communication":"disagree","ta_questions":"agree","ta_group_work":"agree","ta_equity":"agree","ta_feedback":"disagree","ta_reliable":"agree","ta_growth":"agree","ta_strengths":"Shows up.","ta_improve":"Prep more.","ta_notes":""}'),
 ('fb_ta_4','play_user','{"role":"ta","ta_prepared":"strongly_agree","ta_engaged":"strongly_agree","ta_professional":"strongly_agree","ta_communication":"strongly_agree","ta_questions":"strongly_agree","ta_group_work":"strongly_agree","ta_equity":"strongly_agree","ta_feedback":"strongly_agree","ta_reliable":"strongly_agree","ta_growth":"strongly_agree","ta_strengths":"Top tier.","ta_improve":"Nothing.","ta_notes":""}');
+
+-- ==========================================================================
+-- Play New (fb_new_user) — new LA
+-- ==========================================================================
+
+-- Mid-quarter (3 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_new_mq_1','fb_new_user','{"feedback_type":"mid_quarter","activities":["discussion"],"hours":"2","mq_approachable":"agree","mq_helpful":"agree","mq_familiar":"disagree","mq_engagement":"agree","mq_questioning":"agree","mq_supportive":"agree","mq_name":"disagree","mq_belonging":"agree","mq_checkin":"agree","mq_small_groups":"agree","mq_strengths":"Enthusiastic first-timer.","mq_improve":"Get to know students better."}'),
+('fb_new_mq_2','fb_new_user','{"feedback_type":"mid_quarter","activities":["discussion","office_hours"],"hours":"3","mq_approachable":"strongly_agree","mq_helpful":"agree","mq_familiar":"agree","mq_engagement":"agree","mq_questioning":"disagree","mq_supportive":"strongly_agree","mq_name":"agree","mq_belonging":"strongly_agree","mq_checkin":"agree","mq_small_groups":"agree","mq_strengths":"Really friendly.","mq_improve":"Ask more probing questions."}'),
+('fb_new_mq_3','fb_new_user','{"feedback_type":"mid_quarter","activities":["discussion"],"hours":"2","mq_approachable":"strongly_agree","mq_helpful":"strongly_agree","mq_familiar":"agree","mq_engagement":"strongly_agree","mq_questioning":"agree","mq_supportive":"strongly_agree","mq_name":"agree","mq_belonging":"strongly_agree","mq_checkin":"strongly_agree","mq_small_groups":"strongly_agree","mq_strengths":"Natural teacher.","mq_improve":"Nothing yet."}');
+
+-- End-of-quarter (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_new_eq_1','fb_new_user','{"feedback_type":"end_of_quarter","activities":["discussion"],"hours":"3","eq_approachable":"big_improvement","eq_helpful":"big_improvement","eq_familiar":"big_improvement","eq_engagement":"little_improvement","eq_questioning":"big_improvement","eq_supportive":"big_improvement","eq_name":"big_improvement","eq_belonging":"big_improvement","eq_notes":"Huge growth for a new LA."}'),
+('fb_new_eq_2','fb_new_user','{"feedback_type":"end_of_quarter","activities":["discussion","office_hours"],"hours":"4","eq_approachable":"little_improvement","eq_helpful":"little_improvement","eq_familiar":"no_change","eq_engagement":"little_improvement","eq_questioning":"little_improvement","eq_supportive":"little_improvement","eq_name":"little_improvement","eq_belonging":"little_improvement","eq_notes":"Steady progress."}');
+
+-- Observation (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_new_ob_1','fb_new_user','{"feedback_type":"la_observation","obs_approachable":"always","obs_engaging":"sometimes","obs_questioning":"sometimes","obs_checkin":"most_missed","obs_supportive":"most_instructor","obs_name":"almost_never","obs_belonging":"sometimes","obs_small_groups":"most_instructor","obs_wait_time":"sometimes","obs_equity":"sometimes","obs_prompt":"most_instructor","obs_strengths":"Great energy for a new LA.","obs_improve":"Learn student names.","obs_notes":"First observation."}'),
+('fb_new_ob_2','fb_new_user','{"feedback_type":"la_observation","obs_approachable":"always","obs_engaging":"most_instructor","obs_questioning":"most_instructor","obs_checkin":"most_instructor","obs_supportive":"always","obs_name":"sometimes","obs_belonging":"most_instructor","obs_small_groups":"always","obs_wait_time":"most_instructor","obs_equity":"most_instructor","obs_prompt":"always","obs_strengths":"Improved a lot since last time.","obs_improve":"Keep working on equity.","obs_notes":"Clear growth."}');
+
+-- TA (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_new_ta_1','fb_new_user','{"role":"ta","ta_prepared":"agree","ta_engaged":"agree","ta_professional":"strongly_agree","ta_communication":"agree","ta_questions":"agree","ta_group_work":"agree","ta_equity":"agree","ta_feedback":"agree","ta_reliable":"strongly_agree","ta_growth":"strongly_agree","ta_strengths":"Eager to learn.","ta_improve":"More initiative.","ta_notes":""}'),
+('fb_new_ta_2','fb_new_user','{"role":"ta","ta_prepared":"strongly_agree","ta_engaged":"strongly_agree","ta_professional":"strongly_agree","ta_communication":"agree","ta_questions":"strongly_agree","ta_group_work":"strongly_agree","ta_equity":"agree","ta_feedback":"agree","ta_reliable":"strongly_agree","ta_growth":"strongly_agree","ta_strengths":"Reliable and punctual.","ta_improve":"Nothing major.","ta_notes":""}');
+
+-- ==========================================================================
+-- Play Ret (fb_ret_user) — returner
+-- ==========================================================================
+
+-- Mid-quarter (4 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_ret_mq_1','fb_ret_user','{"feedback_type":"mid_quarter","activities":["discussion"],"hours":"3","mq_approachable":"strongly_agree","mq_helpful":"strongly_agree","mq_familiar":"strongly_agree","mq_engagement":"agree","mq_questioning":"strongly_agree","mq_supportive":"strongly_agree","mq_name":"strongly_agree","mq_belonging":"strongly_agree","mq_checkin":"agree","mq_small_groups":"strongly_agree","mq_strengths":"Knows the material cold.","mq_improve":"Could be more energetic."}'),
+('fb_ret_mq_2','fb_ret_user','{"feedback_type":"mid_quarter","activities":["discussion","study_session"],"hours":"5","mq_approachable":"strongly_agree","mq_helpful":"strongly_agree","mq_familiar":"agree","mq_engagement":"strongly_agree","mq_questioning":"agree","mq_supportive":"strongly_agree","mq_name":"agree","mq_belonging":"agree","mq_checkin":"strongly_agree","mq_small_groups":"strongly_agree","mq_strengths":"Very experienced.","mq_improve":"Nothing."}'),
+('fb_ret_mq_3','fb_ret_user','{"feedback_type":"mid_quarter","activities":["discussion"],"hours":"3","mq_approachable":"agree","mq_helpful":"agree","mq_familiar":"strongly_agree","mq_engagement":"agree","mq_questioning":"agree","mq_supportive":"agree","mq_name":"strongly_agree","mq_belonging":"agree","mq_checkin":"agree","mq_small_groups":"agree","mq_strengths":"Consistent.","mq_improve":"Vary teaching methods."}'),
+('fb_ret_mq_4','fb_ret_user','{"feedback_type":"mid_quarter","activities":["discussion","office_hours"],"hours":"4","mq_approachable":"strongly_agree","mq_helpful":"agree","mq_familiar":"strongly_agree","mq_engagement":"disagree","mq_questioning":"agree","mq_supportive":"agree","mq_name":"strongly_agree","mq_belonging":"strongly_agree","mq_checkin":"agree","mq_small_groups":"agree","mq_strengths":"Dependable.","mq_improve":"More interactive activities."}');
+
+-- End-of-quarter (3 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_ret_eq_1','fb_ret_user','{"feedback_type":"end_of_quarter","activities":["discussion"],"hours":"3","eq_approachable":"no_room_for_improvement","eq_helpful":"no_room_for_improvement","eq_familiar":"no_room_for_improvement","eq_engagement":"little_improvement","eq_questioning":"no_room_for_improvement","eq_supportive":"no_room_for_improvement","eq_name":"no_room_for_improvement","eq_belonging":"no_room_for_improvement","eq_notes":"Already great from the start."}'),
+('fb_ret_eq_2','fb_ret_user','{"feedback_type":"end_of_quarter","activities":["discussion"],"hours":"4","eq_approachable":"no_room_for_improvement","eq_helpful":"big_improvement","eq_familiar":"no_change","eq_engagement":"big_improvement","eq_questioning":"little_improvement","eq_supportive":"no_room_for_improvement","eq_name":"no_change","eq_belonging":"little_improvement","eq_notes":"Got more engaging over time."}'),
+('fb_ret_eq_3','fb_ret_user','{"feedback_type":"end_of_quarter","activities":["discussion","study_session"],"hours":"5","eq_approachable":"no_room_for_improvement","eq_helpful":"no_room_for_improvement","eq_familiar":"no_room_for_improvement","eq_engagement":"little_improvement","eq_questioning":"big_improvement","eq_supportive":"no_room_for_improvement","eq_name":"no_room_for_improvement","eq_belonging":"no_room_for_improvement","eq_notes":"Solid returner."}');
+
+-- Observation (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_ret_ob_1','fb_ret_user','{"feedback_type":"la_observation","obs_approachable":"always","obs_engaging":"always","obs_questioning":"most_instructor","obs_checkin":"always","obs_supportive":"always","obs_name":"always","obs_belonging":"always","obs_small_groups":"always","obs_wait_time":"most_instructor","obs_equity":"always","obs_prompt":"always","obs_strengths":"Very polished.","obs_improve":"Try new questioning techniques.","obs_notes":"Experienced LA."}'),
+('fb_ret_ob_2','fb_ret_user','{"feedback_type":"la_observation","obs_approachable":"always","obs_engaging":"most_instructor","obs_questioning":"always","obs_checkin":"most_instructor","obs_supportive":"always","obs_name":"always","obs_belonging":"most_instructor","obs_small_groups":"always","obs_wait_time":"always","obs_equity":"always","obs_prompt":"always","obs_strengths":"Confident facilitation.","obs_improve":"Mix up group formats.","obs_notes":""}');
+
+-- TA (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_ret_ta_1','fb_ret_user','{"role":"ta","ta_prepared":"strongly_agree","ta_engaged":"strongly_agree","ta_professional":"strongly_agree","ta_communication":"strongly_agree","ta_questions":"strongly_agree","ta_group_work":"strongly_agree","ta_equity":"strongly_agree","ta_feedback":"strongly_agree","ta_reliable":"strongly_agree","ta_growth":"agree","ta_strengths":"Veteran presence.","ta_improve":"Nothing.","ta_notes":""}'),
+('fb_ret_ta_2','fb_ret_user','{"role":"ta","ta_prepared":"strongly_agree","ta_engaged":"agree","ta_professional":"strongly_agree","ta_communication":"agree","ta_questions":"strongly_agree","ta_group_work":"agree","ta_equity":"strongly_agree","ta_feedback":"agree","ta_reliable":"strongly_agree","ta_growth":"agree","ta_strengths":"Knows the ropes.","ta_improve":"Could mentor new LAs more.","ta_notes":""}');
+
+-- ==========================================================================
+-- Play Ped (fb_ped_user) — ped head LA
+-- ==========================================================================
+
+-- Mid-quarter (3 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_ped_mq_1','fb_ped_user','{"feedback_type":"mid_quarter","activities":["discussion","lecture"],"hours":"4","mq_approachable":"strongly_agree","mq_helpful":"strongly_agree","mq_familiar":"strongly_agree","mq_engagement":"strongly_agree","mq_questioning":"strongly_agree","mq_supportive":"strongly_agree","mq_name":"strongly_agree","mq_belonging":"strongly_agree","mq_checkin":"strongly_agree","mq_small_groups":"strongly_agree","mq_strengths":"Incredible pedagogy knowledge.","mq_improve":"Nothing."}'),
+('fb_ped_mq_2','fb_ped_user','{"feedback_type":"mid_quarter","activities":["discussion"],"hours":"3","mq_approachable":"strongly_agree","mq_helpful":"agree","mq_familiar":"agree","mq_engagement":"agree","mq_questioning":"strongly_agree","mq_supportive":"strongly_agree","mq_name":"agree","mq_belonging":"strongly_agree","mq_checkin":"agree","mq_small_groups":"strongly_agree","mq_strengths":"Models great questioning.","mq_improve":"More one-on-one time."}'),
+('fb_ped_mq_3','fb_ped_user','{"feedback_type":"mid_quarter","activities":["discussion"],"hours":"3","mq_approachable":"agree","mq_helpful":"strongly_agree","mq_familiar":"strongly_agree","mq_engagement":"strongly_agree","mq_questioning":"agree","mq_supportive":"agree","mq_name":"strongly_agree","mq_belonging":"agree","mq_checkin":"strongly_agree","mq_small_groups":"agree","mq_strengths":"Makes everyone feel welcome.","mq_improve":"Slow down sometimes."}');
+
+-- Head LA ped-only (3 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_ped_hl_1','fb_ped_user','{"feedback_type":"la_head_la","la_ped_seminars":"strongly_agree","la_ped_applies":"strongly_agree","la_ped_discusses":"strongly_agree","la_ped_feedback":"strongly_agree","la_ped_content_meeting":"strongly_agree","la_head_strengths":"Best ped seminars I have attended.","la_head_improve":"Nothing."}'),
+('fb_ped_hl_2','fb_ped_user','{"feedback_type":"la_head_la","la_ped_seminars":"agree","la_ped_applies":"strongly_agree","la_ped_discusses":"strongly_agree","la_ped_feedback":"agree","la_ped_content_meeting":"agree","la_head_strengths":"Applies theory well to our course.","la_head_improve":"Could be more structured in seminars."}'),
+('fb_ped_hl_3','fb_ped_user','{"feedback_type":"la_head_la","la_ped_seminars":"strongly_agree","la_ped_applies":"agree","la_ped_discusses":"agree","la_ped_feedback":"strongly_agree","la_ped_content_meeting":"strongly_agree","la_head_strengths":"Always available to talk pedagogy.","la_head_improve":"More hands-on activities in seminar."}');
+
+-- Observation (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_ped_ob_1','fb_ped_user','{"feedback_type":"la_observation","obs_approachable":"always","obs_engaging":"always","obs_questioning":"always","obs_checkin":"always","obs_supportive":"always","obs_name":"always","obs_belonging":"always","obs_small_groups":"always","obs_wait_time":"always","obs_equity":"always","obs_prompt":"always","obs_strengths":"Textbook facilitation.","obs_improve":"Literally nothing.","obs_notes":"Outstanding."}'),
+('fb_ped_ob_2','fb_ped_user','{"feedback_type":"la_observation","obs_approachable":"always","obs_engaging":"most_instructor","obs_questioning":"always","obs_checkin":"most_instructor","obs_supportive":"always","obs_name":"always","obs_belonging":"always","obs_small_groups":"always","obs_wait_time":"most_instructor","obs_equity":"always","obs_prompt":"always","obs_strengths":"Strong wait time.","obs_improve":"Engage quieter students.","obs_notes":"Near perfect."}');
+
+-- TA (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_ped_ta_1','fb_ped_user','{"role":"ta","ta_prepared":"strongly_agree","ta_engaged":"strongly_agree","ta_professional":"strongly_agree","ta_communication":"strongly_agree","ta_questions":"strongly_agree","ta_group_work":"strongly_agree","ta_equity":"strongly_agree","ta_feedback":"strongly_agree","ta_reliable":"strongly_agree","ta_growth":"strongly_agree","ta_strengths":"Leadership material.","ta_improve":"Nothing.","ta_notes":""}'),
+('fb_ped_ta_2','fb_ped_user','{"role":"ta","ta_prepared":"strongly_agree","ta_engaged":"strongly_agree","ta_professional":"strongly_agree","ta_communication":"agree","ta_questions":"strongly_agree","ta_group_work":"strongly_agree","ta_equity":"agree","ta_feedback":"strongly_agree","ta_reliable":"strongly_agree","ta_growth":"strongly_agree","ta_strengths":"Great role model.","ta_improve":"Communicate more with TA.","ta_notes":""}');
+
+-- ==========================================================================
+-- Play Lcc (fb_lcc_user) — lcc head LA
+-- ==========================================================================
+
+-- Mid-quarter (3 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_lcc_mq_1','fb_lcc_user','{"feedback_type":"mid_quarter","activities":["discussion"],"hours":"3","mq_approachable":"strongly_agree","mq_helpful":"agree","mq_familiar":"agree","mq_engagement":"agree","mq_questioning":"agree","mq_supportive":"strongly_agree","mq_name":"agree","mq_belonging":"agree","mq_checkin":"strongly_agree","mq_small_groups":"agree","mq_strengths":"Very organized.","mq_improve":"More engaging discussions."}'),
+('fb_lcc_mq_2','fb_lcc_user','{"feedback_type":"mid_quarter","activities":["discussion","office_hours"],"hours":"4","mq_approachable":"agree","mq_helpful":"strongly_agree","mq_familiar":"strongly_agree","mq_engagement":"agree","mq_questioning":"agree","mq_supportive":"agree","mq_name":"strongly_agree","mq_belonging":"strongly_agree","mq_checkin":"agree","mq_small_groups":"strongly_agree","mq_strengths":"Knows logistics inside out.","mq_improve":"Try new activities."}'),
+('fb_lcc_mq_3','fb_lcc_user','{"feedback_type":"mid_quarter","activities":["discussion"],"hours":"2","mq_approachable":"strongly_agree","mq_helpful":"strongly_agree","mq_familiar":"agree","mq_engagement":"strongly_agree","mq_questioning":"strongly_agree","mq_supportive":"strongly_agree","mq_name":"agree","mq_belonging":"strongly_agree","mq_checkin":"strongly_agree","mq_small_groups":"strongly_agree","mq_strengths":"Super helpful.","mq_improve":"Nothing."}');
+
+-- Head LA lcc-only (3 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_lcc_hl_1','fb_lcc_user','{"feedback_type":"la_head_la","la_lcc_emails":"strongly_agree","la_lcc_comfortable":"strongly_agree","la_lcc_answers":"strongly_agree","la_lcc_announcements":"strongly_agree","la_lcc_expectations":"strongly_agree","la_head_strengths":"Fastest email responses ever.","la_head_improve":"Nothing."}'),
+('fb_lcc_hl_2','fb_lcc_user','{"feedback_type":"la_head_la","la_lcc_emails":"agree","la_lcc_comfortable":"strongly_agree","la_lcc_answers":"agree","la_lcc_announcements":"agree","la_lcc_expectations":"strongly_agree","la_head_strengths":"Makes expectations crystal clear.","la_head_improve":"Longer announcements sometimes."}'),
+('fb_lcc_hl_3','fb_lcc_user','{"feedback_type":"la_head_la","la_lcc_emails":"strongly_agree","la_lcc_comfortable":"agree","la_lcc_answers":"strongly_agree","la_lcc_announcements":"strongly_agree","la_lcc_expectations":"agree","la_head_strengths":"Always knows the answer.","la_head_improve":"Be more approachable in meetings."}');
+
+-- Observation (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_lcc_ob_1','fb_lcc_user','{"feedback_type":"la_observation","obs_approachable":"most_instructor","obs_engaging":"most_instructor","obs_questioning":"most_instructor","obs_checkin":"always","obs_supportive":"always","obs_name":"most_instructor","obs_belonging":"most_instructor","obs_small_groups":"always","obs_wait_time":"most_instructor","obs_equity":"most_instructor","obs_prompt":"most_instructor","obs_strengths":"Well-organized section.","obs_improve":"More student-centered questioning.","obs_notes":"Good logistics awareness."}'),
+('fb_lcc_ob_2','fb_lcc_user','{"feedback_type":"la_observation","obs_approachable":"always","obs_engaging":"most_instructor","obs_questioning":"sometimes","obs_checkin":"most_instructor","obs_supportive":"always","obs_name":"always","obs_belonging":"always","obs_small_groups":"most_instructor","obs_wait_time":"sometimes","obs_equity":"most_instructor","obs_prompt":"most_instructor","obs_strengths":"Students feel comfortable.","obs_improve":"Wait time before answering.","obs_notes":""}');
+
+-- TA (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_lcc_ta_1','fb_lcc_user','{"role":"ta","ta_prepared":"strongly_agree","ta_engaged":"agree","ta_professional":"strongly_agree","ta_communication":"strongly_agree","ta_questions":"agree","ta_group_work":"agree","ta_equity":"strongly_agree","ta_feedback":"agree","ta_reliable":"strongly_agree","ta_growth":"agree","ta_strengths":"Great communicator with TA.","ta_improve":"More proactive.","ta_notes":""}'),
+('fb_lcc_ta_2','fb_lcc_user','{"role":"ta","ta_prepared":"agree","ta_engaged":"strongly_agree","ta_professional":"strongly_agree","ta_communication":"strongly_agree","ta_questions":"strongly_agree","ta_group_work":"strongly_agree","ta_equity":"agree","ta_feedback":"strongly_agree","ta_reliable":"strongly_agree","ta_growth":"strongly_agree","ta_strengths":"Always on top of logistics.","ta_improve":"Nothing.","ta_notes":""}');
+
+-- ==========================================================================
+-- Play RetLcc (fb_rlcc_user) — ret_lcc
+-- ==========================================================================
+
+-- Mid-quarter (3 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_rlcc_mq_1','fb_rlcc_user','{"feedback_type":"mid_quarter","activities":["discussion","study_session"],"hours":"5","mq_approachable":"strongly_agree","mq_helpful":"strongly_agree","mq_familiar":"strongly_agree","mq_engagement":"strongly_agree","mq_questioning":"strongly_agree","mq_supportive":"strongly_agree","mq_name":"strongly_agree","mq_belonging":"strongly_agree","mq_checkin":"strongly_agree","mq_small_groups":"strongly_agree","mq_strengths":"Does it all.","mq_improve":"Nothing to improve."}'),
+('fb_rlcc_mq_2','fb_rlcc_user','{"feedback_type":"mid_quarter","activities":["discussion"],"hours":"3","mq_approachable":"strongly_agree","mq_helpful":"agree","mq_familiar":"strongly_agree","mq_engagement":"agree","mq_questioning":"agree","mq_supportive":"strongly_agree","mq_name":"strongly_agree","mq_belonging":"agree","mq_checkin":"agree","mq_small_groups":"strongly_agree","mq_strengths":"Experienced and approachable.","mq_improve":"More variety in activities."}'),
+('fb_rlcc_mq_3','fb_rlcc_user','{"feedback_type":"mid_quarter","activities":["discussion","office_hours"],"hours":"4","mq_approachable":"agree","mq_helpful":"strongly_agree","mq_familiar":"agree","mq_engagement":"strongly_agree","mq_questioning":"strongly_agree","mq_supportive":"agree","mq_name":"agree","mq_belonging":"strongly_agree","mq_checkin":"strongly_agree","mq_small_groups":"agree","mq_strengths":"Balances logistics and teaching.","mq_improve":"Could delegate more."}');
+
+-- End-of-quarter (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_rlcc_eq_1','fb_rlcc_user','{"feedback_type":"end_of_quarter","activities":["discussion","study_session"],"hours":"5","eq_approachable":"no_room_for_improvement","eq_helpful":"no_room_for_improvement","eq_familiar":"no_room_for_improvement","eq_engagement":"big_improvement","eq_questioning":"no_room_for_improvement","eq_supportive":"no_room_for_improvement","eq_name":"no_room_for_improvement","eq_belonging":"no_room_for_improvement","eq_notes":"Amazing from day one."}'),
+('fb_rlcc_eq_2','fb_rlcc_user','{"feedback_type":"end_of_quarter","activities":["discussion"],"hours":"3","eq_approachable":"no_room_for_improvement","eq_helpful":"big_improvement","eq_familiar":"no_change","eq_engagement":"little_improvement","eq_questioning":"big_improvement","eq_supportive":"no_room_for_improvement","eq_name":"no_change","eq_belonging":"big_improvement","eq_notes":"Grew even more this quarter."}');
+
+-- Head LA lcc-only (3 rows — ret_lcc gets LCC feedback)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_rlcc_hl_1','fb_rlcc_user','{"feedback_type":"la_head_la","la_lcc_emails":"strongly_agree","la_lcc_comfortable":"strongly_agree","la_lcc_answers":"strongly_agree","la_lcc_announcements":"agree","la_lcc_expectations":"strongly_agree","la_head_strengths":"Handles everything smoothly.","la_head_improve":"Nothing."}'),
+('fb_rlcc_hl_2','fb_rlcc_user','{"feedback_type":"la_head_la","la_lcc_emails":"agree","la_lcc_comfortable":"strongly_agree","la_lcc_answers":"strongly_agree","la_lcc_announcements":"strongly_agree","la_lcc_expectations":"strongly_agree","la_head_strengths":"Great at keeping us informed.","la_head_improve":"Sometimes slow on email."}'),
+('fb_rlcc_hl_3','fb_rlcc_user','{"feedback_type":"la_head_la","la_lcc_emails":"strongly_agree","la_lcc_comfortable":"agree","la_lcc_answers":"agree","la_lcc_announcements":"strongly_agree","la_lcc_expectations":"agree","la_head_strengths":"Clear expectations.","la_head_improve":"More check-ins."}');
+
+-- Observation (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_rlcc_ob_1','fb_rlcc_user','{"feedback_type":"la_observation","obs_approachable":"always","obs_engaging":"always","obs_questioning":"always","obs_checkin":"always","obs_supportive":"always","obs_name":"always","obs_belonging":"always","obs_small_groups":"always","obs_wait_time":"always","obs_equity":"always","obs_prompt":"always","obs_strengths":"Perfect session.","obs_improve":"Nothing.","obs_notes":"Exemplary."}'),
+('fb_rlcc_ob_2','fb_rlcc_user','{"feedback_type":"la_observation","obs_approachable":"always","obs_engaging":"most_instructor","obs_questioning":"most_instructor","obs_checkin":"always","obs_supportive":"always","obs_name":"most_instructor","obs_belonging":"always","obs_small_groups":"always","obs_wait_time":"most_instructor","obs_equity":"most_instructor","obs_prompt":"always","obs_strengths":"Strong presence.","obs_improve":"Push deeper on questioning.","obs_notes":"Veteran skill."}');
+
+-- TA (2 rows)
+INSERT INTO feedback (id, recipientId, feedback) VALUES
+('fb_rlcc_ta_1','fb_rlcc_user','{"role":"ta","ta_prepared":"strongly_agree","ta_engaged":"strongly_agree","ta_professional":"strongly_agree","ta_communication":"strongly_agree","ta_questions":"strongly_agree","ta_group_work":"strongly_agree","ta_equity":"strongly_agree","ta_feedback":"strongly_agree","ta_reliable":"strongly_agree","ta_growth":"strongly_agree","ta_strengths":"Best LA on the team.","ta_improve":"Nothing.","ta_notes":""}'),
+('fb_rlcc_ta_2','fb_rlcc_user','{"role":"ta","ta_prepared":"strongly_agree","ta_engaged":"agree","ta_professional":"strongly_agree","ta_communication":"strongly_agree","ta_questions":"agree","ta_group_work":"strongly_agree","ta_equity":"strongly_agree","ta_feedback":"agree","ta_reliable":"strongly_agree","ta_growth":"agree","ta_strengths":"Handles dual role well.","ta_improve":"Could share more with team.","ta_notes":""}');
