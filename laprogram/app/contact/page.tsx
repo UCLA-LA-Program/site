@@ -17,8 +17,8 @@ export default function ContactPage() {
             If you are an LA with a concern that is not a website bug/technical
             problem, please refer to the{" "}
             <a
-              className="underline-offset-2 text-primary hover:underline"
               href="https://docs.google.com/document/d/1ynJSRhLkGigDWusufc7HGjG-T-gWBAreWKcoyhlA9Sc/edit?usp=sharing"
+              className="underline-offset-2 text-primary hover:underline"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -37,6 +37,8 @@ export default function ContactPage() {
           <a
             href="mailto:pdt.laprogram@gmail.com"
             className="text-sm text-primary underline-offset-2 hover:underline"
+            target="_blank"
+            rel="noopener noreferrer"
           >
             pdt.laprogram@gmail.com
           </a>
