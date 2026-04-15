@@ -24,20 +24,11 @@ import {
   minutesToLabel,
   minutesToTimeStr,
 } from "@/lib/utils";
+import { Section } from "@/types/db";
 
 const WEEKS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
 const STEP = 10; // minutes
 const MIN_RANGE = 30; // minutes
-
-type SectionData = {
-  section_id: string;
-  course_name: string;
-  section_name: string;
-  day: string;
-  time: string; // e.g. "9:00-9:50"
-  location: string;
-  position: string;
-};
 
 type AvailabilityRow = {
   id: string;
@@ -57,13 +48,12 @@ type CourseSchedule = {
   sectionStart: number;
   sectionEnd: number;
   day: string;
-  position: string;
   weekSlots: Map<number, WeekSlot>;
   timeRange: [number, number];
 };
 
 function buildSectionSchedule(
-  section: SectionData,
+  section: Section,
   availability: AvailabilityRow[],
   currentWeek: number,
 ): CourseSchedule {
@@ -101,14 +91,13 @@ function buildSectionSchedule(
     sectionStart,
     sectionEnd,
     day: section.day,
-    position: section.position,
     weekSlots,
     timeRange: [defaultStart, defaultEnd],
   };
 }
 
 function buildSchedules(
-  sections: SectionData[],
+  sections: Section[],
   availability: AvailabilityRow[],
   currentWeek: number,
 ): Map<string, CourseSchedule> {
@@ -138,7 +127,7 @@ function signupCountsFromAvailability(
 }
 
 export function Schedule({ currentWeek }: { currentWeek: number }) {
-  const { data: sections } = useSWRImmutable<SectionData[]>(
+  const { data: sections } = useSWRImmutable<Section[]>(
     "/api/sections",
     fetcher,
   );

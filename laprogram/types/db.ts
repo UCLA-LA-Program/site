@@ -16,6 +16,15 @@ export type Position = {
   position: string;
 };
 
+export type Section = {
+  section_id: string;
+  course_name: string;
+  section_name: string;
+  day: string;
+  time: string; // e.g. "9:00-9:50"
+  location: string;
+};
+
 /** Raw DB query result — includes week/day/time before API transformation. */
 export type AvailabilityRow = {
   id: string;
