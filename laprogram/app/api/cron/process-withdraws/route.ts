@@ -17,8 +17,8 @@ export async function POST(request: Request) {
 
     const hasCronSecret =
       request.headers.get("x-cron-secret") === process.env.CRON_SECRET;
+    const auth = await getAuth();
     if (!hasCronSecret) {
-      const auth = await getAuth();
       const session = await auth.api.getSession({ headers: await headers() });
       if (!session || session.user.role !== "admin") {
         return new Response("Unauthorized", { status: 401 });
@@ -181,6 +181,14 @@ export async function POST(request: Request) {
         */
       ]);
 
+      if (!hasCronSecret) {
+        auth.api.banUser({
+          body: {
+            userId: withdrewUser.id,
+          },
+          headers: await headers(),
+        });
+      }
       messages.push(`removed withdrawn ${withdrewLAEmail}`);
       removedCount++;
     }
