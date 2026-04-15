@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { fetcher, getObsDate, hydrateDates, nowLA } from "@/lib/utils";
 import { format, differenceInCalendarDays, isSameDay } from "date-fns";
 import { DAY_INDEX, LA_POSITION_MAP } from "@/lib/constants";
-import type { Availability } from "@/types/db";
+import type { ObservationAvailability } from "@/types/db";
 import type { MyObservation } from "./types";
 import { formatTime } from "./types";
 import { PendingChanges } from "./components/PendingChanges";
@@ -47,7 +47,7 @@ export function SignUp({
   roundWeeks: string[];
 }) {
   const { data: openData, mutate: mutateOpen } = useSWR<{
-    slots: Availability[];
+    slots: ObservationAvailability[];
     filters: string[];
     notes: string[];
   }>(
@@ -55,7 +55,7 @@ export function SignUp({
     (url: string) =>
       fetcher(url).then(
         (data: {
-          slots: Availability[];
+          slots: ObservationAvailability[];
           filters: string[];
           notes: string[];
         }) => ({

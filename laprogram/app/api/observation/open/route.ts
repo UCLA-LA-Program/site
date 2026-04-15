@@ -1,7 +1,7 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { AvailabilityRow } from "@/types/db";
+import { ObservationAvailabilityRow } from "@/types/db";
 import {
   OBSERVATION_ACTIVE_ROUND_KEY,
   OBSERVATION_ROUND_WEEKS_PREFIX,
@@ -76,7 +76,7 @@ export async function GET() {
         AND availability.week IN (${weeks.map(() => "?").join(", ")})`,
       )
       .bind(session.user.id, ...weeks)
-      .all<AvailabilityRow>();
+      .all<ObservationAvailabilityRow>();
 
     if (!result) {
       return new Response("Encountered database error.", { status: 500 });

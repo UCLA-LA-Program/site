@@ -25,8 +25,16 @@ export type Section = {
   location: string;
 };
 
-/** Raw DB query result — includes week/day/time before API transformation. */
 export type AvailabilityRow = {
+  id: string;
+  section_id: string;
+  time: string; // e.g. "9:10-9:40"
+  week: string;
+  status: "open" | "hidden" | "taken";
+};
+
+/** Raw DB query result — includes week/day/time before API transformation. */
+export type ObservationAvailabilityRow = {
   id: string;
   la_name: string;
   la_email: string;
@@ -40,7 +48,10 @@ export type AvailabilityRow = {
 };
 
 /** API response — week/day/time replaced with parsed datetimes. */
-export type Availability = Omit<AvailabilityRow, "week" | "day" | "time"> & {
+export type ObservationAvailability = Omit<
+  ObservationAvailabilityRow,
+  "week" | "day" | "time"
+> & {
   time_start: TZDate;
   time_end: TZDate;
 };

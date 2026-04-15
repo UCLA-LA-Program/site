@@ -22,7 +22,7 @@ import {
   minutesToTimeStr,
   fetcher,
 } from "@/lib/utils";
-import { Section } from "@/types/db";
+import { AvailabilityRow, Section } from "@/types/db";
 import useSWRImmutable from "swr/immutable";
 
 const WEEKS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
@@ -41,14 +41,6 @@ type CourseSchedule = {
 type WeekSlot = {
   selected: boolean;
   timeRange: [number, number];
-};
-
-type AvailabilityRow = {
-  id: string;
-  section_id: string;
-  time: string; // e.g. "9:10-9:40"
-  week: string;
-  status: "open" | "hidden" | "taken";
 };
 
 function buildSectionSchedule(

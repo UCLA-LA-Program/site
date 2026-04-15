@@ -3,6 +3,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
 import { getCurrentWeek } from "@/lib/utils";
 import { QUARTER_START_KEY } from "@/lib/constants";
+import { AvailabilityRow } from "@/types/db";
 
 interface AvailabilityWeek {
   week: string;
@@ -147,14 +148,14 @@ export async function GET(request: Request) {
           "SELECT id, section_id, time, week, status FROM availability WHERE la_id = ? AND section_id = ?",
         )
         .bind(userId, sectionId)
-        .all();
+        .all<AvailabilityRow>();
     } else {
       result = await db
         .prepare(
           "SELECT id, section_id, time, week, status FROM availability WHERE la_id = ?",
         )
         .bind(userId)
-        .all();
+        .all<AvailabilityRow>();
     }
 
     return Response.json(result.results);
