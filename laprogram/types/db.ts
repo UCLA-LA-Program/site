@@ -1,3 +1,5 @@
+import { TZDate } from "@date-fns/tz";
+
 export type Id = {
   id: string;
 };
@@ -30,6 +32,6 @@ export type AvailabilityRow = {
 
 /** API response — week/day/time replaced with parsed datetimes. */
 export type Availability = Omit<AvailabilityRow, "week" | "day" | "time"> & {
-  time_start: Date;
-  time_end: Date;
+  time_start: TZDate;
+  time_end: TZDate;
 };

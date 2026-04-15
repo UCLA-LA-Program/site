@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarClock, User, MapPin, Filter, Info } from "lucide-react";
 import { toast } from "sonner";
-import { fetcher, getObsDate, nowLA } from "@/lib/utils";
+import { fetcher, getObsDate, hydrateDates, nowLA } from "@/lib/utils";
 import { format, differenceInCalendarDays, isSameDay } from "date-fns";
 import { DAY_INDEX, LA_POSITION_MAP } from "@/lib/constants";
 import type { Availability } from "@/types/db";
@@ -19,22 +19,13 @@ import {
 } from "./components/ObservationCard";
 
 import { OBSERVATION_CHANGE_DAYS_LIMIT } from "@/lib/constants";
+import { TZDate } from "@date-fns/tz";
 
-export function hydrateDates<T extends { time_start: Date; time_end: Date }>(
-  items: T[],
-): T[] {
-  return items.map((item) => ({
-    ...item,
-    time_start: new Date(item.time_start),
-    time_end: new Date(item.time_end),
-  }));
-}
-
-type DateTab = { week: string; date: Date; label: string };
+type DateTab = { week: string; date: TZDate; label: string };
 
 function buildDateTabs(
   weeks: string[],
-  quarterStart: Date | string,
+  quarterStart: TZDate | string,
 ): DateTab[] {
   const tabs: DateTab[] = [];
   for (const week of weeks.sort((a, b) => parseInt(a) - parseInt(b))) {

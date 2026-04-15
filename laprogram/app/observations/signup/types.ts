@@ -1,4 +1,5 @@
 import type { Availability } from "@/types/db";
+import { TZDate } from "@date-fns/tz";
 import { format } from "date-fns";
 
 export type MyObservation = Availability & {
@@ -7,6 +8,6 @@ export type MyObservation = Availability & {
   ta_email: string | null;
 };
 
-export function formatTime(d: Date): string {
+export function formatTime(d: TZDate): string {
   return format(d, "h:mm a");
 }

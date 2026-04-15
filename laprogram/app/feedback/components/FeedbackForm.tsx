@@ -32,7 +32,7 @@ import useSWRImmutable from "swr";
 import { fetcher } from "@/lib/utils";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
-import { hydrateDates } from "@/app/observations/signup/SignUp";
+import { hydrateDates } from "@/lib/utils";
 import { MyObservation } from "@/app/observations/signup/types";
 import { CheckCircle2 } from "lucide-react";
 import { InfoSection } from "./sections/InfoSection";
