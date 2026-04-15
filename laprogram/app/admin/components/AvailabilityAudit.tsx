@@ -13,6 +13,7 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
+import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { X } from "lucide-react";
 import type { AvailabilityAuditRow } from "@/app/api/admin/audit/availability/route";
@@ -37,6 +38,7 @@ type SectionEntry = {
 };
 
 export function AvailabilityAudit() {
+  const [query, setQuery] = useState("");
   const [maxWeeks, setMaxWeeks] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("first_name");
@@ -90,12 +92,22 @@ export function AvailabilityAudit() {
 
   function getNamePart(name: string, part: "first" | "last") {
     const parts = name.trim().split(/\s+/);
-    return part === "first" ? (parts[0] ?? "") : (parts[parts.length - 1] ?? "");
+    return part === "first"
+      ? (parts[0] ?? "")
+      : (parts[parts.length - 1] ?? "");
   }
 
   const filtered = allEntries.filter((e) => {
+    const q = query.trim().toLowerCase();
+    if (
+      q &&
+      !e.la_name.toLowerCase().includes(q) &&
+      !e.la_email.toLowerCase().includes(q)
+    )
+      return false;
     if (maxWeeks && getUnavailable(e) < parseInt(maxWeeks, 10)) return false;
-    if (positionFilter.length > 0 && !positionFilter.includes(e.position)) return false;
+    if (positionFilter.length > 0 && !positionFilter.includes(e.position))
+      return false;
     return true;
   });
 
@@ -104,8 +116,7 @@ export function AvailabilityAudit() {
       return getUnavailable(b) - getUnavailable(a);
     if (sortKey === "unavailable_asc")
       return getUnavailable(a) - getUnavailable(b);
-    if (sortKey === "position")
-      return a.position.localeCompare(b.position);
+    if (sortKey === "position") return a.position.localeCompare(b.position);
     if (sortKey === "last_name")
       return getNamePart(a.la_name, "last").localeCompare(
         getNamePart(b.la_name, "last"),
@@ -129,49 +140,21 @@ export function AvailabilityAudit() {
 
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-2">
-        <label htmlFor="max-weeks" className="text-sm text-muted-foreground">
-          Show LAs with at least
-        </label>
-        <input
-          id="max-weeks"
-          type="number"
-          min={0}
-          max={weeks.length}
-          value={maxWeeks}
-          onChange={(e) => setMaxWeeks(e.target.value)}
-          placeholder="0"
-          className="w-16 rounded-md border px-2 py-1 text-sm"
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="Search name or email…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="max-w-xs"
         />
-        <span className="text-sm text-muted-foreground">weeks unavailable</span>
-        <div className="ml-auto flex items-center gap-2">
-        <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
-          <input
-            type="checkbox"
-            checked={compact}
-            onChange={(e) => setCompact(e.target.checked)}
-            className="rounded"
-          />
-          Compact
-        </label>
-        <button
-          type="button"
-          className="ml-auto rounded-md border px-3 py-1 text-sm hover:bg-muted"
-          onClick={() => {
-            const emails = [...new Set(entries.map((e) => e.la_email))].join(
-              ", ",
-            );
-            navigator.clipboard.writeText(emails).then(() => {
-              setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
-            });
-          }}
-        >
-          {copied
-            ? "Copied!"
-            : `Copy emails (${new Set(entries.map((e) => e.la_email)).size})`}
-        </button>
-        </div>
+        {query && (
+          <Button variant="ghost" size="sm" onClick={() => setQuery("")}>
+            Clear
+          </Button>
+        )}
+        <span className="ml-auto text-xs text-muted-foreground">
+          {entries.length} of {allEntries.length}
+        </span>
       </div>
       <div className="flex flex-wrap items-center gap-2">
         <Combobox
@@ -187,10 +170,7 @@ export function AvailabilityAudit() {
             );
           }}
         >
-          <ComboboxInput
-            placeholder="Filter roles…"
-            className="w-48"
-          />
+          <ComboboxInput placeholder="Filter roles…" className="w-48" />
           <ComboboxContent>
             <ComboboxEmpty>No roles</ComboboxEmpty>
             <ComboboxList>
@@ -231,6 +211,50 @@ export function AvailabilityAudit() {
           ))}
         </div>
       )}
+      <div className="flex flex-wrap items-center gap-2">
+        <label htmlFor="max-weeks" className="text-sm text-muted-foreground">
+          Show LAs with at least
+        </label>
+        <input
+          id="max-weeks"
+          type="number"
+          min={0}
+          max={weeks.length}
+          value={maxWeeks}
+          onChange={(e) => setMaxWeeks(e.target.value)}
+          placeholder="0"
+          className="w-16 rounded-md border px-2 py-1 text-sm"
+        />
+        <span className="text-sm text-muted-foreground">weeks unavailable</span>
+        <div className="ml-auto flex items-center gap-2">
+          <label className="flex items-center gap-1.5 text-sm text-muted-foreground">
+            <input
+              type="checkbox"
+              checked={compact}
+              onChange={(e) => setCompact(e.target.checked)}
+              className="rounded"
+            />
+            Compact
+          </label>
+          <button
+            type="button"
+            className="ml-auto rounded-md border px-3 py-1 text-sm hover:bg-muted"
+            onClick={() => {
+              const emails = [...new Set(entries.map((e) => e.la_email))].join(
+                ", ",
+              );
+              navigator.clipboard.writeText(emails).then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              });
+            }}
+          >
+            {copied
+              ? "Copied!"
+              : `Copy emails (${new Set(entries.map((e) => e.la_email)).size})`}
+          </button>
+        </div>
+      </div>
 
       <div>
         <table
