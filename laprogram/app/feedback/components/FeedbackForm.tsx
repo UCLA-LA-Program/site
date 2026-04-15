@@ -35,6 +35,7 @@ import { authClient } from "@/lib/auth-client";
 import { hydrateDates } from "@/app/observations/signup/SignUp";
 import { MyObservation } from "@/app/observations/signup/types";
 import { CheckCircle2 } from "lucide-react";
+import { InfoSection } from "./sections/InfoSection";
 
 type Option = { value: string; label: string };
 
@@ -289,6 +290,8 @@ export function FeedbackForm({
             )
           }
         </form.Subscribe>
+
+        <InfoSection form={form} />
 
         {/* Student sections */}
         <form.Subscribe
