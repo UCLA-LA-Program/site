@@ -19,7 +19,7 @@ import { useState } from "react";
 import { fetcher } from "@/lib/utils";
 import useSWRImmutable from "swr";
 import type { AnonFeedback } from "./columns";
-import { Position } from "@/types/db";
+import type { Position } from "@/types/db";
 import * as XLSX from "xlsx";
 
 interface TableDef {
@@ -31,6 +31,23 @@ interface TableDef {
 
 function buildTables(positions: Position[]): TableDef[] {
   const positionSet = new Set(positions.map((p) => p.position));
+
+  if (positionSet.size === 0) {
+    return [];
+  }
+
+  const isOnlyLcc = positionSet.size === 1 && positionSet.has("lcc");
+  if (isOnlyLcc) {
+    return [
+      {
+        id: "head_la",
+        label: "Head LA (LCC)",
+        columns: headLALccColumns,
+        filter: (f) => "feedback_type" in f && f.feedback_type === "la_head_la",
+      },
+    ];
+  }
+
   const isPed = positionSet.has("ped") || positionSet.has("ped_lcc");
   const isLcc =
     positionSet.has("lcc") ||
@@ -130,9 +147,9 @@ export function FeedbackView() {
     },
   );
 
-  if (!feedback || !positions) return <></>;
-  const tables = buildTables(positions ?? []);
+  if (!feedback || !positions || positions.length === 0) return <></>;
 
+  const tables = buildTables(positions);
   return (
     <div className="mx-auto w-full px-8 py-5 animate-fade-up">
       <div className="mb-5 flex items-center justify-between">
@@ -148,7 +165,7 @@ export function FeedbackView() {
           Export Excel
         </Button>
       </div>
-      <Tabs defaultValue="mid_quarter">
+      <Tabs defaultValue={tables[0].id}>
         <div className="flex items-center gap-2">
           <TabsList>
             {tables.map((t) => (
@@ -167,26 +184,26 @@ export function FeedbackView() {
             ).map((opt) => {
               const active = graphMode === opt.value;
               return (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setGraphMode(opt.value)}
-                className={`flex items-center gap-1 rounded-md p-1.5 text-xs transition-all duration-200 ${
-                  active ? "bg-accent" : "hover:bg-accent/50"
-                }`}
-                title={opt.label}
-              >
-                <opt.icon className="h-4 w-4 shrink-0" />
-                <span
-                  className="overflow-hidden whitespace-nowrap transition-all duration-200"
-                  style={{
-                    maxWidth: active ? "6rem" : "0",
-                    opacity: active ? 1 : 0,
-                  }}
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setGraphMode(opt.value)}
+                  className={`flex items-center gap-1 rounded-md p-1.5 text-xs transition-all duration-200 ${
+                    active ? "bg-accent" : "hover:bg-accent/50"
+                  }`}
+                  title={opt.label}
                 >
-                  {opt.label}
-                </span>
-              </button>
+                  <opt.icon className="h-4 w-4 shrink-0" />
+                  <span
+                    className="overflow-hidden whitespace-nowrap transition-all duration-200"
+                    style={{
+                      maxWidth: active ? "6rem" : "0",
+                      opacity: active ? 1 : 0,
+                    }}
+                  >
+                    {opt.label}
+                  </span>
+                </button>
               );
             })}
           </div>
