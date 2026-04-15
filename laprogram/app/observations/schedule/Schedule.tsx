@@ -16,9 +16,14 @@ import { CheckCircle2, Loader2, Lock, Users } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { ContactUs } from "@/components/ContactUs";
-import { fetcher, nowLA } from "@/lib/utils";
-import { QUARTER_START_KEY, TIMEZONE } from "@/lib/constants";
-import { TZDate } from "@date-fns/tz";
+import {
+  fetcher,
+  defaultAvailabilityTime,
+  parseTime,
+  parseSectionTime,
+  minutesToLabel,
+  minutesToTimeStr,
+} from "@/lib/utils";
 
 const WEEKS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
 const STEP = 10; // minutes
@@ -57,36 +62,6 @@ type CourseSchedule = {
   timeRange: [number, number];
 };
 
-function parseTime(timeStr: string): number {
-  const match = timeStr.match(/^(\d+):(\d+)(am|pm)?$/i);
-  if (!match) return 0;
-  let h = parseInt(match[1]);
-  const m = parseInt(match[2]);
-  const period = match[3]?.toLowerCase();
-  if (period === "pm" && h !== 12) h += 12;
-  if (period === "am" && h === 12) h = 0;
-  return h * 60 + m;
-}
-
-function parseSectionTime(time: string): [number, number] {
-  const [start, end] = time.split("-");
-  return [parseTime(start), parseTime(end)];
-}
-
-function minutesToLabel(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  const period = h >= 12 ? "PM" : "AM";
-  const displayH = h > 12 ? h - 12 : h === 0 ? 12 : h;
-  return `${displayH}:${m.toString().padStart(2, "0")} ${period}`;
-}
-
-function minutesToTimeStr(minutes: number): string {
-  const h = Math.floor(minutes / 60);
-  const m = minutes % 60;
-  return `${h}:${m.toString().padStart(2, "0")}`;
-}
-
 function buildSectionSchedule(
   section: SectionData,
   availability: AvailabilityRow[],
@@ -98,8 +73,8 @@ function buildSectionSchedule(
   );
 
   const weekSlots = new Map<number, WeekSlot>();
-  let defaultStart = sectionEnd - 30;
-  let defaultEnd = sectionEnd;
+  const defaultTime = defaultAvailabilityTime(section.time);
+  let [defaultStart, defaultEnd] = parseSectionTime(defaultTime);
 
   const futureAvail = sectionAvail.find((a) => parseInt(a.week) >= currentWeek);
   if (futureAvail) {
