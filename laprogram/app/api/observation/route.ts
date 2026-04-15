@@ -83,57 +83,18 @@ export async function POST(request: Request) {
         .bind(slot.la_id),
     ]);
 
-    const groupCounts = await db
+    const openCount = await db
       .prepare(
-        `SELECT
-           CASE WHEN c.position = 'new' THEN 'new' ELSE 'other' END AS grp,
-           SUM(CASE WHEN a.status = 'open' THEN 1 ELSE 0 END) AS open_count,
-           SUM(CASE WHEN a.status = 'hidden' THEN 1 ELSE 0 END) AS hidden_count
-         FROM availability a
-         JOIN section s ON a.section_id = s.id
-         JOIN course c ON a.la_id = c.userId AND s.course_name = c.course_name
-         WHERE a.status IN ('open', 'hidden')
-         GROUP BY grp`,
+        "SELECT COUNT(*) as count FROM availability WHERE status = 'open'",
       )
-      .all<{ grp: string; open_count: number; hidden_count: number }>();
+      .first<{ count: number }>();
 
-    const exhausted = new Set(
-      groupCounts.results
-        .filter((g) => g.open_count === 0 && g.hidden_count > 0)
-        .map((g) => g.grp),
-    );
-
-    const resetStmts = [];
-    if (exhausted.has("new")) {
-      resetStmts.push(
-        db.prepare(
-          `UPDATE availability SET status = 'open'
-           WHERE status = 'hidden'
-           AND id IN (
-             SELECT a.id FROM availability a
-             JOIN section s ON a.section_id = s.id
-             JOIN course c ON a.la_id = c.userId AND s.course_name = c.course_name
-             WHERE c.position = 'new'
-           )`,
-        ),
-      );
-    }
-    if (exhausted.has("other")) {
-      resetStmts.push(
-        db.prepare(
-          `UPDATE availability SET status = 'open'
-           WHERE status = 'hidden'
-           AND id IN (
-             SELECT a.id FROM availability a
-             JOIN section s ON a.section_id = s.id
-             JOIN course c ON a.la_id = c.userId AND s.course_name = c.course_name
-             WHERE c.position != 'new'
-           )`,
-        ),
-      );
-    }
-    if (resetStmts.length > 0) {
-      await db.batch(resetStmts);
+    if (openCount && openCount.count === 0) {
+      await db
+        .prepare(
+          "UPDATE availability SET status = 'open' WHERE status = 'hidden'",
+        )
+        .run();
     }
 
     return Response.json({ success: true, observation_id: observationId });
