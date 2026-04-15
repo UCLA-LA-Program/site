@@ -5,14 +5,14 @@ import { getCurrentWeek } from "@/lib/utils";
 import { QUARTER_START_KEY } from "@/lib/constants";
 import { AvailabilityRow } from "@/types/db";
 
-interface AvailabilityWeek {
-  week: string;
-  time: string;
-}
-
 interface AvailabilityPayload {
   section_id: string;
   weeks: AvailabilityWeek[];
+}
+
+interface AvailabilityWeek {
+  week: number;
+  time: string;
 }
 
 export async function POST(request: Request) {
@@ -38,6 +38,7 @@ export async function POST(request: Request) {
       return new Response("Missing section_id or weeks", { status: 400 });
     }
 
+    console.log(body);
     const assignment = await db
       .prepare(
         "SELECT la_id FROM section_assignment WHERE la_id = ? AND section_id = ?",
@@ -57,12 +58,12 @@ export async function POST(request: Request) {
     // grab future existing availability + statuses by week
     const existingAvailability = await db
       .prepare(
-        "SELECT id, week, status FROM availability WHERE la_id = ? AND section_id = ? AND CAST(week AS INTEGER) >= ?",
+        "SELECT id, CAST(week as INTEGER) as week, status FROM availability WHERE la_id = ? AND section_id = ? AND CAST(week AS INTEGER) >= ?",
       )
       .bind(userId, section_id, currentWeek)
-      .all<{ id: string; week: string; status: string }>();
+      .all<{ id: string; week: number; status: string }>();
 
-    const existingStatusByWeek = new Map<string, string>();
+    const existingStatusByWeek = new Map<number, string>();
     for (const r of existingAvailability.results) {
       existingStatusByWeek.set(r.week, r.status);
     }
@@ -82,7 +83,7 @@ export async function POST(request: Request) {
     const weeksToInsert = weeks.filter((w) => {
       const status = existingStatusByWeek.get(w.week);
       return (
-        parseInt(w.week, 10) >= currentWeek &&
+        w.week >= currentWeek &&
         (!status || status === "open" || status === "hidden")
       );
     });
@@ -99,7 +100,7 @@ export async function POST(request: Request) {
             userId,
             section_id,
             w.time,
-            w.week,
+            w.week.toString(),
             status,
           ),
       );
@@ -145,14 +146,14 @@ export async function GET(request: Request) {
     if (sectionId) {
       result = await db
         .prepare(
-          "SELECT id, section_id, time, week, status FROM availability WHERE la_id = ? AND section_id = ?",
+          "SELECT id, section_id, time, CAST(week AS INTEGER) as week, status FROM availability WHERE la_id = ? AND section_id = ?",
         )
         .bind(userId, sectionId)
         .all<AvailabilityRow>();
     } else {
       result = await db
         .prepare(
-          "SELECT id, section_id, time, week, status FROM availability WHERE la_id = ?",
+          "SELECT id, section_id, time, CAST(week AS INTEGER) as week, status FROM availability WHERE la_id = ?",
         )
         .bind(userId)
         .all<AvailabilityRow>();

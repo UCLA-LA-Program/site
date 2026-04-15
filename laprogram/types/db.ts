@@ -29,7 +29,7 @@ export type AvailabilityRow = {
   id: string;
   section_id: string;
   time: string; // e.g. "9:10-9:40"
-  week: string;
+  week: number;
   status: "open" | "hidden" | "taken";
 };
 

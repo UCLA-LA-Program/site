@@ -57,7 +57,7 @@ function buildSectionSchedule(
   const defaultTime = defaultAvailabilityTime(section.time);
   let [defaultStart, defaultEnd] = parseSectionTime(defaultTime);
 
-  const futureAvail = sectionAvail.find((a) => parseInt(a.week) >= currentWeek);
+  const futureAvail = sectionAvail.find((a) => a.week >= currentWeek);
   if (futureAvail) {
     const [s, e] = futureAvail.time.split("-").map(parseTime);
     defaultStart = s;
@@ -65,7 +65,7 @@ function buildSectionSchedule(
   }
 
   for (const week of WEEKS) {
-    const weekAvail = sectionAvail.find((a) => a.week === String(week));
+    const weekAvail = sectionAvail.find((a) => a.week === week);
     if (weekAvail) {
       const [s, e] = weekAvail.time.split("-").map(parseTime);
       weekSlots.set(week, { selected: true, timeRange: [s, e] });
@@ -93,7 +93,7 @@ function signupCountsFromAvailability(
   const counts = new Map<number, number>();
   for (const a of availability) {
     if (a.status !== "taken") continue;
-    counts.set(parseInt(a.week), (counts.get(parseInt(a.week)) ?? 0) + 1);
+    counts.set(a.week, (counts.get(a.week) ?? 0) + 1);
   }
   return counts;
 }
@@ -135,11 +135,11 @@ export function ScheduleCard({
     if (!schedule) return;
 
     setSaving(true);
-    const weeks: { week: string; time: string }[] = [];
+    const weeks: { week: number; time: string }[] = [];
     for (const [week, slot] of schedule.weekSlots) {
       if (slot.selected) {
         const timeStr = `${minutesToTimeStr(slot.timeRange[0])}-${minutesToTimeStr(slot.timeRange[1])}`;
-        weeks.push({ week: String(week), time: timeStr });
+        weeks.push({ week, time: timeStr });
       }
     }
 
