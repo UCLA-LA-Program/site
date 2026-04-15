@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarClock, User, MapPin, Filter, Info } from "lucide-react";
 import { toast } from "sonner";
-import { fetcher, getObsDate, nowLA } from "@/lib/utils";
+import { fetcher, getObsDate, hydrateDates, nowLA } from "@/lib/utils";
 import { format, differenceInCalendarDays, isSameDay } from "date-fns";
 import { DAY_INDEX, LA_POSITION_MAP } from "@/lib/constants";
 import type { Availability } from "@/types/db";
@@ -18,18 +18,8 @@ import {
   FutureObservationsCard,
 } from "./components/ObservationCard";
 
-import { OBSERVATION_CHANGE_DAYS_LIMIT, TIMEZONE } from "@/lib/constants";
+import { OBSERVATION_CHANGE_DAYS_LIMIT } from "@/lib/constants";
 import { TZDate } from "@date-fns/tz";
-
-function hydrateDates<T extends { time_start: TZDate; time_end: TZDate }>(
-  items: T[],
-): T[] {
-  return items.map((item) => ({
-    ...item,
-    time_start: new TZDate(item.time_start, TIMEZONE),
-    time_end: new TZDate(item.time_end, TIMEZONE),
-  }));
-}
 
 type DateTab = { week: string; date: TZDate; label: string };
 

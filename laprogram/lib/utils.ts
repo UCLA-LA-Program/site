@@ -91,6 +91,16 @@ export function parseTimeRange(
   };
 }
 
+export function hydrateDates<
+  T extends { time_start: TZDate; time_end: TZDate },
+>(items: T[]): T[] {
+  return items.map((item) => ({
+    ...item,
+    time_start: new TZDate(item.time_start, TIMEZONE),
+    time_end: new TZDate(item.time_end, TIMEZONE),
+  }));
+}
+
 export function isLS7(course: string) {
   return (
     course.includes("LS 7A") ||
