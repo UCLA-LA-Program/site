@@ -1,12 +1,11 @@
 "use client";
 
-import { useState } from "react";
-import { ChartPie, BarChart3 } from "lucide-react";
 import type { Column, AnonFeedback } from "./columns";
 
 interface Props {
   columns: Column[];
   data: AnonFeedback[];
+  defaultMode: "bars" | "pie";
 }
 
 // matplotlib default (tab10) color cycle
@@ -27,65 +26,44 @@ interface CardProps {
   col: Column;
   counts: Map<string, number>;
   total: number;
+  mode: "bars" | "pie";
 }
 
-function DistributionCard({ col, counts, total }: CardProps) {
-  const [mode, setMode] = useState<"bars" | "pie">("bars");
+function DistributionCard({ col, counts, total, mode }: CardProps) {
   const options = col.options!;
 
   return (
-    <div className="flex flex-col rounded-lg border bg-card p-4 text-card-foreground">
-      <div className="mb-3 flex items-start justify-between gap-2">
-        <h3 className="text-sm font-medium leading-snug">{col.header}</h3>
-        <button
-          type="button"
-          onClick={() => setMode(mode === "bars" ? "pie" : "bars")}
-          className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-          title={mode === "bars" ? "Show pie chart" : "Show bars"}
-        >
-          {mode === "bars" ? (
-            <ChartPie className="h-4 w-4" />
-          ) : (
-            <BarChart3 className="h-4 w-4" />
-          )}
-        </button>
-      </div>
+    <div className="flex flex-col rounded-lg border bg-card p-3 text-card-foreground">
+      <h3 className="mb-2 text-xs font-medium leading-snug">{col.header}</h3>
 
-      <div
-        className="flex flex-1 flex-col justify-center"
-        style={{ minHeight: `${options.length * 2.25 + 1}rem` }}
-      >
-      {mode === "bars" ? (
-        <ul className="space-y-1.5">
-          {options.map((opt) => {
-            const count = counts.get(opt.value) ?? 0;
-            const pct = total ? (count / total) * 100 : 0;
-            return (
-              <li key={opt.value} className="text-xs">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="text-muted-foreground">{opt.label}</span>
-                  <span className="tabular-nums text-muted-foreground">
-                    {count} · {pct.toFixed(0)}%
-                  </span>
-                </div>
-                <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-muted">
-                  <div
-                    className="h-full rounded-full bg-primary transition-all"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </li>
-            );
-          })}
-        </ul>
-      ) : (
-        <PieView options={options} counts={counts} total={total} />
-      )}
+      <div className="flex flex-1 flex-col justify-end">
+        {mode === "bars" ? (
+          <ul className="space-y-1">
+            {options.map((opt) => {
+              const count = counts.get(opt.value) ?? 0;
+              const pct = total ? (count / total) * 100 : 0;
+              return (
+                <li key={opt.value} className="text-[11px]">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-muted-foreground">{opt.label}</span>
+                    <span className="shrink-0 whitespace-nowrap tabular-nums text-muted-foreground">
+                      {count} · {pct.toFixed(0)}%
+                    </span>
+                  </div>
+                  <div className="mt-0.5 h-1 w-full overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full rounded-full bg-primary transition-all"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        ) : (
+          <PieView options={options} counts={counts} total={total} />
+        )}
       </div>
-
-      <p className="mt-3 text-[10px] text-muted-foreground">
-        {total} response{total === 1 ? "" : "s"}
-      </p>
     </div>
   );
 }
@@ -103,10 +81,11 @@ function PieView({
   const cx = 60;
   const cy = 60;
   let acc = 0;
-  const slices = options
-    .map((opt, i) => {
-      const count = counts.get(opt.value) ?? 0;
-      if (count === 0) return null;
+  const entries = options.map((opt, i) => {
+    const count = counts.get(opt.value) ?? 0;
+    const pct = total ? (count / total) * 100 : 0;
+    let d: string | null = null;
+    if (count > 0) {
       const startAngle = (acc / total) * Math.PI * 2 - Math.PI / 2;
       acc += count;
       const endAngle = (acc / total) * Math.PI * 2 - Math.PI / 2;
@@ -115,39 +94,46 @@ function PieView({
       const y1 = cy + radius * Math.sin(startAngle);
       const x2 = cx + radius * Math.cos(endAngle);
       const y2 = cy + radius * Math.sin(endAngle);
-      const pct = (count / total) * 100;
-      // Full-circle fallback when a single option has all responses
-      const d =
+      d =
         count === total
           ? `M ${cx - radius} ${cy} A ${radius} ${radius} 0 1 1 ${cx + radius} ${cy} A ${radius} ${radius} 0 1 1 ${cx - radius} ${cy} Z`
           : `M ${cx} ${cy} L ${x1} ${y1} A ${radius} ${radius} 0 ${large} 1 ${x2} ${y2} Z`;
-      return {
-        d,
-        color: SLICE_COLORS[i % SLICE_COLORS.length],
-        label: opt.label,
-        count,
-        pct,
-      };
-    })
-    .filter((s): s is NonNullable<typeof s> => s !== null);
+    }
+    return {
+      d,
+      color: SLICE_COLORS[i % SLICE_COLORS.length],
+      label: opt.label,
+      count,
+      pct,
+    };
+  });
 
   return (
-    <div className="flex items-center gap-3">
-      <svg viewBox="0 0 120 120" className="h-28 w-28 shrink-0">
-        {slices.map((s, i) => (
-          <path key={i} d={s.d} fill={s.color} stroke="var(--card)" strokeWidth="1" />
-        ))}
+    <div className="flex flex-col items-center gap-2">
+      <svg viewBox="0 0 120 120" className="h-24 w-24 shrink-0">
+        {entries.map(
+          (s, i) =>
+            s.d && (
+              <path
+                key={i}
+                d={s.d}
+                fill={s.color}
+                stroke="var(--card)"
+                strokeWidth="1"
+              />
+            ),
+        )}
       </svg>
-      <ul className="flex-1 space-y-1 text-[10px]">
-        {slices.map((s, i) => (
+      <ul className="w-full space-y-0.5 text-[11px]">
+        {entries.map((s, i) => (
           <li key={i} className="flex items-center gap-1.5">
             <span
               className="inline-block h-2 w-2 shrink-0 rounded-sm"
               style={{ background: s.color }}
             />
             <span className="text-muted-foreground">{s.label}</span>
-            <span className="ml-auto tabular-nums text-muted-foreground">
-              {s.pct.toFixed(0)}%
+            <span className="ml-auto shrink-0 whitespace-nowrap tabular-nums text-muted-foreground">
+              {s.count} · {s.pct.toFixed(0)}%
             </span>
           </li>
         ))}
@@ -156,11 +142,12 @@ function PieView({
   );
 }
 
-export function FeedbackDistribution({ columns, data }: Props) {
+export function FeedbackDistribution({ columns, data, defaultMode }: Props) {
   const scored = columns.filter((c) => c.options && c.options.length > 0);
   if (scored.length === 0 || data.length === 0) return null;
 
   const cards = scored
+    .map((col) => ({ ...col, options: col.options?.toReversed() }))
     .map((col) => {
       const counts = new Map<string, number>();
       let total = 0;
@@ -179,14 +166,20 @@ export function FeedbackDistribution({ columns, data }: Props) {
 
   return (
     <div
-      className="mb-6 grid gap-4"
+      className="mb-4 grid gap-3"
       style={{
-        gridTemplateColumns: "repeat(auto-fill, minmax(280px, 1fr))",
+        gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))",
         gridAutoRows: "1fr",
       }}
     >
       {cards.map(({ col, counts, total }) => (
-        <DistributionCard key={col.key} col={col} counts={counts} total={total} />
+        <DistributionCard
+          key={col.key}
+          col={col}
+          counts={counts}
+          total={total}
+          mode={defaultMode}
+        />
       ))}
     </div>
   );

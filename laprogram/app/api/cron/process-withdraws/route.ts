@@ -17,8 +17,8 @@ export async function POST(request: Request) {
 
     const hasCronSecret =
       request.headers.get("x-cron-secret") === process.env.CRON_SECRET;
+    const auth = await getAuth();
     if (!hasCronSecret) {
-      const auth = await getAuth();
       const session = await auth.api.getSession({ headers: await headers() });
       if (!session || session.user.role !== "admin") {
         return new Response("Unauthorized", { status: 401 });
@@ -71,6 +71,7 @@ export async function POST(request: Request) {
     }
 
     const errors: string[] = [];
+    const messages: string[] = [];
     const affectedObservers: Map<string, string[]> = new Map();
     const observerNames: Map<string, string> = new Map();
     let removedCount = 0;
@@ -151,6 +152,7 @@ export async function POST(request: Request) {
       }
 
       await db.batch([
+        /*
         db
           .prepare("DELETE FROM observation WHERE observee_id = ?")
           .bind(withdrewUser.id),
@@ -160,10 +162,12 @@ export async function POST(request: Request) {
         db
           .prepare("DELETE FROM availability WHERE la_id = ?")
           .bind(withdrewUser.id),
+        */
         db
           .prepare("DELETE FROM section_assignment WHERE la_id = ?")
           .bind(withdrewUser.id),
         db.prepare("DELETE FROM course WHERE userId = ?").bind(withdrewUser.id),
+        /*
         db
           .prepare("DELETE FROM feedback WHERE recipientId = ?")
           .bind(withdrewUser.id),
@@ -174,11 +178,22 @@ export async function POST(request: Request) {
           .prepare("DELETE FROM account WHERE userId = ?")
           .bind(withdrewUser.id),
         db.prepare("DELETE FROM user WHERE id = ?").bind(withdrewUser.id),
+        */
       ]);
 
+      if (!hasCronSecret) {
+        auth.api.banUser({
+          body: {
+            userId: withdrewUser.id,
+          },
+          headers: await headers(),
+        });
+      }
+      messages.push(`removed withdrawn ${withdrewLAEmail}`);
       removedCount++;
     }
 
+    /*
     if (affectedObservers.size > 0 && process.env.POSTMARK_SERVER_TOKEN) {
       await fetch("https://api.postmarkapp.com/email/batchWithTemplates", {
         method: "POST",
@@ -200,9 +215,11 @@ export async function POST(request: Request) {
         }),
       });
     }
+    */
 
     const summary =
-      `Processed ${withdrewLARecords.length} withdrawn LAs. Removed: ${removedCount}. Notified: ${affectedObservers.size} observers.` +
+      `Processed ${withdrewLARecords.length} withdrawn LAs. Removed: ${removedCount}.\n` +
+      messages.join("\n") +
       (errors.length > 0 ? `\nErrors:\n${errors.join("\n")}` : "");
 
     return new Response(summary, { status: 200 });

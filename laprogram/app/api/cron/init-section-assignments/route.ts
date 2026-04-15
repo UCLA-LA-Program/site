@@ -3,6 +3,7 @@ import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import type { AirtableRecord } from "@/lib/airtable";
 import { backupDatabase } from "@/lib/backup";
+import { defaultAvailabilityTime } from "@/lib/utils";
 
 export async function POST(request: Request) {
   try {
@@ -114,9 +115,9 @@ export async function POST(request: Request) {
 
       for (const rawName of airtableSections) {
         const section = await db
-          .prepare("SELECT id FROM section WHERE raw = ?")
+          .prepare("SELECT id, time FROM section WHERE raw = ?")
           .bind(rawName)
-          .first<{ id: string }>();
+          .first<{ id: string; time: string }>();
 
         if (!section) {
           errors.push(
@@ -135,7 +136,23 @@ export async function POST(request: Request) {
               )
               .bind(user.id, section.id),
           );
-          message += `adding ${email} ${section.id}\n`;
+          const availTime = defaultAvailabilityTime(section.time);
+          for (const week of [3, 4, 5, 6, 7, 8, 9, 10]) {
+            insertStmts.push(
+              db
+                .prepare(
+                  `INSERT OR IGNORE INTO availability (id, la_id, section_id, time, week, status) VALUES (?, ?, ?, ?, ?, 'open')`,
+                )
+                .bind(
+                  crypto.randomUUID(),
+                  user.id,
+                  section.id,
+                  availTime,
+                  String(week),
+                ),
+            );
+          }
+          message += `adding ${email} ${section.id} (with default availability)\n`;
         }
       }
 

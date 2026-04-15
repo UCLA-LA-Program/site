@@ -13,10 +13,14 @@ import {
 } from "./columns";
 import type { Column } from "./columns";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { Download, BarChart3, ChartPie, X } from "lucide-react";
+import { useState } from "react";
 import { fetcher } from "@/lib/utils";
-import useSWR from "swr";
+import useSWRImmutable from "swr";
 import type { AnonFeedback } from "./columns";
-import { Position } from "@/types/db";
+import type { Position } from "@/types/db";
+import * as XLSX from "xlsx";
 
 interface TableDef {
   id: string;
@@ -27,8 +31,28 @@ interface TableDef {
 
 function buildTables(positions: Position[]): TableDef[] {
   const positionSet = new Set(positions.map((p) => p.position));
+
+  if (positionSet.size === 0) {
+    return [];
+  }
+
+  const isOnlyLcc = positionSet.size === 1 && positionSet.has("lcc");
+  if (isOnlyLcc) {
+    return [
+      {
+        id: "head_la",
+        label: "Head LA (LCC)",
+        columns: headLALccColumns,
+        filter: (f) => "feedback_type" in f && f.feedback_type === "la_head_la",
+      },
+    ];
+  }
+
   const isPed = positionSet.has("ped") || positionSet.has("ped_lcc");
-  const isLcc = positionSet.has("lcc") || positionSet.has("ped_lcc");
+  const isLcc =
+    positionSet.has("lcc") ||
+    positionSet.has("ped_lcc") ||
+    positionSet.has("ret_lcc");
 
   const tables: TableDef[] = [
     {
@@ -86,39 +110,117 @@ function buildTables(positions: Position[]): TableDef[] {
   return tables;
 }
 
+function downloadExcel(tables: TableDef[], feedback: AnonFeedback[]) {
+  const wb = XLSX.utils.book_new();
+  for (const t of tables) {
+    const rows = feedback.filter(t.filter);
+    const data = rows.map((row) => {
+      const obj: Record<string, unknown> = {};
+      for (const col of t.columns) {
+        const raw = (row as Record<string, unknown>)[col.key];
+        obj[col.header] = col.render ? col.render(raw) : raw;
+      }
+      return obj;
+    });
+    const ws = XLSX.utils.json_to_sheet(data);
+    XLSX.utils.book_append_sheet(wb, ws, t.label.slice(0, 31));
+  }
+  XLSX.writeFile(wb, "feedback.xlsx");
+}
+
 export function FeedbackView() {
-  const { data: feedback } = useSWR<AnonFeedback[]>("/api/feedback", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
-  const { data: positions } = useSWR<Position[]>("/api/la/self", fetcher, {
-    suspense: true,
-    fallbackData: [],
-  });
+  const [graphMode, setGraphMode] = useState<"none" | "bars" | "pie">("bars");
+  const { data: feedback } = useSWRImmutable<AnonFeedback[]>(
+    "/api/feedback",
+    fetcher,
+    {
+      suspense: true,
+      fallbackData: [],
+    },
+  );
+  const { data: positions } = useSWRImmutable<Position[]>(
+    "/api/la/self",
+    fetcher,
+    {
+      suspense: true,
+      fallbackData: [],
+    },
+  );
 
-  if (!feedback || !positions) return <></>;
-  const tables = buildTables(positions ?? []);
+  if (!feedback || !positions || positions.length === 0) return <></>;
 
+  const tables = buildTables(positions);
   return (
     <div className="mx-auto w-full px-8 py-5 animate-fade-up">
-      <h1 className="mb-5 text-2xl font-bold tracking-tight">
-        Feedback Responses
-      </h1>
-      <Tabs defaultValue="mid_quarter">
-        <TabsList>
-          {tables.map((t) => (
-            <TabsTrigger key={t.id} value={t.id}>
-              {t.label}
-            </TabsTrigger>
-          ))}
-        </TabsList>
+      <div className="mb-5 flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">
+          Feedback Responses
+        </h1>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => downloadExcel(tables, feedback)}
+        >
+          <Download className="mr-1.5 h-4 w-4" />
+          Export Excel
+        </Button>
+      </div>
+      <Tabs defaultValue={tables[0].id}>
+        <div className="flex items-center gap-2">
+          <TabsList>
+            {tables.map((t) => (
+              <TabsTrigger key={t.id} value={t.id}>
+                {t.label}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+          <div className="flex gap-0.5 rounded-lg border p-0.5">
+            {(
+              [
+                { value: "none", icon: X, label: "Hide graphs" },
+                { value: "bars", icon: BarChart3, label: "Bar charts" },
+                { value: "pie", icon: ChartPie, label: "Pie charts" },
+              ] as const
+            ).map((opt) => {
+              const active = graphMode === opt.value;
+              return (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setGraphMode(opt.value)}
+                  className={`flex items-center gap-1 rounded-md p-1.5 text-xs transition-all duration-200 ${
+                    active ? "bg-accent" : "hover:bg-accent/50"
+                  }`}
+                  title={opt.label}
+                >
+                  <opt.icon className="h-4 w-4 shrink-0" />
+                  <span
+                    className="overflow-hidden whitespace-nowrap transition-all duration-200"
+                    style={{
+                      maxWidth: active ? "6rem" : "0",
+                      opacity: active ? 1 : 0,
+                    }}
+                  >
+                    {opt.label}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
         {tables.map((t) => (
           <TabsContent key={t.id} value={t.id}>
             {(() => {
               const rows = feedback.filter(t.filter);
               return (
                 <>
-                  <FeedbackDistribution columns={t.columns} data={rows} />
+                  {graphMode !== "none" && (
+                    <FeedbackDistribution
+                      columns={t.columns}
+                      data={rows}
+                      defaultMode={graphMode}
+                    />
+                  )}
                   <FeedbackTable columns={t.columns} data={rows} />
                 </>
               );

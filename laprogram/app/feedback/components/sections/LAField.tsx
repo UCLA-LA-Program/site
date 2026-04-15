@@ -40,7 +40,7 @@ export const LAField = withForm({
               value={field.state.value}
               items={[
                 ...las
-                  .filter((la) => la.course === course)
+                  .filter((la) => la.course === course && la.position !== "lcc")
                   .sort((a, b) => a.name.localeCompare(b.name)),
               ]}
             >

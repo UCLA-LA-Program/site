@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarClock, User, MapPin, Filter, Info } from "lucide-react";
 import { toast } from "sonner";
-import { fetcher, getObsDate, nowLA } from "@/lib/utils";
+import { fetcher, getObsDate, hydrateDates, nowLA } from "@/lib/utils";
 import { format, differenceInCalendarDays, isSameDay } from "date-fns";
 import { DAY_INDEX, LA_POSITION_MAP } from "@/lib/constants";
 import type { Availability } from "@/types/db";
@@ -19,22 +19,13 @@ import {
 } from "./components/ObservationCard";
 
 import { OBSERVATION_CHANGE_DAYS_LIMIT } from "@/lib/constants";
+import { TZDate } from "@date-fns/tz";
 
-export function hydrateDates<T extends { time_start: Date; time_end: Date }>(
-  items: T[],
-): T[] {
-  return items.map((item) => ({
-    ...item,
-    time_start: new Date(item.time_start),
-    time_end: new Date(item.time_end),
-  }));
-}
-
-type DateTab = { week: string; date: Date; label: string };
+type DateTab = { week: string; date: TZDate; label: string };
 
 function buildDateTabs(
   weeks: string[],
-  quarterStart: Date | string,
+  quarterStart: TZDate | string,
 ): DateTab[] {
   const tabs: DateTab[] = [];
   for (const week of weeks.sort((a, b) => parseInt(a) - parseInt(b))) {
@@ -59,18 +50,24 @@ export function SignUp({
     slots: Availability[];
     filters: string[];
     notes: string[];
-  }>("/api/observation/open", (url: string) =>
-    fetcher(url).then(
-      (data: {
-        slots: Availability[];
-        filters: string[];
-        notes: string[];
-      }) => ({
-        slots: hydrateDates(data.slots),
-        filters: data.filters,
-        notes: data.notes,
-      }),
-    ),
+  }>(
+    "/api/observation/open",
+    (url: string) =>
+      fetcher(url).then(
+        (data: {
+          slots: Availability[];
+          filters: string[];
+          notes: string[];
+        }) => ({
+          slots: hydrateDates(data.slots),
+          filters: data.filters,
+          notes: data.notes,
+        }),
+      ),
+    {
+      suspense: true,
+      fallbackData: { slots: [], filters: [], notes: [] },
+    },
   );
   const openSlots = openData?.slots;
   const activeFilters = openData?.filters ?? [];
@@ -91,6 +88,7 @@ export function SignUp({
   const { data: myObservations, mutate: mutateObservations } = useSWR(
     "/api/observation",
     (url: string) => fetcher(url).then(hydrateDates<MyObservation>),
+    { suspense: true, fallbackData: [] },
   );
 
   const [pendingAdds, setPendingAdds] = useState<Set<string>>(new Set());
@@ -339,8 +337,8 @@ export function SignUp({
         </div>
 
         {/* Sidebar (top on mobile, right on desktop) */}
-        <div className="order-first w-full shrink-0 lg:order-last lg:w-[32rem]">
-          <div className="space-y-4 lg:sticky lg:top-24">
+        <div className="order-first w-full shrink-0 lg:order-last lg:w-[32rem] lg:sticky lg:top-[7.25rem] lg:self-start lg:max-h-[calc(100vh-7.5rem)] lg:overflow-y-auto">
+          <div className="space-y-4">
             <PendingChanges
               addSlots={pendingAddSlots}
               removeSlots={pendingRemoveSlots}

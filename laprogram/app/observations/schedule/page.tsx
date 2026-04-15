@@ -3,6 +3,8 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getCurrentWeek } from "@/lib/utils";
+import { QUARTER_START_KEY } from "@/lib/constants";
 import { Schedule } from "./Schedule";
 
 export const metadata: Metadata = {
@@ -32,5 +34,8 @@ export default async function ObservationsPage() {
     );
   }
 
-  return <Schedule />;
+  const quarterStart = await env.config.get(QUARTER_START_KEY);
+  const currentWeek = getCurrentWeek(quarterStart ?? undefined);
+
+  return <Schedule currentWeek={currentWeek} />;
 }
