@@ -24,11 +24,11 @@ export function nowLA(): TZDate {
   return TZDate.tz(TIMEZONE);
 }
 
-function parseQuarterStart(raw: string): Date {
+function parseQuarterStart(raw: string): TZDate {
   return startOfDay(parse(raw, "yyyy-MM-dd", nowLA()));
 }
 
-export async function getQuarterStart(env: CloudflareEnv): Promise<Date> {
+export async function getQuarterStart(env: CloudflareEnv): Promise<TZDate> {
   const raw = await env.config.get(QUARTER_START_KEY);
   if (!raw) throw new Error("QUARTER_START not configured");
   return parseQuarterStart(raw);
