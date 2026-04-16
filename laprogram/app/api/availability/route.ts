@@ -38,7 +38,6 @@ export async function POST(request: Request) {
       return new Response("Missing section_id or weeks", { status: 400 });
     }
 
-    console.log(body);
     const assignment = await db
       .prepare(
         "SELECT la_id FROM section_assignment WHERE la_id = ? AND section_id = ?",
