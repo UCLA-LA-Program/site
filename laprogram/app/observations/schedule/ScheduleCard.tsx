@@ -276,8 +276,8 @@ export function ScheduleCard({
                 onValueChange={(v) => setTimeRange(v)}
                 minStepsBetweenThumbs={MIN_RANGE / STEP}
               />
-              <span className="w-[10.5rem] shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-                {minutesToLabel(schedule.timeRange[0])}–
+              <span className="w-32 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+                {minutesToLabel(schedule.timeRange[0])}-
                 {minutesToLabel(schedule.timeRange[1])}
               </span>
             </div>
@@ -338,8 +338,8 @@ export function ScheduleCard({
                       disabled
                       showThumbs={false}
                     />
-                    <span className="w-[10.5rem] shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-                      {minutesToLabel(slot.timeRange[0])}–
+                    <span className="w-32 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
+                      {minutesToLabel(slot.timeRange[0])}-
                       {minutesToLabel(slot.timeRange[1])}
                     </span>
                   </div>
