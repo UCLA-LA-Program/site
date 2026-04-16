@@ -1,4 +1,5 @@
 import { getAuth } from "@/lib/auth";
+import { Section } from "@/types/db";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
 
@@ -24,16 +25,13 @@ export async function GET() {
         section.section_name,
         section.day,
         section.time,
-        section.location,
-        course.position
+        section.location        
         FROM section_assignment
         JOIN section ON section_assignment.section_id = section.id
-        JOIN course ON course.userId = section_assignment.la_id
-          AND course.course_name = section.course_name
         WHERE section_assignment.la_id = ?`,
       )
       .bind(session.user.id)
-      .all();
+      .all<Section>();
 
     return Response.json(result.results);
   } catch (error) {

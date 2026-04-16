@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Plus, X, Check } from "lucide-react";
 import { format } from "date-fns";
-import type { Availability } from "@/types/db";
+import type { ObservationAvailability } from "@/types/db";
 import { LA_POSITION_MAP } from "@/lib/constants";
 import type { MyObservation } from "../types";
 import { formatTime } from "../types";
@@ -13,7 +13,7 @@ function PendingRow({
   strikethrough,
   action,
 }: {
-  slot: Availability;
+  slot: ObservationAvailability;
   strikethrough?: boolean;
   action: React.ReactNode;
 }) {
@@ -48,7 +48,7 @@ export function PendingChanges({
   onUndoRemove,
   onConfirm,
 }: {
-  addSlots: Availability[];
+  addSlots: ObservationAvailability[];
   removeSlots: MyObservation[];
   onUndoAdd: (id: string) => void;
   onUndoRemove: (id: string) => void;
