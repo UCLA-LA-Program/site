@@ -198,7 +198,7 @@ export function ScheduleCard({
         }
       }
 
-      return { ...s, weekSlots };
+      return { ...s, timeRange: [start, end], weekSlots };
     });
     setDirty(true);
   }
