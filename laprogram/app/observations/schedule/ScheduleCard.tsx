@@ -107,7 +107,7 @@ export function ScheduleCard({
 }) {
   const { data: availability, mutate: mutateAvailability } = useSWRImmutable<
     AvailabilityRow[]
-  >("/api/availability", fetcher);
+  >(`/api/availability?section_id=${section.section_id}`, fetcher);
 
   const [schedule, setSchedule] = useState<CourseSchedule>();
   const [showPast, setShowPast] = useState<boolean>(false);
