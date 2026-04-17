@@ -66,6 +66,7 @@ export function AvailabilityAudit() {
   const [sortKey, setSortKey] = useState<SortKey>("first_name");
   const [compact, setCompact] = useState(false);
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
+  const [courseTypes, setCourseTypes] = useState<string[]>([]);
   const { data } = useSWR<AvailabilityAuditRow[]>(
     "/api/admin/audit/availability",
     fetcher,
@@ -151,6 +152,9 @@ export function AvailabilityAudit() {
   const positionOptions = [
     ...new Set(allEntries.map((e) => e.position)),
   ].sort();
+  const courseTypeOptions = Array.from(
+    new Set(allEntries.map((e) => e.course_name.split(" ")[0])),
+  ).sort();
 
   function getUnavailable(e: SectionEntry) {
     return weeks.filter((w) => !e.weeks[w]).length;
@@ -173,6 +177,11 @@ export function AvailabilityAudit() {
       return false;
     if (maxWeeks && getUnavailable(e) < parseInt(maxWeeks, 10)) return false;
     if (positionFilter.length > 0 && !positionFilter.includes(e.position))
+      return false;
+    if (
+      courseTypes.length > 0 &&
+      !courseTypes.includes(e.course_name.split(" ")[0])
+    )
       return false;
     return true;
   });
@@ -277,6 +286,40 @@ export function AvailabilityAudit() {
           ))}
         </div>
       )}
+      <div className="flex flex-wrap items-center gap-1.5">
+        {courseTypeOptions.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() =>
+              setCourseTypes(
+                courseTypes.includes(t)
+                  ? courseTypes.filter((x) => x !== t)
+                  : [...courseTypes, t],
+              )
+            }
+            className={`inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium ${
+              courseTypes.includes(t)
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted hover:bg-muted/70"
+            }`}
+          >
+            {t}
+            {courseTypes.includes(t) && (
+              <X className="h-3 w-3 opacity-60" />
+            )}
+          </button>
+        ))}
+        {courseTypes.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCourseTypes([])}
+          >
+            Clear
+          </Button>
+        )}
+      </div>
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="max-weeks" className="text-sm text-muted-foreground">
           Show LAs with at least

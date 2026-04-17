@@ -8,7 +8,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Volume2 } from "lucide-react";
 import { fetcher } from "@/lib/utils";
 import {
   FEATURE_FLAGS,
@@ -185,7 +185,34 @@ export function ConfigTab() {
         </CardContent>
       </Card>
 
-      <div className="flex justify-end">
+      <div className="flex items-center justify-between">
+        <Button
+          variant="outline"
+          onClick={() => {
+            const animals = [
+              { name: "Cat", emoji: "🐱", file: "cat" },
+              { name: "Cow", emoji: "🐮", file: "cow" },
+              { name: "Dog", emoji: "🐶", file: "dog" },
+              { name: "Duck", emoji: "🦆", file: "duck" },
+              { name: "Elephant", emoji: "🐘", file: "elephant" },
+              { name: "Frog", emoji: "🐸", file: "frog" },
+              { name: "Goose", emoji: "🪿", file: "goose" },
+              { name: "Horse", emoji: "🐴", file: "horse" },
+              { name: "Monkey", emoji: "🐒", file: "monkey" },
+              { name: "Owl", emoji: "🦉", file: "owl" },
+              { name: "Penguin", emoji: "🐧", file: "penguin" },
+              { name: "Pig", emoji: "🐷", file: "pig" },
+              { name: "Rooster", emoji: "🐓", file: "rooster" },
+              { name: "Sheep", emoji: "🐑", file: "sheep" },
+            ];
+            const animal = animals[Math.floor(Math.random() * animals.length)];
+            new Audio(`/sounds/${animal.file}.mp3`).play();
+            toast(`${animal.emoji} ${animal.name}!`);
+          }}
+        >
+          <Volume2 className="mr-1.5 h-3.5 w-3.5" />
+          Animal Sound
+        </Button>
         <Button disabled={!dirty || saving} onClick={save}>
           {saving && <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />}
           Save Changes

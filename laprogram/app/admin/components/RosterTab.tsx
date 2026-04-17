@@ -24,6 +24,7 @@ type RosterSortKey = "first_name" | "last_name" | "email" | "courses";
 export function RosterTab() {
   const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher);
   const [rosterQuery, setRosterQuery] = useState("");
+  const [rosterCourseTypes, setRosterCourseTypes] = useState<string[]>([]);
   const [rosterCourses, setRosterCourses] = useState<string[]>([]);
   const [rosterPositions, setRosterPositions] = useState<string[]>([]);
   const [rosterSortKey, setRosterSortKey] =
@@ -34,6 +35,13 @@ export function RosterTab() {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
   }
 
+  const courseTypeOptions = Array.from(
+    new Set(
+      roster.flatMap((u) =>
+        u.courses.map((c) => c.course_name.split(" ")[0]),
+      ),
+    ),
+  ).sort();
   const courseOptions = Array.from(
     new Set(roster.flatMap((u) => u.courses.map((c) => c.course_name))),
   ).sort();
@@ -48,6 +56,13 @@ export function RosterTab() {
         q &&
         !u.name.toLowerCase().includes(q) &&
         !u.email.toLowerCase().includes(q)
+      )
+        return false;
+      if (
+        rosterCourseTypes.length > 0 &&
+        !u.courses.some((c) =>
+          rosterCourseTypes.includes(c.course_name.split(" ")[0]),
+        )
       )
         return false;
       if (
@@ -225,6 +240,40 @@ export function RosterTab() {
                 </button>
               ))}
             </div>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5">
+          {courseTypeOptions.map((t) => (
+            <button
+              key={t}
+              type="button"
+              onClick={() =>
+                setRosterCourseTypes(
+                  rosterCourseTypes.includes(t)
+                    ? rosterCourseTypes.filter((x) => x !== t)
+                    : [...rosterCourseTypes, t],
+                )
+              }
+              className={`inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium ${
+                rosterCourseTypes.includes(t)
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted hover:bg-muted/70"
+              }`}
+            >
+              {t}
+              {rosterCourseTypes.includes(t) && (
+                <X className="h-3 w-3 opacity-60" />
+              )}
+            </button>
+          ))}
+          {rosterCourseTypes.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => setRosterCourseTypes([])}
+            >
+              Clear
+            </Button>
           )}
         </div>
       </div>
