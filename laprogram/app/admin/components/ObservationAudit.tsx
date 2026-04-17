@@ -1,7 +1,11 @@
 "use client";
 
+import { useState } from "react";
 import useSWR from "swr";
 import { fetcher } from "@/lib/utils";
+import { X } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import type { ObservationAuditRow } from "@/app/api/admin/audit/observations/route";
 
 type ObserverEntry = {
@@ -19,6 +23,8 @@ export function ObservationAudit() {
     "/api/admin/audit/observations",
     fetcher,
   );
+  const [query, setQuery] = useState("");
+  const [courseTypes, setCourseTypes] = useState<string[]>([]);
 
   if (!data) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -49,9 +55,27 @@ export function ObservationAudit() {
     }
   }
 
-  const entries = [...map.values()].sort((a, b) =>
-    a.user_name.localeCompare(b.user_name),
-  );
+  const courseTypeOptions = Array.from(
+    new Set([...map.values()].map((e) => e.course_name.split(" ")[0])),
+  ).sort();
+
+  const q = query.trim().toLowerCase();
+  const entries = [...map.values()]
+    .filter((e) => {
+      if (
+        q &&
+        !e.user_name.toLowerCase().includes(q) &&
+        !e.user_email.toLowerCase().includes(q)
+      )
+        return false;
+      if (
+        courseTypes.length > 0 &&
+        !courseTypes.includes(e.course_name.split(" ")[0])
+      )
+        return false;
+      return true;
+    })
+    .sort((a, b) => a.user_name.localeCompare(b.user_name));
   const weeks = [...weekSet].sort((a, b) => Number(a) - Number(b));
 
   if (entries.length === 0) {
@@ -59,7 +83,58 @@ export function ObservationAudit() {
   }
 
   return (
-    <div className="overflow-x-auto">
+    <div className="space-y-3">
+      <div className="flex items-center gap-2">
+        <Input
+          placeholder="Search name or email…"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          className="max-w-md"
+        />
+        {query && (
+          <Button variant="ghost" size="sm" onClick={() => setQuery("")}>
+            Clear
+          </Button>
+        )}
+        <span className="ml-auto text-xs text-muted-foreground">
+          {entries.length} of {map.size}
+        </span>
+      </div>
+      <div className="flex flex-wrap items-center gap-1.5">
+        {courseTypeOptions.map((t) => (
+          <button
+            key={t}
+            type="button"
+            onClick={() =>
+              setCourseTypes(
+                courseTypes.includes(t)
+                  ? courseTypes.filter((x) => x !== t)
+                  : [...courseTypes, t],
+              )
+            }
+            className={`inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium ${
+              courseTypes.includes(t)
+                ? "bg-primary text-primary-foreground"
+                : "bg-muted hover:bg-muted/70"
+            }`}
+          >
+            {t}
+            {courseTypes.includes(t) && (
+              <X className="h-3 w-3 opacity-60" />
+            )}
+          </button>
+        ))}
+        {courseTypes.length > 0 && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setCourseTypes([])}
+          >
+            Clear
+          </Button>
+        )}
+      </div>
+      <div className="overflow-x-auto">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b text-left text-muted-foreground">
@@ -103,6 +178,7 @@ export function ObservationAudit() {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
