@@ -155,5 +155,9 @@ export function isLS7(course: string) {
 }
 
 export function isValidUID(uid: string) {
-  return /^\d{9}$/.test(uid) && luhn.validate(uid.slice(1) + uid[0]);
+  return (
+    uid.length === 9 &&
+    /^\d{9}$/.test(uid) &&
+    luhn.validate(uid.slice(1) + uid[0])
+  );
 }
