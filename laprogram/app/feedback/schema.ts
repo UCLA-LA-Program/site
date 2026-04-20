@@ -65,12 +65,9 @@ const closingFields = {
   courses_without_las: z.string().optional(),
   uid: z
     .string()
-    .refine(
-      (val) =>
-        val === "" ||
-        (val.length === 9 && /^\d{9}$/.test(val) && luhnIsValid(val)),
-      { message: "Please enter a valid 9-digit UID" },
-    )
+    .refine((val) => val === "" || (val.length === 9 && /^\d{9}$/.test(val)), {
+      message: "Please enter a valid 9-digit UID",
+    })
     .optional(),
   ls7code: z.string().optional(),
   gender: z.string().optional(),
