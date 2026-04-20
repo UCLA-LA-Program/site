@@ -9,6 +9,7 @@ import {
   startOfDay,
   differenceInCalendarDays,
 } from "date-fns";
+import { luhn } from "cdigit";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -151,4 +152,8 @@ export function isLS7(course: string) {
     course.includes("LS 7B") ||
     course.includes("LS 7C")
   );
+}
+
+export function isValidUID(uid: string) {
+  return /^\d{9}$/.test(uid) && luhn.validate(uid.slice(1) + uid[0]);
 }
