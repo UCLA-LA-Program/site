@@ -101,13 +101,18 @@ function signupCountsFromAvailability(
 export function ScheduleCard({
   section,
   currentWeek,
+  laId,
 }: {
   section: Section;
   currentWeek: number;
+  laId?: string;
 }) {
+  const availabilityUrl = `/api/availability?section_id=${section.section_id}${
+    laId ? `&la_id=${laId}` : ""
+  }`;
   const { data: availability, mutate: mutateAvailability } = useSWRImmutable<
     AvailabilityRow[]
-  >(`/api/availability?section_id=${section.section_id}`, fetcher);
+  >(availabilityUrl, fetcher);
 
   const [schedule, setSchedule] = useState<CourseSchedule>();
   const [showPast, setShowPast] = useState<boolean>(false);
@@ -147,7 +152,11 @@ export function ScheduleCard({
       await fetch("/api/availability", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ section_id: section.section_id, weeks }),
+        body: JSON.stringify({
+          section_id: section.section_id,
+          weeks,
+          ...(laId ? { la_id: laId } : {}),
+        }),
       });
       const freshAvailability = await mutateAvailability();
       if (section && freshAvailability) {

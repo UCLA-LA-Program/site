@@ -3,9 +3,11 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { ChevronDown, X } from "lucide-react";
-import { fetcher } from "@/lib/utils";
-import { LA_POSITION_MAP } from "@/lib/constants";
+import { ChevronDown, Pencil, X } from "lucide-react";
+import { fetcher, getCurrentWeek } from "@/lib/utils";
+import { LA_POSITION_MAP, QUARTER_START_KEY } from "@/lib/constants";
+import { ScheduleCard } from "@/app/observations/schedule/ScheduleCard";
+import type { Section } from "@/types/db";
 import {
   Popover,
   PopoverContent,
@@ -52,6 +54,9 @@ type SectionEntry = {
   section_name: string;
   section_time: string;
   section_id: string;
+  section_day: string;
+  section_time_raw: string;
+  section_location: string;
   position: string;
   weeks: Record<string, number>;
 };
@@ -67,10 +72,16 @@ export function AvailabilityAudit() {
   const [compact, setCompact] = useState(false);
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [courseTypes, setCourseTypes] = useState<string[]>([]);
-  const { data } = useSWR<AvailabilityAuditRow[]>(
+  const [editing, setEditing] = useState<SectionEntry | null>(null);
+  const { data, mutate: mutateAudit } = useSWR<AvailabilityAuditRow[]>(
     "/api/admin/audit/availability",
     fetcher,
   );
+  const { data: config } = useSWR<Record<string, string>>(
+    "/api/admin/flag",
+    fetcher,
+  );
+  const currentWeek = getCurrentWeek(config?.[QUARTER_START_KEY]);
 
   const selected = [...resetPositions];
   const scopeLabel =
@@ -136,6 +147,9 @@ export function AvailabilityAudit() {
         section_name: row.section_name,
         section_time: row.section_time,
         section_id: row.section_id,
+        section_day: row.section_day,
+        section_time_raw: row.section_time_raw,
+        section_location: row.section_location,
         position: row.position,
         weeks: {},
       };
@@ -305,17 +319,11 @@ export function AvailabilityAudit() {
             }`}
           >
             {t}
-            {courseTypes.includes(t) && (
-              <X className="h-3 w-3 opacity-60" />
-            )}
+            {courseTypes.includes(t) && <X className="h-3 w-3 opacity-60" />}
           </button>
         ))}
         {courseTypes.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setCourseTypes([])}
-          >
+          <Button variant="ghost" size="sm" onClick={() => setCourseTypes([])}>
             Clear
           </Button>
         )}
@@ -415,14 +423,54 @@ export function AvailabilityAudit() {
         </div>
       </div>
 
+      <Dialog
+        open={!!editing}
+        onOpenChange={(open) => {
+          if (!open) {
+            setEditing(null);
+            mutateAudit();
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>
+              {editing?.la_name} — {editing?.course_name}{" "}
+              {editing?.section_name}
+            </DialogTitle>
+            <DialogDescription>
+              Edit availability as this LA. Same rules apply: past weeks and
+              weeks with sign-ups are locked.
+            </DialogDescription>
+          </DialogHeader>
+          {editing && (
+            <ScheduleCard
+              key={`${editing.la_id}|${editing.section_id}`}
+              section={
+                {
+                  section_id: editing.section_id,
+                  course_name: editing.course_name,
+                  section_name: editing.section_name,
+                  day: editing.section_day,
+                  time: editing.section_time_raw,
+                  location: editing.section_location,
+                } satisfies Section
+              }
+              currentWeek={currentWeek}
+              laId={editing.la_id}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
       <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reset hidden slots?</DialogTitle>
             <DialogDescription>
               This will unhide every hidden availability slot for{" "}
-              <span className="font-medium text-foreground">{scopeLabel}</span>
-              . Observers will see those slots again on their next load.
+              <span className="font-medium text-foreground">{scopeLabel}</span>.
+              Observers will see those slots again on their next load.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
@@ -520,6 +568,14 @@ export function AvailabilityAudit() {
                   className="border-b last:border-0"
                 >
                   <td className="truncate py-1.5 pr-2 font-medium">
+                    <button
+                      type="button"
+                      className="mr-1.5 inline-flex size-5 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-foreground"
+                      title="Edit availability"
+                      onClick={() => setEditing(entry)}
+                    >
+                      <Pencil className="size-3" />
+                    </button>
                     {displayName}
                   </td>
                   <td className="truncate py-1.5 pr-2 text-muted-foreground">

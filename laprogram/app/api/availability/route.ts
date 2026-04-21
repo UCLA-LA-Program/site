@@ -8,6 +8,7 @@ import { AvailabilityRow } from "@/types/db";
 interface AvailabilityPayload {
   section_id: string;
   weeks: AvailabilityWeek[];
+  la_id?: string;
 }
 
 interface AvailabilityWeek {
@@ -29,14 +30,16 @@ export async function POST(request: Request) {
     }
 
     const db = env.data;
-    const userId = session.user.id;
 
     const body = (await request.json()) as AvailabilityPayload;
-    const { section_id, weeks } = body;
+    const { section_id, weeks, la_id } = body;
 
     if (!section_id || !Array.isArray(weeks)) {
       return new Response("Missing section_id or weeks", { status: 400 });
     }
+
+    const isAdmin = session.user.role === "admin";
+    const userId = la_id && isAdmin ? la_id : session.user.id;
 
     const assignment = await db
       .prepare(
@@ -136,10 +139,12 @@ export async function GET(request: Request) {
     }
 
     const db = env.data;
-    const userId = session.user.id;
 
     const url = new URL(request.url);
     const sectionId = url.searchParams.get("section_id");
+    const laIdParam = url.searchParams.get("la_id");
+    const isAdmin = session.user.role === "admin";
+    const userId = laIdParam && isAdmin ? laIdParam : session.user.id;
 
     let result;
     if (sectionId) {

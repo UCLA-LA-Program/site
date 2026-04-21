@@ -10,6 +10,9 @@ export type AvailabilityAuditRow = {
   section_name: string;
   section_time: string;
   section_id: string;
+  section_day: string;
+  section_time_raw: string;
+  section_location: string;
   position: string;
   week: string | null;
   slot_count: number;
@@ -36,6 +39,9 @@ export async function GET() {
          s.course_name,
          s.section_name,
          s.day || ' ' || s.time AS section_time,
+         s.day AS section_day,
+         s.time AS section_time_raw,
+         s.location AS section_location,
          sa.section_id,
          c.position,
          a.week,
