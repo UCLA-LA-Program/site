@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { isValid as luhnIsValid } from "luhn-js";
+import { isValidUID } from "@/lib/utils";
 import {
   EQ_NONSENSITIVE_QUESTIONS,
   EQ_SENSITIVE_QUESTIONS,
@@ -65,7 +65,7 @@ const closingFields = {
   courses_without_las: z.string().optional(),
   uid: z
     .string()
-    .refine((val) => val === "" || (val.length === 9 && /^\d{9}$/.test(val)), {
+    .refine((val) => val === "" || isValidUID(val), {
       message: "Please enter a valid 9-digit UID",
     })
     .optional(),
