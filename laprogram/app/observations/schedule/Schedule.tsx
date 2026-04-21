@@ -29,6 +29,10 @@ export function Schedule({ currentWeek }: { currentWeek: number }) {
               all future weeks. You can edit in 10 minute increments with a
               required minimum of 30 minutes.
             </li>
+            <li className="font-bold">
+              Enter your availability for all weeks during the quarter that you
+              anticipate being present and able to be observed.
+            </li>
             <li>Press &ldquo;Save Changes&rdquo; to save your availability.</li>
           </ul>
           <p className="mb-2 text-sm">Notes:</p>
