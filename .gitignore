@@ -3,3 +3,9 @@
 # use skills-lock.json to get the current skills.
 .agents/
 .claude/
+
+# macOS
+.DS_Store
+
+# wrangler
+.wrangler/
