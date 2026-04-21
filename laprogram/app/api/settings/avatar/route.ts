@@ -38,8 +38,12 @@ export async function POST(request: Request) {
 
     const transformedImage = (
       await env.IMAGES?.input(file.stream())
-        .transform({ width: IMAGE_SIZE, height: IMAGE_SIZE, fit: "cover" })
-        .output({ format: "image/webp" })
+        .transform({
+          width: IMAGE_SIZE,
+          height: IMAGE_SIZE,
+          fit: "cover",
+        })
+        .output({ format: "image/webp", quality: 80 })
     )?.response();
 
     if (!transformedImage) throw Error();
