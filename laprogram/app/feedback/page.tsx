@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
 import { FeedbackForm } from "./components/FeedbackForm";
 import { ContactUs } from "@/components/ContactUs";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { getAuth } from "@/lib/auth";
 import {
   ROLE_OPTIONS,
   STUDENT_FEEDBACK_TYPE_OPTIONS,
@@ -15,12 +17,14 @@ export const metadata: Metadata = {
 export default async function FeedbackPage() {
   const { env } = await getCloudflareContext({ async: true });
 
-  const [mq, eq, obs, hla, ta] = await Promise.all([
+  const auth = await getAuth();
+  const [mq, eq, obs, hla, ta, session] = await Promise.all([
     env.config.get("MID_QUARTER_FEEDBACK"),
     env.config.get("END_OF_QUARTER_FEEDBACK"),
     env.config.get("OBSERVATION_FEEDBACK"),
     env.config.get("HEAD_LA_FEEDBACK"),
     env.config.get("TA_FEEDBACK"),
+    auth.api.getSession({ headers: await headers() }),
   ]);
 
   const on = (v: string | null) => v === "true";
@@ -81,6 +85,14 @@ export default async function FeedbackPage() {
                 roleOptions={roleOptions}
                 feedbackTypeOptions={feedbackTypeOptions}
                 laFeedbackTypeOptions={laFeedbackTypeOptions}
+                user={
+                  session
+                    ? {
+                        name: session.user.name,
+                        email: session.user.email,
+                      }
+                    : null
+                }
               />
             </>
           )}

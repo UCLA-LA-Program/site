@@ -17,6 +17,7 @@ import { HeadLASection } from "./sections/HeadLASection";
 import { ObservationSection } from "./sections/ObservationSection";
 import { RoleField } from "./sections/RoleField";
 import { SignInGate } from "./sections/SignInGate";
+import { SignOutGate } from "./sections/SignOutGate";
 import { LAFeedbackTypeField } from "./sections/LAFeedbackTypeField";
 import { ObservationPicker } from "./sections/ObservationPicker";
 import { HeadLAPicker } from "./sections/HeadLAPicker";
@@ -43,12 +44,14 @@ type FeedbackFormProps = {
   roleOptions: Option[];
   feedbackTypeOptions: Option[];
   laFeedbackTypeOptions: Option[];
+  user: { name: string; email: string } | null;
 };
 
 export function FeedbackForm({
   roleOptions,
   feedbackTypeOptions,
   laFeedbackTypeOptions,
+  user,
 }: FeedbackFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const { data: session } = authClient.useSession();
@@ -74,7 +77,9 @@ export function FeedbackForm({
   );
 
   const form = useAppForm({
-    defaultValues,
+    defaultValues: user
+      ? { ...defaultValues, name: user.name, email: user.email }
+      : defaultValues,
     validators: {
       onSubmit: feedbackFormSchema,
     },
@@ -144,6 +149,8 @@ export function FeedbackForm({
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
                   aria-invalid={isInvalid}
+                  readOnly={!!user}
+                  disabled={!!user}
                 />
               </Field>
             );
@@ -168,6 +175,8 @@ export function FeedbackForm({
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
                   aria-invalid={isInvalid}
+                  readOnly={!!user}
+                  disabled={!!user}
                 />
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
@@ -230,14 +239,21 @@ export function FeedbackForm({
           }
         </form.Subscribe>
 
-        {/* Course — hidden for LA role */}
+        {/* TA sign-out gate — shown when a signed-in user picks TA */}
+        <form.Subscribe selector={(state) => state.values.role}>
+          {(role) => role === "ta" && session && <SignOutGate />}
+        </form.Subscribe>
+
+        {/* Course — hidden for LA role and for signed-in TA */}
         <form.Subscribe selector={(state) => state.values.role}>
           {(role) =>
-            role && role !== "la" && <CourseField form={form} las={las} />
+            role &&
+            role !== "la" &&
+            !(role === "ta" && session) && <CourseField form={form} las={las} />
           }
         </form.Subscribe>
 
-        {/* LA — hidden for LA role */}
+        {/* LA — hidden for LA role and for signed-in TA */}
         <form.Subscribe
           selector={(state) => ({
             course: state.values.course,
@@ -246,7 +262,10 @@ export function FeedbackForm({
         >
           {({ course, role }) =>
             course &&
-            role !== "la" && <LAField form={form} las={las} course={course} />
+            role !== "la" &&
+            !(role === "ta" && session) && (
+              <LAField form={form} las={las} course={course} />
+            )
           }
         </form.Subscribe>
 
@@ -334,7 +353,8 @@ export function FeedbackForm({
         >
           {({ la, role }) =>
             la &&
-            role === "ta" && (
+            role === "ta" &&
+            !session && (
               <>
                 <FieldSeparator />
                 <TASection form={form} />
