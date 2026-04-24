@@ -43,12 +43,14 @@ type FeedbackFormProps = {
   roleOptions: Option[];
   feedbackTypeOptions: Option[];
   laFeedbackTypeOptions: Option[];
+  user: { name: string; email: string } | null;
 };
 
 export function FeedbackForm({
   roleOptions,
   feedbackTypeOptions,
   laFeedbackTypeOptions,
+  user,
 }: FeedbackFormProps) {
   const [submitted, setSubmitted] = useState(false);
   const { data: session } = authClient.useSession();
@@ -74,7 +76,9 @@ export function FeedbackForm({
   );
 
   const form = useAppForm({
-    defaultValues,
+    defaultValues: user
+      ? { ...defaultValues, name: user.name, email: user.email }
+      : defaultValues,
     validators: {
       onSubmit: feedbackFormSchema,
     },
@@ -144,6 +148,8 @@ export function FeedbackForm({
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
                   aria-invalid={isInvalid}
+                  readOnly={!!user}
+                  disabled={!!user}
                 />
               </Field>
             );
@@ -168,6 +174,8 @@ export function FeedbackForm({
                   onChange={(e) => field.handleChange(e.target.value)}
                   onBlur={field.handleBlur}
                   aria-invalid={isInvalid}
+                  readOnly={!!user}
+                  disabled={!!user}
                 />
                 {isInvalid && <FieldError errors={field.state.meta.errors} />}
               </Field>
