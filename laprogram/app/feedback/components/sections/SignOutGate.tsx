@@ -23,7 +23,7 @@ export function SignOutGate() {
         onClick={async () => {
           setPending(true);
           await authClient.signOut();
-          router.refresh();
+          window.location.reload();
         }}
       >
         {pending ? "Logging out…" : "Log out"}
