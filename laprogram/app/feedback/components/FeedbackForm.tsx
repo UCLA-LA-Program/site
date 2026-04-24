@@ -17,6 +17,7 @@ import { HeadLASection } from "./sections/HeadLASection";
 import { ObservationSection } from "./sections/ObservationSection";
 import { RoleField } from "./sections/RoleField";
 import { SignInGate } from "./sections/SignInGate";
+import { SignOutGate } from "./sections/SignOutGate";
 import { LAFeedbackTypeField } from "./sections/LAFeedbackTypeField";
 import { ObservationPicker } from "./sections/ObservationPicker";
 import { HeadLAPicker } from "./sections/HeadLAPicker";
@@ -238,14 +239,21 @@ export function FeedbackForm({
           }
         </form.Subscribe>
 
-        {/* Course — hidden for LA role */}
+        {/* TA sign-out gate — shown when a signed-in user picks TA */}
+        <form.Subscribe selector={(state) => state.values.role}>
+          {(role) => role === "ta" && session && <SignOutGate />}
+        </form.Subscribe>
+
+        {/* Course — hidden for LA role and for signed-in TA */}
         <form.Subscribe selector={(state) => state.values.role}>
           {(role) =>
-            role && role !== "la" && <CourseField form={form} las={las} />
+            role &&
+            role !== "la" &&
+            !(role === "ta" && session) && <CourseField form={form} las={las} />
           }
         </form.Subscribe>
 
-        {/* LA — hidden for LA role */}
+        {/* LA — hidden for LA role and for signed-in TA */}
         <form.Subscribe
           selector={(state) => ({
             course: state.values.course,
@@ -254,7 +262,10 @@ export function FeedbackForm({
         >
           {({ course, role }) =>
             course &&
-            role !== "la" && <LAField form={form} las={las} course={course} />
+            role !== "la" &&
+            !(role === "ta" && session) && (
+              <LAField form={form} las={las} course={course} />
+            )
           }
         </form.Subscribe>
 
@@ -342,7 +353,8 @@ export function FeedbackForm({
         >
           {({ la, role }) =>
             la &&
-            role === "ta" && (
+            role === "ta" &&
+            !session && (
               <>
                 <FieldSeparator />
                 <TASection form={form} />

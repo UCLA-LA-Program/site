@@ -36,7 +36,7 @@ export default async function FeedbackPage() {
       case "la":
         return on(obs) || on(hla);
       case "ta":
-        return !session && on(ta);
+        return on(ta);
     }
   });
 
