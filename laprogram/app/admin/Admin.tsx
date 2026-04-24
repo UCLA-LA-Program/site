@@ -4,7 +4,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { ConfigTab } from "./components/ConfigTab";
 import { RosterTab } from "./components/RosterTab";
 import { AvailabilityAudit } from "./components/AvailabilityAudit";
-import { SignupsList } from "./components/SignupsList";
+import { ObservationAudit } from "./components/ObservationAudit";
 import { SyncTab } from "./components/SyncTab";
 
 export function Admin() {
@@ -16,7 +16,7 @@ export function Admin() {
           <TabsList>
             <TabsTrigger value="roster">Roster</TabsTrigger>
             <TabsTrigger value="availability">Availability</TabsTrigger>
-            <TabsTrigger value="signups">Sign-ups</TabsTrigger>
+            <TabsTrigger value="observations">Observations</TabsTrigger>
             <TabsTrigger value="config">Configuration</TabsTrigger>
             <TabsTrigger value="sync">Airtable Sync</TabsTrigger>
           </TabsList>
@@ -30,8 +30,8 @@ export function Admin() {
           <AvailabilityAudit />
         </TabsContent>
 
-        <TabsContent value="signups" className="flex justify-center">
-          <SignupsList />
+        <TabsContent value="observations" className="flex justify-center">
+          <ObservationAudit />
         </TabsContent>
 
         <TabsContent value="config" className="flex justify-center">

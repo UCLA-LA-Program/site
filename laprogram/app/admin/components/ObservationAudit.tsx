@@ -71,15 +71,12 @@ type GroupedPerson = {
   rows: SignupRow[];
 };
 
-export function SignupsList() {
+export function ObservationAudit() {
   const { data, mutate } = useSWR<SignupRow[]>(
     "/api/admin/audit/signups",
     fetcher,
   );
-  const { data: roster } = useSWR<RosterUser[]>(
-    "/api/admin/roster",
-    fetcher,
-  );
+  const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher);
   const [groupBy, setGroupBy] = useState<GroupBy>("observer");
   const [query, setQuery] = useState("");
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
@@ -226,36 +223,7 @@ export function SignupsList() {
   const countLabel = groupBy === "observer" ? "Observing" : "Observed by";
 
   return (
-    <div className="w-full max-w-6xl space-y-3 px-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <ToggleGroup
-          type="single"
-          value={groupBy}
-          onValueChange={(v) => {
-            if (v) {
-              setGroupBy(v as GroupBy);
-              setExpanded(new Set());
-            }
-          }}
-          variant="outline"
-          size="sm"
-        >
-          <ToggleGroupItem value="observer">Group by observer</ToggleGroupItem>
-          <ToggleGroupItem value="observee">Group by observee</ToggleGroupItem>
-        </ToggleGroup>
-        <ToggleGroup
-          type="single"
-          value={statusFilter}
-          onValueChange={(v) => v && setStatusFilter(v as StatusFilter)}
-          variant="outline"
-          size="sm"
-        >
-          <ToggleGroupItem value="all">All</ToggleGroupItem>
-          <ToggleGroupItem value="done">Done</ToggleGroupItem>
-          <ToggleGroupItem value="pending">Pending</ToggleGroupItem>
-        </ToggleGroup>
-      </div>
-
+    <div className="w-full max-w-6xl space-y-3">
       <div className="flex items-center gap-2">
         <Input
           placeholder="Search name or email…"
@@ -328,6 +296,35 @@ export function SignupsList() {
           ))}
         </div>
       )}
+
+      <div className="flex flex-wrap items-center gap-2">
+        <ToggleGroup
+          type="single"
+          value={groupBy}
+          onValueChange={(v) => {
+            if (v) {
+              setGroupBy(v as GroupBy);
+              setExpanded(new Set());
+            }
+          }}
+          variant="outline"
+          size="sm"
+        >
+          <ToggleGroupItem value="observer">Group by observer</ToggleGroupItem>
+          <ToggleGroupItem value="observee">Group by observee</ToggleGroupItem>
+        </ToggleGroup>
+        <ToggleGroup
+          type="single"
+          value={statusFilter}
+          onValueChange={(v) => v && setStatusFilter(v as StatusFilter)}
+          variant="outline"
+          size="sm"
+        >
+          <ToggleGroupItem value="all">All</ToggleGroupItem>
+          <ToggleGroupItem value="done">Done</ToggleGroupItem>
+          <ToggleGroupItem value="pending">Pending</ToggleGroupItem>
+        </ToggleGroup>
+      </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
         {courseTypeOptions.map((t) => (
@@ -429,7 +426,10 @@ export function SignupsList() {
                       <span className="text-green-700 dark:text-green-400">
                         {doneCount}
                       </span>
-                      <span className="text-muted-foreground"> / {rows.length}</span>
+                      <span className="text-muted-foreground">
+                        {" "}
+                        / {rows.length}
+                      </span>
                     </td>
                   </tr>
                   {isOpen && canExpand && (
