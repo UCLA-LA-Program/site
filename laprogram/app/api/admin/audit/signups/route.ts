@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
-import { format } from "date-fns";
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getObsDate, getQuarterStart } from "@/lib/utils";
+import { formatDateLA } from "@/app/observations/signup/types";
 
 export type SignupRow = {
   id: string;
@@ -98,7 +98,7 @@ export async function GET() {
     let completed = false;
     if (quarterStart) {
       const obsDate = getObsDate(r.week, r.day, quarterStart);
-      const expected = `${r.section_name} — ${format(obsDate, "M/d")}`;
+      const expected = `${r.section_name} — ${formatDateLA(obsDate)}`;
       const key = `${r.observer_email.toLowerCase()}|${r.observee_id}|${expected}`;
       completed = completedKeys.has(key);
     }

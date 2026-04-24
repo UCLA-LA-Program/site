@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dialog";
 import type { SignupRow } from "@/app/api/admin/audit/signups/route";
 import type { RosterUser } from "@/app/api/admin/roster/route";
+import type { UnpairedFeedback } from "@/app/api/admin/audit/unpaired-feedbacks/route";
 
 function splitPositions(p: string | null): string[] {
   if (!p) return [];
@@ -77,6 +78,10 @@ export function ObservationAudit() {
     fetcher,
   );
   const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher);
+  const { data: unpaired, mutate: mutateUnpaired } = useSWR<UnpairedFeedback[]>(
+    "/api/admin/audit/unpaired-feedbacks",
+    fetcher,
+  );
   const [groupBy, setGroupBy] = useState<GroupBy>("observer");
   const [query, setQuery] = useState("");
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
@@ -87,6 +92,9 @@ export function ObservationAudit() {
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [toDelete, setToDelete] = useState<SignupRow | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [toPair, setToPair] = useState<UnpairedFeedback | null>(null);
+  const [pairQuery, setPairQuery] = useState("");
+  const [pairing, setPairing] = useState(false);
 
   if (!data) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -216,6 +224,36 @@ export function ObservationAudit() {
       toast.error("Delete failed.");
     } finally {
       setDeleting(false);
+    }
+  }
+
+  async function pairWithSignup(signup: SignupRow) {
+    if (!toPair) return;
+    setPairing(true);
+    try {
+      const res = await fetch(`/api/admin/feedback/${toPair.id}/pair`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: signup.observer_name,
+          email: signup.observer_email,
+        }),
+      });
+      if (!res.ok) {
+        const text = await res.text();
+        toast.error(`Pair failed: ${text}`);
+        return;
+      }
+      toast.success(
+        `Paired feedback to ${signup.observer_name} → ${signup.observee_name}`,
+      );
+      setToPair(null);
+      setPairQuery("");
+      await Promise.all([mutate(), mutateUnpaired()]);
+    } catch {
+      toast.error("Pair failed.");
+    } finally {
+      setPairing(false);
     }
   }
 
@@ -541,6 +579,229 @@ export function ObservationAudit() {
           </tbody>
         </table>
       </div>
+
+      <div className="mt-6 space-y-2">
+        <div>
+          <h3 className="text-sm font-semibold">Unpaired feedbacks</h3>
+          <p className="text-xs text-muted-foreground">
+            Observation feedbacks whose observer email / obs_section does not
+            match any sign-up. Pair one to a sign-up to overwrite the
+            feedback&apos;s stored name and email so it matches.
+          </p>
+        </div>
+        {!unpaired ? (
+          <p className="text-sm text-muted-foreground">Loading…</p>
+        ) : unpaired.length === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            All observation feedbacks are paired.
+          </p>
+        ) : (
+          <div className="overflow-x-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b bg-muted/30 text-left text-muted-foreground">
+                  <th className="px-2 py-1.5 font-medium">
+                    Submitted by (as typed)
+                  </th>
+                  <th className="px-2 py-1.5 font-medium">Observee</th>
+                  <th className="px-2 py-1.5 font-medium">Course / Section</th>
+                  <th className="px-2 py-1.5 text-right font-medium">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {unpaired.map((f) => (
+                  <tr key={f.id} className="border-b last:border-0">
+                    <td className="px-2 py-1.5">
+                      <div className="font-medium">
+                        {f.observer_name || "—"}
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        {f.observer_email || "—"}
+                      </div>
+                    </td>
+                    <td className="px-2 py-1.5">
+                      <div className="font-medium">{f.observee_name}</div>
+                      <div className="text-xs text-muted-foreground">
+                        {f.observee_email}
+                      </div>
+                    </td>
+                    <td className="px-2 py-1.5 whitespace-nowrap text-muted-foreground">
+                      <div>{f.course || "—"}</div>
+                      <div className="text-xs">{f.obs_section || "—"}</div>
+                    </td>
+                    <td className="px-2 py-1.5 text-right">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => {
+                          setToPair(f);
+                          setPairQuery("");
+                        }}
+                      >
+                        Pair with sign-up…
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+
+      <Dialog
+        open={toPair !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setToPair(null);
+            setPairQuery("");
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-5xl">
+          <DialogHeader>
+            <DialogTitle>Pair feedback with sign-up</DialogTitle>
+            <DialogDescription>
+              {toPair && (
+                <>
+                  Select a sign-up. The feedback&apos;s stored name and email
+                  will be overwritten to match the sign-up&apos;s observer, so
+                  it can be linked on the audit table.
+                </>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          {toPair && (
+            <div className="space-y-3">
+              <div className="rounded-md border bg-muted/30 p-2 text-xs">
+                <div>
+                  <span className="text-muted-foreground">Submitted by: </span>
+                  <span className="font-medium">
+                    {toPair.observer_name || "—"}
+                  </span>{" "}
+                  <span className="text-muted-foreground">
+                    ({toPair.observer_email || "—"})
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Observee: </span>
+                  <span className="font-medium">{toPair.observee_name}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">obs_section: </span>
+                  <span className="font-mono">{toPair.obs_section || "—"}</span>
+                </div>
+              </div>
+              <Input
+                placeholder="Search sign-ups by name, email, or course…"
+                value={pairQuery}
+                onChange={(e) => setPairQuery(e.target.value)}
+              />
+              <div className="max-h-80 overflow-auto rounded-md border">
+                <table className="w-full text-xs">
+                  <thead className="sticky top-0 bg-background">
+                    <tr className="border-b text-left text-muted-foreground">
+                      <th className="px-2 py-1.5 font-medium">Observer</th>
+                      <th className="px-2 py-1.5 font-medium">Observee</th>
+                      <th className="px-2 py-1.5 font-medium">Section</th>
+                      <th className="px-2 py-1.5 font-medium">When</th>
+                      <th className="px-2 py-1.5 font-medium">Status</th>
+                      <th className="px-2 py-1.5" />
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {(() => {
+                      const pq = pairQuery.trim().toLowerCase();
+                      const candidates = (data ?? [])
+                        .filter((s) => {
+                          if (s.observee_id !== toPair.observee_id) return false;
+                          if (!pq) return true;
+                          return (
+                            s.observer_name.toLowerCase().includes(pq) ||
+                            s.observer_email.toLowerCase().includes(pq) ||
+                            s.course_name.toLowerCase().includes(pq) ||
+                            s.section_name.toLowerCase().includes(pq)
+                          );
+                        })
+                        .sort(
+                          (a, b) =>
+                            Number(a.completed) - Number(b.completed) ||
+                            a.observer_name.localeCompare(b.observer_name),
+                        );
+                      if (candidates.length === 0) {
+                        return (
+                          <tr>
+                            <td
+                              colSpan={6}
+                              className="px-2 py-3 text-center text-muted-foreground"
+                            >
+                              No sign-ups for this observee.
+                            </td>
+                          </tr>
+                        );
+                      }
+                      return candidates.map((s) => (
+                        <tr
+                          key={s.id}
+                          className="border-b last:border-0 hover:bg-muted/50"
+                        >
+                          <td className="px-2 py-1.5">
+                            <div className="font-medium">{s.observer_name}</div>
+                            <div className="text-muted-foreground">
+                              {s.observer_email}
+                            </div>
+                          </td>
+                          <td className="px-2 py-1.5">{s.observee_name}</td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">
+                            {s.course_name} {s.section_name}
+                          </td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">
+                            Wk {s.week} · {s.day} {formatTimeRange(s.time)}
+                          </td>
+                          <td className="px-2 py-1.5 whitespace-nowrap">
+                            {s.completed ? (
+                              <span className="inline-flex items-center gap-1 rounded-sm bg-green-500/15 px-1.5 py-0.5 text-green-700 dark:text-green-400">
+                                <Check className="size-3" />
+                                Done
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-muted-foreground">
+                                <Clock className="size-3" />
+                                Pending
+                              </span>
+                            )}
+                          </td>
+                          <td className="px-2 py-1.5 text-right">
+                            <Button
+                              size="sm"
+                              disabled={pairing}
+                              onClick={() => pairWithSignup(s)}
+                            >
+                              Pair
+                            </Button>
+                          </td>
+                        </tr>
+                      ));
+                    })()}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setToPair(null);
+                setPairQuery("");
+              }}
+              disabled={pairing}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={toDelete !== null}
