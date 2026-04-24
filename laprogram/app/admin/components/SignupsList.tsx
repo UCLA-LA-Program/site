@@ -3,7 +3,7 @@
 import { Fragment, useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { ChevronRight, Trash2, X } from "lucide-react";
+import { Check, ChevronRight, Clock, Trash2, X } from "lucide-react";
 import { fetcher, parseSectionTime, minutesToLabel } from "@/lib/utils";
 import { LA_POSITION_MAP } from "@/lib/constants";
 import { Input } from "@/components/ui/input";
@@ -61,6 +61,7 @@ function formatTimeRange(time: string) {
 
 type GroupBy = "observer" | "observee";
 type SortKey = "name" | "email" | "count";
+type StatusFilter = "all" | "done" | "pending";
 
 type GroupedPerson = {
   id: string;
@@ -83,6 +84,7 @@ export function SignupsList() {
   const [query, setQuery] = useState("");
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [courseTypes, setCourseTypes] = useState<string[]>([]);
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [sortKey, setSortKey] = useState<SortKey>("count");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
@@ -241,6 +243,17 @@ export function SignupsList() {
           <ToggleGroupItem value="observer">Group by observer</ToggleGroupItem>
           <ToggleGroupItem value="observee">Group by observee</ToggleGroupItem>
         </ToggleGroup>
+        <ToggleGroup
+          type="single"
+          value={statusFilter}
+          onValueChange={(v) => v && setStatusFilter(v as StatusFilter)}
+          variant="outline"
+          size="sm"
+        >
+          <ToggleGroupItem value="all">All</ToggleGroupItem>
+          <ToggleGroupItem value="done">Done</ToggleGroupItem>
+          <ToggleGroupItem value="pending">Pending</ToggleGroupItem>
+        </ToggleGroup>
       </div>
 
       <div className="flex items-center gap-2">
@@ -376,11 +389,17 @@ export function SignupsList() {
           <tbody>
             {sorted.map((p) => {
               const isOpen = expanded.has(p.id);
-              const rows = courseTypes.length
-                ? p.rows.filter((r) =>
-                    courseTypes.includes(r.course_name.split(" ")[0]),
-                  )
-                : p.rows;
+              const rows = p.rows.filter((r) => {
+                if (
+                  courseTypes.length > 0 &&
+                  !courseTypes.includes(r.course_name.split(" ")[0])
+                )
+                  return false;
+                if (statusFilter === "done" && !r.completed) return false;
+                if (statusFilter === "pending" && r.completed) return false;
+                return true;
+              });
+              const doneCount = rows.filter((r) => r.completed).length;
               const canExpand = rows.length > 0;
               return (
                 <Fragment key={p.id}>
@@ -406,7 +425,12 @@ export function SignupsList() {
                     <td className="py-1.5 pr-2 text-muted-foreground">
                       {positionLabel(p.position)}
                     </td>
-                    <td className="py-1.5 pr-2 text-center">{rows.length}</td>
+                    <td className="py-1.5 pr-2 text-center whitespace-nowrap">
+                      <span className="text-green-700 dark:text-green-400">
+                        {doneCount}
+                      </span>
+                      <span className="text-muted-foreground"> / {rows.length}</span>
+                    </td>
                   </tr>
                   {isOpen && canExpand && (
                     <tr className="border-b last:border-0 bg-muted/20">
@@ -426,6 +450,9 @@ export function SignupsList() {
                               </th>
                               <th className="pb-1 pr-2 text-left font-medium">
                                 When
+                              </th>
+                              <th className="pb-1 pr-2 text-left font-medium">
+                                Status
                               </th>
                               <th className="pb-1 pr-2 text-right font-medium">
                                 Actions
@@ -468,6 +495,19 @@ export function SignupsList() {
                                   <td className="py-1 pr-2 whitespace-nowrap text-muted-foreground">
                                     Wk {r.week} · {r.day}{" "}
                                     {formatTimeRange(r.time)}
+                                  </td>
+                                  <td className="py-1 pr-2 whitespace-nowrap">
+                                    {r.completed ? (
+                                      <span className="inline-flex items-center gap-1 rounded-sm bg-green-500/15 px-1.5 py-0.5 text-green-700 dark:text-green-400">
+                                        <Check className="size-3" />
+                                        Done
+                                      </span>
+                                    ) : (
+                                      <span className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-muted-foreground">
+                                        <Clock className="size-3" />
+                                        Pending
+                                      </span>
+                                    )}
                                   </td>
                                   <td className="py-1 pr-2 text-right">
                                     <Button
