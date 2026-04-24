@@ -588,6 +588,11 @@ export function ObservationAudit() {
             match any sign-up. Pair one to a sign-up to overwrite the
             feedback&apos;s stored name and email so it matches.
           </p>
+          <div className="my-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
+            This is a dangerous feature. Do not use this unless you are
+            completely sure of how it works. If this feature has not been
+            explicitly explained to you, do not use it.
+          </div>
         </div>
         {!unpaired ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
@@ -714,7 +719,8 @@ export function ObservationAudit() {
                       const pq = pairQuery.trim().toLowerCase();
                       const candidates = (data ?? [])
                         .filter((s) => {
-                          if (s.observee_id !== toPair.observee_id) return false;
+                          if (s.observee_id !== toPair.observee_id)
+                            return false;
                           if (!pq) return true;
                           return (
                             s.observer_name.toLowerCase().includes(pq) ||
