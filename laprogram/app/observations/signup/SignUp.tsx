@@ -7,11 +7,11 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarClock, User, MapPin, Filter, Info } from "lucide-react";
 import { toast } from "sonner";
 import { fetcher, getObsDate, hydrateDates, nowLA } from "@/lib/utils";
-import { format, differenceInCalendarDays, isSameDay } from "date-fns";
+import { differenceInCalendarDays, isSameDay } from "date-fns";
 import { DAY_INDEX, LA_POSITION_MAP } from "@/lib/constants";
 import type { ObservationAvailability } from "@/types/db";
 import type { MyObservation } from "./types";
-import { formatTime } from "./types";
+import { formatDateLA, formatTimeLA } from "./types";
 import { PendingChanges } from "./components/PendingChanges";
 import {
   PastObservations,
@@ -31,7 +31,11 @@ function buildDateTabs(
   for (const week of weeks.sort((a, b) => parseInt(a) - parseInt(b))) {
     for (const day of DAY_INDEX.slice(0, 5)) {
       const date = getObsDate(week, day, quarterStart);
-      tabs.push({ week, date, label: format(date, "M/d") });
+      tabs.push({
+        week,
+        date,
+        label: formatDateLA(date),
+      });
     }
   }
   return tabs;
@@ -78,7 +82,7 @@ export function SignUp({
   // Count slots per tab from ISO dates
   const slotCounts = new Map<string, number>();
   for (const slot of openSlots ?? []) {
-    const label = format(slot.time_start, "M/d");
+    const label = formatDateLA(slot.time_start);
     slotCounts.set(label, (slotCounts.get(label) ?? 0) + 1);
   }
 
@@ -310,8 +314,8 @@ export function SignUp({
                           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <CalendarClock className="size-3" />
-                              {formatTime(slot.time_start)}–
-                              {formatTime(slot.time_end)}
+                              {formatTimeLA(slot.time_start)}–
+                              {formatTimeLA(slot.time_end)}
                             </span>
                             <span className="flex items-center gap-1">
                               <MapPin className="size-3" />

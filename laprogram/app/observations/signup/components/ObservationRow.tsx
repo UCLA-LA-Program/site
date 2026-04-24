@@ -1,9 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { X, UserRound } from "lucide-react";
 import Image from "next/image";
-import { format } from "date-fns";
 import type { MyObservation } from "../types";
-import { formatTime } from "../types";
+import { formatDateLA, formatTimeLA } from "../types";
 import { IMAGE_SIZE, LA_POSITION_MAP } from "@/lib/constants";
 
 export function ObservationRow({
@@ -42,10 +41,10 @@ export function ObservationRow({
           <p className="text-muted-foreground">
             {LA_POSITION_MAP.get(obs.la_position) ?? obs.la_position} &middot;{" "}
             {obs.course_name} {obs.section_name} &middot;{" "}
-            {format(obs.time_start, "M/d")}
+            {formatDateLA(obs.time_start)}
           </p>
           <p className="text-xs text-muted-foreground">
-            {formatTime(obs.time_start)}–{formatTime(obs.time_end)} &middot;{" "}
+            {formatTimeLA(obs.time_start)}–{formatTimeLA(obs.time_end)} &middot;{" "}
             {obs.location}
           </p>
           {obs.ta_name && (
