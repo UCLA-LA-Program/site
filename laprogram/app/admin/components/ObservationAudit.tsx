@@ -224,6 +224,11 @@ export function ObservationAudit() {
 
   return (
     <div className="w-full max-w-6xl space-y-3">
+      <div className="rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
+        Status and done counts are inferred by matching feedback submissions to
+        sign-ups and may not be fully accurate. Expect these numbers to shift
+        after the observation-flow refactor between round 1 and round 2.
+      </div>
       <div className="flex items-center gap-2">
         <Input
           placeholder="Search name or email…"
