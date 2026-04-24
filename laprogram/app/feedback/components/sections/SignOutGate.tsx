@@ -1,13 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { LogOut } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 
 export function SignOutGate() {
-  const router = useRouter();
   const [pending, setPending] = useState(false);
 
   return (
