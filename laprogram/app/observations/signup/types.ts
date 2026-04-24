@@ -1,6 +1,7 @@
 import type { ObservationAvailability } from "@/types/db";
-import { TZDate } from "@date-fns/tz";
+import { TZDate, tz } from "@date-fns/tz";
 import { format } from "date-fns";
+import { TIMEZONE } from "@/lib/constants";
 
 export type MyObservation = ObservationAvailability & {
   la_image: string | null;
@@ -8,6 +9,10 @@ export type MyObservation = ObservationAvailability & {
   ta_email: string | null;
 };
 
-export function formatTime(d: TZDate): string {
-  return format(d, "h:mm a");
+export function formatTimeLA(d: TZDate): string {
+  return format(d, "h:mm a", { in: tz(TIMEZONE) });
+}
+
+export function formatDateLA(d: TZDate): string {
+  return format(d, "M/d", { in: tz(TIMEZONE) });
 }

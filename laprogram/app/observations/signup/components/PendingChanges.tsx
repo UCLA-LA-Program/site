@@ -2,11 +2,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Plus, X, Check } from "lucide-react";
-import { format } from "date-fns";
 import type { ObservationAvailability } from "@/types/db";
 import { LA_POSITION_MAP } from "@/lib/constants";
 import type { MyObservation } from "../types";
-import { formatTime } from "../types";
+import { formatDateLA, formatTimeLA } from "../types";
 
 function PendingRow({
   slot,
@@ -27,12 +26,12 @@ function PendingRow({
             <>
               {LA_POSITION_MAP.get(slot.la_position) ?? slot.la_position}{" "}
               &middot; {slot.course_name} {slot.section_name} &middot;{" "}
-              {format(slot.time_start, "M/d")}{" "}
+              {formatDateLA(slot.time_start)}{" "}
             </>
           )}
         </p>
         <p className={`text-xs text-muted-foreground ${strike}`}>
-          {formatTime(slot.time_start)}–{formatTime(slot.time_end)} &middot;{" "}
+          {formatTimeLA(slot.time_start)}–{formatTimeLA(slot.time_end)} &middot;{" "}
           {slot.location}
         </p>
       </div>

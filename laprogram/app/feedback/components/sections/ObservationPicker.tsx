@@ -5,10 +5,9 @@ import { Field, FieldLabel } from "@/components/ui/field";
 import Image from "next/image";
 import { UserRound } from "lucide-react";
 import { IMAGE_SIZE, LA_POSITION_MAP } from "@/lib/constants";
-import { format } from "date-fns";
 import { withForm } from "../../form";
 import { defaultValues, feedbackFormSchema } from "../../schema";
-import { MyObservation } from "@/app/observations/signup/types";
+import { formatDateLA, MyObservation } from "@/app/observations/signup/types";
 
 export const ObservationPicker = withForm({
   defaultValues,
@@ -36,7 +35,7 @@ export const ObservationPicker = withForm({
               form.setFieldValue("la", obs.la_name);
               form.setFieldValue(
                 "obs_section",
-                `${obs.section_name} — ${format(obs.time_start, "M/d")}`,
+                `${obs.section_name} — ${formatDateLA(obs.time_start)}`,
               );
               form.setFieldValue("obs_la_position", obs.la_position);
             }
@@ -74,7 +73,7 @@ export const ObservationPicker = withForm({
                         {LA_POSITION_MAP.get(obs.la_position) ??
                           obs.la_position}{" "}
                         &middot; {obs.course_name} {obs.section_name} &middot;{" "}
-                        {format(obs.time_start, "M/d")}
+                        {formatDateLA(obs.time_start)}
                       </p>
                     </div>
                   </div>
