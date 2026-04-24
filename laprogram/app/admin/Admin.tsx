@@ -36,7 +36,7 @@ export function Admin() {
           <ObservationAudit />
         </TabsContent>
 
-        <TabsContent value="signups" className="w-full">
+        <TabsContent value="signups" className="flex justify-center">
           <SignupsList />
         </TabsContent>
 

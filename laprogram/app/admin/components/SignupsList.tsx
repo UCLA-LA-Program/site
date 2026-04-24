@@ -224,7 +224,7 @@ export function SignupsList() {
   const countLabel = groupBy === "observer" ? "Observing" : "Observed by";
 
   return (
-    <div className="w-full space-y-3 px-2">
+    <div className="w-full max-w-6xl space-y-3 px-2">
       <div className="flex flex-wrap items-center gap-2">
         <ToggleGroup
           type="single"
