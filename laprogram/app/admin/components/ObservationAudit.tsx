@@ -126,7 +126,6 @@ export function ObservationAudit() {
   const peopleMap = new Map<string, GroupedPerson>();
   if (roster) {
     for (const u of roster) {
-      if (u.courses.length === 0) continue;
       const position =
         [...new Set(u.courses.map((c) => c.position))].join(",") || null;
       peopleMap.set(u.id, {
