@@ -16,10 +16,47 @@ import { useState, useEffect, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
+const LAST_EMAIL_KEY = "magic-link-last-email";
+
+async function fetchWaitSeconds(email: string): Promise<number> {
+  try {
+    const res = await fetch(
+      `/api/magic-link/status?email=${encodeURIComponent(email)}`,
+    );
+    if (!res.ok) return 0;
+    const data = (await res.json()) as { waitSeconds?: number };
+    return data.waitSeconds ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+function formatCooldown(seconds: number): string {
+  if (seconds < 60) return `${seconds}s`;
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return s === 0 ? `${m}m` : `${m}m ${s}s`;
+}
+
 export function Login({ callbackURL }: { callbackURL?: string }) {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [cooldown, setCooldown] = useState(0);
+
+  // On mount, ask the server about the last email used in this browser. If
+  // the server still has an active cooldown, restore the confirmation screen.
+  useEffect(() => {
+    const lastEmail = window.localStorage.getItem(LAST_EMAIL_KEY);
+    if (!lastEmail) return;
+    fetchWaitSeconds(lastEmail).then((wait) => {
+      if (wait > 0) {
+        setSubmittedEmail(lastEmail);
+        setCooldown(wait);
+      } else {
+        window.localStorage.removeItem(LAST_EMAIL_KEY);
+      }
+    });
+  }, []);
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -28,20 +65,40 @@ export function Login({ callbackURL }: { callbackURL?: string }) {
   }, [cooldown]);
 
   function sendLink(email: string) {
+    const normalized = email.trim().toLowerCase();
     startTransition(async () => {
+      // Pre-check: if the email is currently rate-limited, show the cooldown
+      // without falsely claiming we just sent a new link.
+      const preWait = await fetchWaitSeconds(normalized);
+      if (preWait > 0) {
+        window.localStorage.setItem(LAST_EMAIL_KEY, normalized);
+        setSubmittedEmail(email);
+        setCooldown(preWait);
+        return;
+      }
+
       const { error } = await authClient.signIn.magicLink({
-        email: email.trim().toLowerCase(),
+        email: normalized,
         callbackURL: callbackURL ?? "/",
       });
       if (error) {
         toast.error(error.message ?? "Something went wrong. Please try again.");
         return;
       }
-      startTransition(() => {
-        setSubmittedEmail(email);
-        setCooldown(15);
-      });
+
+      // After the send, the server now holds the next cooldown. Read it back
+      // so the button reflects the true wait.
+      const postWait = await fetchWaitSeconds(normalized);
+      window.localStorage.setItem(LAST_EMAIL_KEY, normalized);
+      setSubmittedEmail(email);
+      setCooldown(postWait);
     });
+  }
+
+  function resetEmail() {
+    setSubmittedEmail(null);
+    setCooldown(0);
+    window.localStorage.removeItem(LAST_EMAIL_KEY);
   }
 
   return (
@@ -76,13 +133,11 @@ export function Login({ callbackURL }: { callbackURL?: string }) {
                 ) : (
                   <RotateCw className="h-4 w-4" />
                 )}
-                {cooldown > 0 ? `Resend link (${cooldown}s)` : "Resend link"}
+                {cooldown > 0
+                  ? `Resend link (${formatCooldown(cooldown)})`
+                  : "Resend link"}
               </Button>
-              <Button
-                variant="ghost"
-                onClick={() => setSubmittedEmail(null)}
-                className="gap-2"
-              >
+              <Button variant="ghost" onClick={resetEmail} className="gap-2">
                 <ArrowLeft className="h-4 w-4" />
                 Use a different email
               </Button>

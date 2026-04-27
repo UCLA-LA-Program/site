@@ -7,6 +7,7 @@ import { Kysely } from "kysely";
 import { D1Dialect } from "kysely-d1";
 import { nextCookies } from "better-auth/next-js";
 import { sendMagicLink } from "./email";
+import { clearMagicLinkRateLimit } from "./magic-link-rate-limit";
 
 async function authBuilder() {
   const { env } = await getCloudflareContext({ async: true });
@@ -26,6 +27,24 @@ async function authBuilder() {
         dialect: new D1Dialect({ database: env.data }),
       }),
       type: "sqlite",
+    },
+    databaseHooks: {
+      session: {
+        create: {
+          after: async (session) => {
+            const email = await env.data
+              ?.prepare("SELECT email FROM user WHERE id = ?")
+              .bind(session.userId)
+              .first<{ email: string }>();
+            if (email?.email && env.config) {
+              await clearMagicLinkRateLimit(
+                env.config,
+                email.email.toLowerCase(),
+              );
+            }
+          },
+        },
+      },
     },
     plugins: [
       magicLink({

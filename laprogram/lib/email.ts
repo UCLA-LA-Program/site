@@ -1,25 +1,39 @@
 import "server-only";
 
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { reserveMagicLinkSend } from "./magic-link-rate-limit";
 
 export async function sendMagicLink(email: string, url: string) {
   const { env } = await getCloudflareContext({ async: true });
+  const normalized = email.trim().toLowerCase();
+
+  if (env.config) {
+    const allowed = await reserveMagicLinkSend(env.config, normalized);
+    if (!allowed) {
+      console.log(`Rate limit hit for magic link to ${normalized}`);
+      return;
+    }
+  }
 
   const name = await env.data
     ?.prepare("SELECT id, name FROM user WHERE email = ?")
-    .bind(email)
+    .bind(normalized)
     .first("name");
 
   if (!name) {
     console.log(
-      `User with email ${email} attempted to log in; no such user found`,
+      `User with email ${normalized} attempted to log in; no such user found`,
     );
     return;
   }
 
-  // just use console for development so we don't hit Postmark API
-  if (process.env.NODE_ENV === "development") {
-    console.log(url);
+  // In local dev (npm run dev) and local preview (npm run preview with
+  // NEXTJS_ENV=development in .dev.vars), log the link instead of emailing.
+  if (
+    process.env.NODE_ENV === "development" ||
+    process.env.NEXTJS_ENV === "development"
+  ) {
+    console.log(`Magic link for ${normalized}: ${url}`);
     return;
   }
 
