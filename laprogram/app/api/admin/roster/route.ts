@@ -15,8 +15,8 @@ type RosterRow = {
   name: string;
   email: string;
   image: string | null;
-  course_name: string | null;
-  position: string | null;
+  course_name: string;
+  position: string;
 };
 
 export async function GET() {
@@ -36,7 +36,7 @@ export async function GET() {
       `SELECT user.id, user.name, user.email, user.image,
               course.course_name, course.position
        FROM user
-       LEFT JOIN course ON course.userId = user.id
+       JOIN course ON course.userId = user.id
        ORDER BY user.name COLLATE NOCASE`,
     )
     .run<RosterRow>();
@@ -59,12 +59,10 @@ export async function GET() {
       };
       usersMap.set(row.id, user);
     }
-    if (row.course_name && row.position) {
-      user.courses.push({
-        course_name: row.course_name,
-        position: row.position,
-      });
-    }
+    user.courses.push({
+      course_name: row.course_name,
+      position: row.position,
+    });
   }
 
   return Response.json([...usersMap.values()]);
