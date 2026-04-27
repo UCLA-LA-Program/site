@@ -58,6 +58,19 @@ export async function POST(request: Request) {
       return new Response("Cannot observe yourself", { status: 400 });
     }
 
+    const existing = await db
+      .prepare(
+        "SELECT 1 FROM observation WHERE observer_id = ? AND availability_id = ? LIMIT 1",
+      )
+      .bind(observerId, availability_id)
+      .first();
+    if (existing) {
+      return new Response(
+        "You have already signed up to observe this availability slot",
+        { status: 400 },
+      );
+    }
+
     const quarterStart = await getQuarterStart(env);
     if (daysUntil(getObsDate(slot.week, slot.day, quarterStart)) <= 0) {
       return new Response("Cannot sign up for past observations", {
