@@ -73,9 +73,12 @@ export async function GET() {
         JOIN course ON availability.la_id = course.userId AND section.course_name = course.course_name
         WHERE availability.status = 'open'
         AND availability.la_id <> ?
+        AND availability.id NOT IN (
+          SELECT availability_id FROM observation WHERE observer_id = ?
+        )
         AND availability.week IN (${weeks.map(() => "?").join(", ")})`,
       )
-      .bind(session.user.id, ...weeks)
+      .bind(session.user.id, session.user.id, ...weeks)
       .all<ObservationAvailabilityRow>();
 
     if (!result) {
