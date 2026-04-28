@@ -86,14 +86,16 @@ export function Login({
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
-              <Turnstile
-                ref={turnstileRef}
-                siteKey={sitekey}
-                options={{ size: "flexible" }}
-                onSuccess={(token) => setTurnstileToken(token)}
-                onExpire={() => setTurnstileToken(null)}
-                onError={() => setTurnstileToken(null)}
-              />
+              {cooldown === 0 && (
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={sitekey}
+                  options={{ size: "flexible" }}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                />
+              )}
               <Button
                 variant="outline"
                 onClick={() => {
