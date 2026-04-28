@@ -4,7 +4,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
 import { v7 as uuidv7 } from "uuid";
 
-const MAX_SIZE = 7 * 1024 * 1024; // 7 MB limit
+// const MAX_SIZE = 7 * 1024 * 1024; // 7 MB limit
 
 export async function POST(request: Request) {
   try {
@@ -32,9 +32,11 @@ export async function POST(request: Request) {
       });
     }
 
+    /* Remove file size check for now
     if (file.size > MAX_SIZE) {
       return new Response("Cropped image must be under 7MB", { status: 400 });
     }
+    */
 
     const transformedImage = (
       await env.IMAGES?.input(file.stream())
