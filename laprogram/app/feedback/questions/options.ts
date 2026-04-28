@@ -29,6 +29,7 @@ export const ACTIVITY_OPTIONS = [
   },
   { value: "office_hours", label: "Office Hours" },
   { value: "study_session", label: "Review/Study Session" },
+  { value: "pss", label: "Problem-Solving Session" },
 ] as const;
 
 export const IMPROVEMENT_OPTIONS = [
