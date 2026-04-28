@@ -7,6 +7,7 @@ import {
   getObsDate,
   daysUntil,
 } from "@/lib/utils";
+import { OBSERVATION_FUTURE_LIMIT } from "@/lib/constants";
 
 export async function POST(request: Request) {
   try {
@@ -58,11 +59,44 @@ export async function POST(request: Request) {
       return new Response("Cannot observe yourself", { status: 400 });
     }
 
+    const existing = await db
+      .prepare(
+        "SELECT 1 FROM observation WHERE observer_id = ? AND availability_id = ? LIMIT 1",
+      )
+      .bind(observerId, availability_id)
+      .first();
+    if (existing) {
+      return new Response(
+        "You have already signed up to observe this availability slot",
+        { status: 400 },
+      );
+    }
+
     const quarterStart = await getQuarterStart(env);
     if (daysUntil(getObsDate(slot.week, slot.day, quarterStart)) <= 0) {
       return new Response("Cannot sign up for past observations", {
         status: 400,
       });
+    }
+
+    const observerObs = await db
+      .prepare(
+        `SELECT availability.week AS week, section.day AS day
+         FROM observation
+         JOIN availability ON observation.availability_id = availability.id
+         JOIN section ON availability.section_id = section.id
+         WHERE observation.observer_id = ?`,
+      )
+      .bind(observerId)
+      .all<{ week: string; day: string }>();
+    const futureCount = observerObs.results.filter(
+      (o) => daysUntil(getObsDate(o.week, o.day, quarterStart)) > 0,
+    ).length;
+    if (futureCount >= OBSERVATION_FUTURE_LIMIT) {
+      return new Response(
+        `You can only have ${OBSERVATION_FUTURE_LIMIT} upcoming observations at a time. Complete or cancel one before signing up for another.`,
+        { status: 400 },
+      );
     }
 
     const observationId = crypto.randomUUID();

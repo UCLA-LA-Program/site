@@ -18,7 +18,10 @@ import {
   FutureObservationsCard,
 } from "./components/ObservationCard";
 
-import { OBSERVATION_CHANGE_DAYS_LIMIT } from "@/lib/constants";
+import {
+  OBSERVATION_CHANGE_DAYS_LIMIT,
+  OBSERVATION_FUTURE_LIMIT,
+} from "@/lib/constants";
 import { TZDate } from "@date-fns/tz";
 
 type DateTab = { week: string; date: TZDate; label: string };
@@ -206,6 +209,12 @@ export function SignUp({
   const activeFuture = futureObs.filter((o) => !pendingRemoves.has(o.id));
   const pendingRemoveSlots = futureObs.filter((o) => pendingRemoves.has(o.id));
 
+  const upcomingCount =
+    upcomingObs.length +
+    futureObs.filter((o) => !pendingRemoves.has(o.id)).length +
+    pendingAdds.size;
+  const atLimit = upcomingCount >= OBSERVATION_FUTURE_LIMIT;
+
   if (!openData || !myObservations) {
     return <></>;
   }
@@ -230,6 +239,13 @@ export function SignUp({
             </a>{" "}
             to find out how many observations you need to complete.
           </p>
+          {atLimit && (
+            <div className="mb-3 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-900 dark:text-amber-200">
+              You&apos;ve reached the limit of {OBSERVATION_FUTURE_LIMIT}{" "}
+              upcoming observations. Complete or cancel one before signing up
+              for another.
+            </div>
+          )}
           {(activeFilters.length > 0 || activeNotes.length > 0) && (
             <div className="mb-5 flex flex-col gap-3">
               {activeFilters.length > 0 && (
@@ -328,6 +344,12 @@ export function SignUp({
                           variant="outline"
                           className="ml-4 shrink-0"
                           onClick={() => addSlot(slot.id)}
+                          disabled={atLimit}
+                          title={
+                            atLimit
+                              ? `Limit of ${OBSERVATION_FUTURE_LIMIT} upcoming observations reached.`
+                              : undefined
+                          }
                         >
                           <Plus className="size-3.5" />
                           Sign up
