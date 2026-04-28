@@ -1,19 +1,19 @@
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { z } from "zod";
 
-const bodySchema = z.object({
-  email: z.email(),
-  token: z.string().min(1),
-  callbackURL: z.string().optional(),
-});
+interface LoginPayload {
+  email: string;
+  token: string;
+  callbackURL?: string;
+}
 
 export async function POST(request: Request) {
-  const parsed = bodySchema.safeParse(await request.json().catch(() => null));
-  if (!parsed.success) {
+  const body = (await request.json()) as LoginPayload;
+  const { email, token, callbackURL } = body;
+
+  if (!email || !token) {
     return new Response("Invalid request body.", { status: 400 });
   }
-  const { email, token, callbackURL } = parsed.data;
 
   if (!process.env.TURNSTILE_SECRET_KEY) {
     return new Response("Turnstile is not configured.", { status: 500 });
@@ -41,10 +41,8 @@ export async function POST(request: Request) {
       },
       headers: await headers(),
     });
-  } catch (err) {
-    const message =
-      err instanceof Error ? err.message : "Failed to send magic link.";
-    return new Response(message, { status: 500 });
+  } catch {
+    return new Response("Failed to send magic link.", { status: 500 });
   }
 
   return new Response(null, { status: 200 });
