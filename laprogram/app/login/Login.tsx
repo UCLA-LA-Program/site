@@ -15,11 +15,13 @@ import { authClient } from "@/lib/auth-client";
 import { useState, useEffect, useTransition } from "react";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { Turnstile, useTurnstile } from "react-turnstile";
 
 export function Login({ callbackURL }: { callbackURL?: string }) {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [cooldown, setCooldown] = useState(0);
+  const turnstile = useTurnstile();
 
   useEffect(() => {
     if (cooldown <= 0) return;
@@ -124,6 +126,20 @@ export function Login({ callbackURL }: { callbackURL?: string }) {
                   placeholder="openquestion@g.ucla.edu"
                   required
                   autoFocus
+                />
+                <Turnstile
+                  sitekey="0x4AAAAAADFKq8nTE8GzmlJh"
+                  fixedSize={true}
+                  size="flexible"
+                  className="rounded-md"
+                  onVerify={(token) => {
+                    fetch("/login", {
+                      method: "POST",
+                      body: JSON.stringify({ token }),
+                    }).then((response) => {
+                      if (!response.ok) turnstile.reset();
+                    });
+                  }}
                 />
                 <Button type="submit" disabled={pending} className="gap-2">
                   Continue
