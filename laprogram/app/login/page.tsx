@@ -28,6 +28,9 @@ export default async function LoginPage({
   }
 
   return (
-    <Login callbackURL={redirectTo} sitekey={process.env.TURNSTILE_SITE_KEY} />
+    <Login
+      callbackURL={redirectTo}
+      sitekey={process.env.TURNSTILE_SITE_KEY ?? ""}
+    />
   );
 }
