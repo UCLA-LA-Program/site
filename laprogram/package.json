@@ -15,6 +15,7 @@
   "dependencies": {
     "@base-ui/react": "^1.4.0",
     "@date-fns/tz": "^1.4.1",
+    "@marsidev/react-turnstile": "^1.5.1",
     "@opennextjs/cloudflare": "^1.18.0",
     "@tanstack/react-form": "^1.28.5",
     "better-auth": "^1.5.5",
@@ -33,7 +34,6 @@
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-easy-crop": "^5.5.7",
-    "react-turnstile": "^1.1.5",
     "server-only": "^0.0.1",
     "shadcn": "^4.0.6",
     "sonner": "^2.0.7",
