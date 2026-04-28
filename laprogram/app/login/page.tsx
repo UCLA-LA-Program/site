@@ -27,5 +27,10 @@ export default async function LoginPage({
     redirect(redirectTo ?? "/");
   }
 
-  return <Login callbackURL={redirectTo} />;
+  return (
+    <Login
+      callbackURL={redirectTo}
+      sitekey={process.env.TURNSTILE_SITE_KEY ?? ""}
+    />
+  );
 }
