@@ -30,7 +30,7 @@ export default async function LoginPage({
   return (
     <Login
       callbackURL={redirectTo}
-      sitekey={process.env.TURNSTILE_SITE_KEY ?? ""}
+      sitekey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY ?? ""}
     />
   );
 }
