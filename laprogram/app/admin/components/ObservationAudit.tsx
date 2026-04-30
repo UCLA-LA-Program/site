@@ -192,7 +192,7 @@ export function ObservationAudit() {
       ...p,
       filteredRows,
       completedCount,
-      pendingCount: filteredRows.length - completedCount,
+      pendingCount: filteredRows.length,
     };
   });
 
@@ -216,9 +216,7 @@ export function ObservationAudit() {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
     } else {
       setSortKey(key);
-      setSortDir(
-        key === "completed" || key === "signed_up" ? "desc" : "asc",
-      );
+      setSortDir(key === "completed" || key === "signed_up" ? "desc" : "asc");
     }
   }
 
