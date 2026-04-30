@@ -31,8 +31,8 @@ export async function POST(request: Request) {
 
     await env.data
       ?.prepare(
-        `INSERT INTO feedback (id, recipientId, feedback) 
-      VALUES (?1, ?2, ?3)`,
+        `INSERT INTO feedback (id, recipientId, feedback, submitted_at)
+      VALUES (?1, ?2, ?3, datetime('now'))`,
       )
       .bind(uuidv7(), recipient?.results[0].id, JSON.stringify(feedback))
       .run();

@@ -202,6 +202,14 @@ export function ObservationAudit() {
     });
   }
 
+  function expandAll() {
+    setExpanded(new Set(sorted.map((p) => p.id)));
+  }
+
+  function collapseAll() {
+    setExpanded(new Set());
+  }
+
   async function confirmDelete() {
     if (!toDelete) return;
     setDeleting(true);
@@ -366,6 +374,14 @@ export function ObservationAudit() {
           <ToggleGroupItem value="done">Done</ToggleGroupItem>
           <ToggleGroupItem value="pending">Pending</ToggleGroupItem>
         </ToggleGroup>
+        <div className="ml-auto flex items-center gap-1">
+          <Button variant="ghost" size="sm" onClick={expandAll}>
+            Expand all
+          </Button>
+          <Button variant="ghost" size="sm" onClick={collapseAll}>
+            Collapse all
+          </Button>
+        </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-1.5">
