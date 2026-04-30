@@ -61,7 +61,7 @@ function formatTimeRange(time: string) {
 }
 
 type GroupBy = "observer" | "observee";
-type SortKey = "name" | "email" | "count";
+type SortKey = "name" | "email" | "completed" | "signed_up";
 type StatusFilter = "all" | "done" | "pending";
 
 type GroupedPerson = {
@@ -87,7 +87,7 @@ export function ObservationAudit() {
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [courseTypes, setCourseTypes] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("count");
+  const [sortKey, setSortKey] = useState<SortKey>("signed_up");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [toDelete, setToDelete] = useState<SignupRow | null>(null);
@@ -172,12 +172,42 @@ export function ObservationAudit() {
     return true;
   });
 
-  const sorted = [...filtered].sort((a, b) => {
+  function filterRowsFor(rows: SignupRow[]) {
+    return rows.filter((r) => {
+      if (
+        courseTypes.length > 0 &&
+        !courseTypes.includes(r.course_name.split(" ")[0])
+      )
+        return false;
+      if (statusFilter === "done" && !r.completed) return false;
+      if (statusFilter === "pending" && r.completed) return false;
+      return true;
+    });
+  }
+
+  const enriched = filtered.map((p) => {
+    const filteredRows = filterRowsFor(p.rows);
+    const completedCount = filteredRows.filter((r) => r.completed).length;
+    return {
+      ...p,
+      filteredRows,
+      completedCount,
+      pendingCount: filteredRows.length - completedCount,
+    };
+  });
+
+  const sorted = [...enriched].sort((a, b) => {
     const dir = sortDir === "asc" ? 1 : -1;
     if (sortKey === "name") return a.name.localeCompare(b.name) * dir;
     if (sortKey === "email") return a.email.localeCompare(b.email) * dir;
+    if (sortKey === "completed") {
+      return (
+        (a.completedCount - b.completedCount) * dir ||
+        a.name.localeCompare(b.name)
+      );
+    }
     return (
-      (a.rows.length - b.rows.length) * dir || a.name.localeCompare(b.name)
+      (a.pendingCount - b.pendingCount) * dir || a.name.localeCompare(b.name)
     );
   });
 
@@ -186,7 +216,9 @@ export function ObservationAudit() {
       setSortDir(sortDir === "asc" ? "desc" : "asc");
     } else {
       setSortKey(key);
-      setSortDir(key === "count" ? "desc" : "asc");
+      setSortDir(
+        key === "completed" || key === "signed_up" ? "desc" : "asc",
+      );
     }
   }
 
@@ -265,7 +297,6 @@ export function ObservationAudit() {
   }
 
   const otherLabel = groupBy === "observer" ? "Observee" : "Observer";
-  const countLabel = groupBy === "observer" ? "Observing" : "Observed by";
 
   return (
     <div className="w-full max-w-6xl space-y-3">
@@ -434,27 +465,22 @@ export function ObservationAudit() {
               <th className="pb-2 pr-2 font-medium">Roles</th>
               <th
                 className="cursor-pointer pb-2 pr-2 text-center font-medium select-none hover:text-foreground"
-                onClick={() => toggleSort("count")}
+                onClick={() => toggleSort("completed")}
               >
-                {countLabel}
-                {sortArrow("count")}
+                Completed{sortArrow("completed")}
+              </th>
+              <th
+                className="cursor-pointer pb-2 pr-2 text-center font-medium select-none hover:text-foreground"
+                onClick={() => toggleSort("signed_up")}
+              >
+                Signed up{sortArrow("signed_up")}
               </th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((p) => {
               const isOpen = expanded.has(p.id);
-              const rows = p.rows.filter((r) => {
-                if (
-                  courseTypes.length > 0 &&
-                  !courseTypes.includes(r.course_name.split(" ")[0])
-                )
-                  return false;
-                if (statusFilter === "done" && !r.completed) return false;
-                if (statusFilter === "pending" && r.completed) return false;
-                return true;
-              });
-              const doneCount = rows.filter((r) => r.completed).length;
+              const rows = p.filteredRows;
               const canExpand = rows.length > 0;
               return (
                 <Fragment key={p.id}>
@@ -481,19 +507,30 @@ export function ObservationAudit() {
                       {positionLabel(p.position)}
                     </td>
                     <td className="py-1.5 pr-2 text-center whitespace-nowrap">
-                      <span className="text-green-700 dark:text-green-400">
-                        {doneCount}
+                      <span
+                        className={
+                          p.completedCount > 0
+                            ? "text-green-700 dark:text-green-400"
+                            : "text-muted-foreground"
+                        }
+                      >
+                        {p.completedCount}
                       </span>
-                      <span className="text-muted-foreground">
-                        {" "}
-                        / {rows.length}
+                    </td>
+                    <td className="py-1.5 pr-2 text-center whitespace-nowrap">
+                      <span
+                        className={
+                          p.pendingCount > 0 ? "" : "text-muted-foreground"
+                        }
+                      >
+                        {p.pendingCount}
                       </span>
                     </td>
                   </tr>
                   {isOpen && canExpand && (
                     <tr className="border-b last:border-0 bg-muted/20">
                       <td />
-                      <td colSpan={4} className="py-2 pr-2">
+                      <td colSpan={5} className="py-2 pr-2">
                         <table className="w-full text-xs">
                           <thead>
                             <tr className="text-muted-foreground">
