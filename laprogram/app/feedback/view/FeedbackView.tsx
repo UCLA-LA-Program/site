@@ -29,7 +29,7 @@ interface TableDef {
   filter: (f: AnonFeedback) => boolean;
 }
 
-function buildTables(positions: Position[]): TableDef[] {
+export function buildTables(positions: Position[]): TableDef[] {
   const positionSet = new Set(positions.map((p) => p.position));
 
   if (positionSet.size === 0) {
