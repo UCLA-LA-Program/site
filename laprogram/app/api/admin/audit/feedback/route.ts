@@ -28,9 +28,7 @@ export async function GET(request: Request) {
       .bind(userId)
       .all<{ id: string; feedback: string }>(),
     env.data
-      .prepare(
-        `SELECT course_name, position FROM course WHERE userId = ?1`,
-      )
+      .prepare(`SELECT course_name, position FROM course WHERE userId = ?1`)
       .bind(userId)
       .all<Position>(),
   ]);
