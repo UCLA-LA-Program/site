@@ -7,6 +7,7 @@ import { AvailabilityAudit } from "./components/AvailabilityAudit";
 import { ObservationAudit } from "./components/ObservationAudit";
 import { FeedbackAudit } from "./components/FeedbackAudit";
 import { SyncTab } from "./components/SyncTab";
+import { ReportTab } from "./components/ReportTab";
 
 export function Admin() {
   return (
@@ -21,6 +22,7 @@ export function Admin() {
             <TabsTrigger value="feedback">Feedback</TabsTrigger>
             <TabsTrigger value="config">Configuration</TabsTrigger>
             <TabsTrigger value="sync">Airtable Sync</TabsTrigger>
+            <TabsTrigger value="reports">Reports</TabsTrigger>
           </TabsList>
         </div>
 
@@ -46,6 +48,10 @@ export function Admin() {
 
         <TabsContent value="sync" className="flex justify-center">
           <SyncTab />
+        </TabsContent>
+
+        <TabsContent value="reports" className="flex justify-center">
+          <ReportTab />
         </TabsContent>
       </Tabs>
     </div>
