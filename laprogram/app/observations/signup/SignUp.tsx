@@ -4,12 +4,13 @@ import { useState, useEffect } from "react";
 import useSWR from "swr";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus, CalendarClock, User, MapPin, Filter, Info } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Plus, CalendarClock, User, MapPin, Filter, Info, X } from "lucide-react";
 import { toast } from "sonner";
 import { fetcher, getObsDate, hydrateDates, nowLA } from "@/lib/utils";
 import { differenceInCalendarDays, isSameDay } from "date-fns";
 import { DAY_INDEX, LA_POSITION_MAP } from "@/lib/constants";
-import type { ObservationAvailability } from "@/types/db";
+import type { ObservationAvailability, Position } from "@/types/db";
 import type { MyObservation } from "./types";
 import { formatDateLA, formatTimeLA } from "./types";
 import { PendingChanges } from "./components/PendingChanges";
@@ -82,9 +83,23 @@ export function SignUp({
 
   const dateTabs = buildDateTabs(roundWeeks, quarterStart);
 
-  // Count slots per tab from ISO dates
+  function passesCourseFilter(courseName: string): boolean {
+    if (courseFilterMode === "observer") {
+      return myCourseNames.has(courseName);
+    }
+    if (courseFilterMode === "observee") {
+      return (
+        observeeCourses.length === 0 || observeeCourses.includes(courseName)
+      );
+    }
+    return true;
+  }
+
+  // Count slots per tab from ISO dates (after course filter so the tab
+  // counts match what the user will actually see).
   const slotCounts = new Map<string, number>();
   for (const slot of openSlots ?? []) {
+    if (!passesCourseFilter(slot.course_name)) continue;
     const label = formatDateLA(slot.time_start);
     slotCounts.set(label, (slotCounts.get(label) ?? 0) + 1);
   }
@@ -97,6 +112,23 @@ export function SignUp({
     (url: string) => fetcher(url).then(hydrateDates<MyObservation>),
     { suspense: true, fallbackData: [] },
   );
+  const { data: myCourses } = useSWR<Position[]>(
+    "/api/la/self",
+    fetcher,
+    { fallbackData: [] },
+  );
+
+  type CourseFilterMode = "all" | "observer" | "observee";
+  const [courseFilterMode, setCourseFilterMode] =
+    useState<CourseFilterMode>("all");
+  const [observeeCourses, setObserveeCourses] = useState<string[]>([]);
+
+  const myCourseNames = new Set(
+    (myCourses ?? []).map((c) => c.course_name),
+  );
+  const slotCourseOptions = Array.from(
+    new Set((openSlots ?? []).map((s) => s.course_name)),
+  ).sort();
 
   const [pendingAdds, setPendingAdds] = useState<Set<string>>(new Set());
   const [pendingRemoves, setPendingRemoves] = useState<Set<string>>(new Set());
@@ -177,12 +209,13 @@ export function SignUp({
   // Find selected date from tabs
   const selectedDate = dateTabs.find((t) => t.label === selectedTab)?.date;
 
-  // Filter slots for the active tab, excluding pending adds
+  // Filter slots for the active tab, excluding pending adds, applying course filter
   const available = (openSlots ?? []).filter(
     (s) =>
       selectedDate &&
       isSameDay(s.time_start, selectedDate) &&
-      !pendingAdds.has(s.id),
+      !pendingAdds.has(s.id) &&
+      passesCourseFilter(s.course_name),
   );
   const pendingAddSlots = (openSlots ?? []).filter((s) =>
     pendingAdds.has(s.id),
@@ -276,6 +309,66 @@ export function SignUp({
               )}
             </div>
           )}
+          <div className="mb-4 flex flex-wrap items-center gap-2">
+            <ToggleGroup
+              type="single"
+              value={courseFilterMode}
+              onValueChange={(v) => {
+                if (!v) return;
+                setCourseFilterMode(v as CourseFilterMode);
+                if (v !== "observee") setObserveeCourses([]);
+              }}
+              variant="outline"
+              size="sm"
+            >
+              <ToggleGroupItem value="all">All courses</ToggleGroupItem>
+              <ToggleGroupItem
+                value="observer"
+                disabled={myCourseNames.size === 0}
+              >
+                By observer
+              </ToggleGroupItem>
+              <ToggleGroupItem value="observee">By observee</ToggleGroupItem>
+            </ToggleGroup>
+          </div>
+          {courseFilterMode === "observee" &&
+            slotCourseOptions.length > 0 && (
+              <div className="mb-4 flex flex-wrap items-center gap-1.5">
+                {slotCourseOptions.map((course) => {
+                  const active = observeeCourses.includes(course);
+                  return (
+                    <button
+                      key={course}
+                      type="button"
+                      onClick={() =>
+                        setObserveeCourses(
+                          active
+                            ? observeeCourses.filter((c) => c !== course)
+                            : [...observeeCourses, course],
+                        )
+                      }
+                      className={`inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium ${
+                        active
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted hover:bg-muted/70"
+                      }`}
+                    >
+                      {course}
+                      {active && <X className="h-3 w-3 opacity-60" />}
+                    </button>
+                  );
+                })}
+                {observeeCourses.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => setObserveeCourses([])}
+                  >
+                    Clear
+                  </Button>
+                )}
+              </div>
+            )}
           {dateTabs.length === 0 ? (
             <p className="text-sm text-muted-foreground">
               No observation dates are currently available.

@@ -59,6 +59,18 @@ export async function POST(request: Request) {
       return new Response("Cannot observe yourself", { status: 400 });
     }
 
+    const sameSection = await db
+      .prepare(
+        "SELECT 1 FROM section_assignment WHERE la_id = ? AND section_id = ? LIMIT 1",
+      )
+      .bind(observerId, slot.section_id)
+      .first();
+    if (sameSection) {
+      return new Response("Cannot observe an LA in your own section", {
+        status: 400,
+      });
+    }
+
     const existing = await db
       .prepare(
         "SELECT 1 FROM observation WHERE observer_id = ? AND availability_id = ? LIMIT 1",
