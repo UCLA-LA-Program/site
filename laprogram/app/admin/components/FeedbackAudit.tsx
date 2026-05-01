@@ -206,24 +206,25 @@ export function FeedbackAudit() {
   const { data: roster } = useSWR<RosterUser[]>("/api/admin/roster", fetcher);
   const [selectedId, setSelectedId] = useState<string>("");
 
-  const userById = new Map((roster ?? []).map((u) => [u.id, u]));
-  const ids = (roster ?? []).map((u) => u.id);
+  const items = roster ?? [];
 
   return (
     <div className="w-full max-w-6xl space-y-6">
       <div className="space-y-3">
         <div className="flex flex-wrap items-center gap-2">
           <Combobox
-            items={ids}
-            value={selectedId}
-            onValueChange={(v: string | null) => setSelectedId(v ?? "")}
-            filter={(item: string, query: string) => {
-              const u = userById.get(item);
-              if (!u) return false;
+            items={items}
+            value={items.find((u) => u.id === selectedId) ?? null}
+            onValueChange={(u: RosterUser | null) =>
+              setSelectedId(u?.id ?? "")
+            }
+            itemToStringLabel={(u: RosterUser) => u.name}
+            itemToStringValue={(u: RosterUser) => u.id}
+            filter={(item: RosterUser, query: string) => {
               const q = query.toLowerCase();
               return (
-                u.name.toLowerCase().includes(q) ||
-                u.email.toLowerCase().includes(q)
+                item.name.toLowerCase().includes(q) ||
+                item.email.toLowerCase().includes(q)
               );
             }}
           >
@@ -232,17 +233,14 @@ export function FeedbackAudit() {
               <ComboboxEmpty>No users</ComboboxEmpty>
               <ComboboxList>
                 <ComboboxCollection>
-                  {(item: string) => {
-                    const u = userById.get(item);
-                    return (
-                      <ComboboxItem key={item} value={item}>
-                        {u?.name}{" "}
-                        <span className="text-muted-foreground">
-                          {u?.email}
-                        </span>
-                      </ComboboxItem>
-                    );
-                  }}
+                  {(item: RosterUser) => (
+                    <ComboboxItem key={item.id} value={item}>
+                      {item.name}{" "}
+                      <span className="text-muted-foreground">
+                        {item.email}
+                      </span>
+                    </ComboboxItem>
+                  )}
                 </ComboboxCollection>
               </ComboboxList>
             </ComboboxContent>
