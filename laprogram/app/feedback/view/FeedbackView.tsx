@@ -29,7 +29,7 @@ interface TableDef {
   filter: (f: AnonFeedback) => boolean;
 }
 
-function buildTables(positions: Position[]): TableDef[] {
+export function buildTables(positions: Position[]): TableDef[] {
   const positionSet = new Set(positions.map((p) => p.position));
 
   if (positionSet.size === 0) {
@@ -128,30 +128,24 @@ function downloadExcel(tables: TableDef[], feedback: AnonFeedback[]) {
   XLSX.writeFile(wb, "feedback.xlsx");
 }
 
-export function FeedbackView({ userId }: { userId?: string } = {}) {
+export function FeedbackView() {
   const [graphMode, setGraphMode] = useState<"none" | "bars" | "pie">("bars");
-  const { data: adminPayload } = useSWRImmutable<{
-    feedback: AnonFeedback[];
-    positions: Position[];
-  }>(
-    userId
-      ? `/api/admin/audit/feedback?userId=${encodeURIComponent(userId)}`
-      : null,
+  const { data: feedback } = useSWRImmutable<AnonFeedback[]>(
+    "/api/feedback",
     fetcher,
+    {
+      suspense: true,
+      fallbackData: [],
+    },
   );
-  const { data: ownFeedback } = useSWRImmutable<AnonFeedback[]>(
-    userId ? null : "/api/feedback",
+  const { data: positions } = useSWRImmutable<Position[]>(
+    "/api/la/self",
     fetcher,
-    { suspense: !userId, fallbackData: [] },
+    {
+      suspense: true,
+      fallbackData: [],
+    },
   );
-  const { data: ownPositions } = useSWRImmutable<Position[]>(
-    userId ? null : "/api/la/self",
-    fetcher,
-    { suspense: !userId, fallbackData: [] },
-  );
-
-  const feedback = userId ? adminPayload?.feedback : ownFeedback;
-  const positions = userId ? adminPayload?.positions : ownPositions;
 
   if (!feedback || !positions || positions.length === 0) return <></>;
 

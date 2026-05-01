@@ -14,9 +14,56 @@ import {
   ComboboxItem,
   ComboboxList,
 } from "@/components/ui/combobox";
-import { FeedbackView } from "@/app/feedback/view/FeedbackView";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { FeedbackTable } from "@/app/feedback/view/FeedbackTable";
+import { buildTables } from "@/app/feedback/view/FeedbackView";
+import type { AnonFeedback } from "@/app/feedback/view/columns";
+import type { Position } from "@/types/db";
 import type { RosterUser } from "@/app/api/admin/roster/route";
 import type { FeedbackUidRow } from "@/app/api/admin/audit/feedback-uids/route";
+
+function FeedbackTables({ userId }: { userId: string }) {
+  const { data } = useSWR<{
+    feedback: AnonFeedback[];
+    positions: Position[];
+  }>(`/api/admin/audit/feedback?userId=${encodeURIComponent(userId)}`, fetcher);
+
+  if (!data) {
+    return <p className="text-sm text-muted-foreground">Loading…</p>;
+  }
+  if (data.positions.length === 0) {
+    return (
+      <p className="text-sm text-muted-foreground">
+        This user has no course positions.
+      </p>
+    );
+  }
+
+  const tables = buildTables(data.positions);
+  if (tables.length === 0) {
+    return <p className="text-sm text-muted-foreground">No tables to show.</p>;
+  }
+
+  return (
+    <Tabs defaultValue={tables[0].id}>
+      <TabsList>
+        {tables.map((t) => (
+          <TabsTrigger key={t.id} value={t.id}>
+            {t.label}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {tables.map((t) => (
+        <TabsContent key={t.id} value={t.id}>
+          <FeedbackTable
+            columns={t.columns}
+            data={data.feedback.filter(t.filter)}
+          />
+        </TabsContent>
+      ))}
+    </Tabs>
+  );
+}
 
 function CopyButton({ text, disabled }: { text: string; disabled?: boolean }) {
   const [copied, setCopied] = useState(false);
@@ -211,7 +258,7 @@ export function FeedbackAudit() {
           )}
         </div>
         {selectedId ? (
-          <FeedbackView key={selectedId} userId={selectedId} />
+          <FeedbackTables key={selectedId} userId={selectedId} />
         ) : (
           <p className="text-sm text-muted-foreground">
             Select a user to view their feedback.
