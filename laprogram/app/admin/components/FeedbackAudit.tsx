@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import useSWR from "swr";
+import { Check, ChevronRight, Copy } from "lucide-react";
 import { fetcher } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,11 +18,43 @@ import { FeedbackView } from "@/app/feedback/view/FeedbackView";
 import type { RosterUser } from "@/app/api/admin/roster/route";
 import type { FeedbackUidRow } from "@/app/api/admin/audit/feedback-uids/route";
 
+function CopyButton({ text, disabled }: { text: string; disabled?: boolean }) {
+  const [copied, setCopied] = useState(false);
+  return (
+    <button
+      type="button"
+      disabled={disabled}
+      onClick={(e) => {
+        e.stopPropagation();
+        navigator.clipboard.writeText(text).then(() => {
+          setCopied(true);
+          setTimeout(() => setCopied(false), 1500);
+        });
+      }}
+      className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+      title="Copy"
+    >
+      {copied ? (
+        <>
+          <Check className="size-3" />
+          Copied
+        </>
+      ) : (
+        <>
+          <Copy className="size-3" />
+          Copy
+        </>
+      )}
+    </button>
+  );
+}
+
 function UidLists() {
   const { data: rows } = useSWR<FeedbackUidRow[]>(
     "/api/admin/audit/feedback-uids",
     fetcher,
   );
+  const [expanded, setExpanded] = useState<Set<string>>(new Set());
 
   if (!rows) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -50,30 +83,74 @@ function UidLists() {
     );
   }
 
+  function toggle(course: string) {
+    setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(course)) next.delete(course);
+      else next.add(course);
+      return next;
+    });
+  }
+
   return (
-    <div className="space-y-6">
-      {courses.map(([course, entry]) => (
-        <div key={course} className="space-y-2">
-          <h3 className="text-sm font-semibold">{course}</h3>
-          <div className="grid grid-cols-2 gap-4">
-            {(["mid_quarter", "end_of_quarter"] as const).map((type) => (
-              <div key={type}>
-                <div className="mb-1 flex items-baseline justify-between">
-                  <span className="text-xs font-medium text-muted-foreground">
-                    {type === "mid_quarter" ? "Mid-Quarter" : "End-of-Quarter"}
-                  </span>
-                  <span className="text-xs text-muted-foreground">
-                    {entry[type].length}
-                  </span>
-                </div>
-                <pre className="max-h-64 overflow-auto rounded-md border bg-muted/30 p-2 font-mono text-xs">
-                  {entry[type].length > 0 ? entry[type].join("\n") : "—"}
-                </pre>
+    <div className="space-y-4">
+      {courses.map(([course, entry]) => {
+        const isExpanded = expanded.has(course);
+        const courseAll = [...entry.mid_quarter, ...entry.end_of_quarter];
+        return (
+          <div key={course} className="space-y-2">
+            <div className="flex w-full items-center gap-1.5">
+              <button
+                type="button"
+                onClick={() => toggle(course)}
+                className="flex items-center gap-1.5 text-left text-sm font-semibold hover:text-muted-foreground"
+              >
+                <ChevronRight
+                  className={`size-4 text-muted-foreground transition-transform ${
+                    isExpanded ? "rotate-90" : ""
+                  }`}
+                />
+                {course}
+                <span className="text-xs font-normal text-muted-foreground">
+                  {entry.mid_quarter.length} mid ·{" "}
+                  {entry.end_of_quarter.length} end
+                </span>
+              </button>
+              <CopyButton
+                text={courseAll.join("\n")}
+                disabled={courseAll.length === 0}
+              />
+            </div>
+            {isExpanded && (
+              <div className="grid grid-cols-2 gap-4 pl-5">
+                {(["mid_quarter", "end_of_quarter"] as const).map((type) => (
+                  <div key={type}>
+                    <div className="mb-1 flex items-center justify-between">
+                      <span className="text-xs font-medium text-muted-foreground">
+                        {type === "mid_quarter"
+                          ? "Mid-Quarter"
+                          : "End-of-Quarter"}
+                      </span>
+                      <div className="flex items-center gap-1">
+                        <span className="text-xs text-muted-foreground">
+                          {entry[type].length}
+                        </span>
+                        <CopyButton
+                          text={entry[type].join("\n")}
+                          disabled={entry[type].length === 0}
+                        />
+                      </div>
+                    </div>
+                    <pre className="max-h-64 overflow-auto rounded-md border bg-muted/30 p-2 font-mono text-xs">
+                      {entry[type].length > 0 ? entry[type].join("\n") : "—"}
+                    </pre>
+                  </div>
+                ))}
               </div>
-            ))}
+            )}
           </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 }

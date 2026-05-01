@@ -22,7 +22,7 @@ export async function GET() {
 
   const result = await env.data
     .prepare(
-      `SELECT
+      `SELECT DISTINCT
          json_extract(f.feedback, '$.course') AS course,
          json_extract(f.feedback, '$.feedback_type') AS feedback_type,
          json_extract(f.feedback, '$.uid') AS uid
