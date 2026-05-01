@@ -76,9 +76,12 @@ export async function GET() {
         AND availability.id NOT IN (
           SELECT availability_id FROM observation WHERE observer_id = ?
         )
+        AND availability.section_id NOT IN (
+          SELECT section_id FROM section_assignment WHERE la_id = ?
+        )
         AND availability.week IN (${weeks.map(() => "?").join(", ")})`,
       )
-      .bind(session.user.id, session.user.id, ...weeks)
+      .bind(session.user.id, session.user.id, session.user.id, ...weeks)
       .all<ObservationAvailabilityRow>();
 
     if (!result) {
