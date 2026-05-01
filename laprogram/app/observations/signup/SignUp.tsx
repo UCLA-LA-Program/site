@@ -83,27 +83,6 @@ export function SignUp({
 
   const dateTabs = buildDateTabs(roundWeeks, quarterStart);
 
-  function passesCourseFilter(courseName: string): boolean {
-    if (courseFilterMode === "observer") {
-      return myCourseNames.has(courseName);
-    }
-    if (courseFilterMode === "observee") {
-      return (
-        observeeCourses.length === 0 || observeeCourses.includes(courseName)
-      );
-    }
-    return true;
-  }
-
-  // Count slots per tab from ISO dates (after course filter so the tab
-  // counts match what the user will actually see).
-  const slotCounts = new Map<string, number>();
-  for (const slot of openSlots ?? []) {
-    if (!passesCourseFilter(slot.course_name)) continue;
-    const label = formatDateLA(slot.time_start);
-    slotCounts.set(label, (slotCounts.get(label) ?? 0) + 1);
-  }
-
   const [activeTab, setActiveTab] = useState<string | null>(null);
   const selectedTab =
     activeTab ?? (dateTabs.length > 0 ? dateTabs[0].label : "");
@@ -129,6 +108,27 @@ export function SignUp({
   const slotCourseOptions = Array.from(
     new Set((openSlots ?? []).map((s) => s.course_name)),
   ).sort();
+
+  function passesCourseFilter(courseName: string): boolean {
+    if (courseFilterMode === "observer") {
+      return myCourseNames.has(courseName);
+    }
+    if (courseFilterMode === "observee") {
+      return (
+        observeeCourses.length === 0 || observeeCourses.includes(courseName)
+      );
+    }
+    return true;
+  }
+
+  // Count slots per tab from ISO dates (after course filter so the tab
+  // counts match what the user will actually see).
+  const slotCounts = new Map<string, number>();
+  for (const slot of openSlots ?? []) {
+    if (!passesCourseFilter(slot.course_name)) continue;
+    const label = formatDateLA(slot.time_start);
+    slotCounts.set(label, (slotCounts.get(label) ?? 0) + 1);
+  }
 
   const [pendingAdds, setPendingAdds] = useState<Set<string>>(new Set());
   const [pendingRemoves, setPendingRemoves] = useState<Set<string>>(new Set());
