@@ -16,8 +16,6 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 
-const TURNSTILE_DISABLED = process.env.NODE_ENV === "development";
-
 export function Login({
   callbackURL,
   sitekey,
@@ -28,9 +26,7 @@ export function Login({
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
   const [cooldown, setCooldown] = useState(0);
-  const [turnstileToken, setTurnstileToken] = useState<string | null>(
-    TURNSTILE_DISABLED ? "dev" : null,
-  );
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const turnstileRef = useRef<TurnstileInstance | null>(null);
 
   useEffect(() => {
@@ -40,7 +36,6 @@ export function Login({
   }, [cooldown]);
 
   function resetTurnstile() {
-    if (TURNSTILE_DISABLED) return;
     setTurnstileToken(null);
     turnstileRef.current?.reset();
   }
@@ -91,7 +86,7 @@ export function Login({
               </CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-3">
-              {cooldown === 0 && !TURNSTILE_DISABLED && (
+              {cooldown === 0 && (
                 <Turnstile
                   ref={turnstileRef}
                   siteKey={sitekey}
@@ -163,16 +158,14 @@ export function Login({
                   required
                   autoFocus
                 />
-                {!TURNSTILE_DISABLED && (
-                  <Turnstile
-                    ref={turnstileRef}
-                    siteKey={sitekey}
-                    options={{ size: "flexible" }}
-                    onSuccess={(token) => setTurnstileToken(token)}
-                    onExpire={() => setTurnstileToken(null)}
-                    onError={() => setTurnstileToken(null)}
-                  />
-                )}
+                <Turnstile
+                  ref={turnstileRef}
+                  siteKey={sitekey}
+                  options={{ size: "flexible" }}
+                  onSuccess={(token) => setTurnstileToken(token)}
+                  onExpire={() => setTurnstileToken(null)}
+                  onError={() => setTurnstileToken(null)}
+                />
                 <Button
                   type="submit"
                   disabled={pending || !turnstileToken}
