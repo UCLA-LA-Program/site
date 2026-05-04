@@ -45,13 +45,11 @@ function buildDateTabs(
 }
 
 export function SignUp({
-  activeRound,
   quarterStart,
-  roundWeeks,
+  weeks,
 }: {
-  activeRound: number;
   quarterStart: string;
-  roundWeeks: string[];
+  weeks: string[];
 }) {
   const { data: openData, mutate: mutateOpen } = useSWR<{
     slots: ObservationAvailability[];
@@ -80,7 +78,7 @@ export function SignUp({
   const activeFilters = openData?.filters ?? [];
   const activeNotes = openData?.notes ?? [];
 
-  const dateTabs = buildDateTabs(roundWeeks, quarterStart);
+  const dateTabs = buildDateTabs(weeks, quarterStart);
 
   // Count slots per tab from ISO dates
   const slotCounts = new Map<string, number>();
@@ -224,9 +222,7 @@ export function SignUp({
       <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
         {/* Left: available slots */}
         <div className="min-w-0 flex-1">
-          <h1 className="mb-2 text-2xl font-bold">
-            Observation Sign-Ups{activeRound > 0 && ` — Round ${activeRound}`}
-          </h1>
+          <h1 className="mb-2 text-2xl font-bold">Observation Sign-Ups</h1>
           <p className="mb-2 text-sm text-muted-foreground">
             Refer to{" "}
             <a
@@ -283,7 +279,7 @@ export function SignUp({
           ) : (
             <Tabs value={selectedTab} onValueChange={setActiveTab}>
               <div className="mb-4 space-y-2">
-                {roundWeeks.map((week) => (
+                {weeks.map((week) => (
                   <TabsList key={week} className="w-full justify-start">
                     <span className="px-2 text-xs text-muted-foreground">
                       Wk {week}

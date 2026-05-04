@@ -4,8 +4,9 @@ import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import {
   FEATURE_FLAGS,
-  OBSERVATION_ACTIVE_ROUND_KEY,
-  OBSERVATION_ROUND_WEEKS_PREFIX,
+  OBSERVATION_ENABLED_WEEKS_KEY,
+  OBSERVATION_WEEK_ALLOWLIST_PREFIX,
+  OBSERVATION_WEEK_RANGE,
   QUARTER_START_KEY,
 } from "@/lib/constants";
 
@@ -23,9 +24,10 @@ export async function GET() {
   const keys = [
     ...FEATURE_FLAGS.map((f) => f.key),
     QUARTER_START_KEY,
-    OBSERVATION_ACTIVE_ROUND_KEY,
-    `${OBSERVATION_ROUND_WEEKS_PREFIX}1`,
-    `${OBSERVATION_ROUND_WEEKS_PREFIX}2`,
+    OBSERVATION_ENABLED_WEEKS_KEY,
+    ...OBSERVATION_WEEK_RANGE.map(
+      (w) => `${OBSERVATION_WEEK_ALLOWLIST_PREFIX}${w}`,
+    ),
   ];
 
   const entries = Object.fromEntries(await env.config.get(keys));
