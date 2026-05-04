@@ -44,6 +44,20 @@ function positionLabel(p: string | null) {
   return parts.map((x) => LA_POSITION_MAP.get(x) ?? x).join(", ");
 }
 
+function formatSubmittedAt(s: string | null): string {
+  if (!s) return "—";
+  const iso = s.includes("T") ? s : s.replace(" ", "T") + "Z";
+  const date = new Date(iso);
+  if (isNaN(date.getTime())) return "—";
+  return date.toLocaleString("en-US", {
+    timeZone: "America/Los_Angeles",
+    month: "numeric",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 function formatTimeRange(time: string) {
   try {
     const [start, end] = parseSectionTime(time);
@@ -547,6 +561,9 @@ export function ObservationAudit() {
                               <th className="pb-1 pr-2 text-left font-medium">
                                 Status
                               </th>
+                              <th className="pb-1 pr-2 text-left font-medium">
+                                Submitted
+                              </th>
                               <th className="pb-1 pr-2 text-right font-medium">
                                 Actions
                               </th>
@@ -601,6 +618,11 @@ export function ObservationAudit() {
                                         Pending
                                       </span>
                                     )}
+                                  </td>
+                                  <td className="py-1 pr-2 whitespace-nowrap text-muted-foreground">
+                                    {r.completed
+                                      ? formatSubmittedAt(r.submitted_at)
+                                      : "—"}
                                   </td>
                                   <td className="py-1 pr-2 text-right">
                                     <Button

@@ -20,14 +20,16 @@ export type SignupRow = {
   time: string;
   week: string;
   completed: boolean;
+  submitted_at: string | null;
 };
 
-type SignupQueryRow = Omit<SignupRow, "completed">;
+type SignupQueryRow = Omit<SignupRow, "completed" | "submitted_at">;
 
 type FeedbackMatchRow = {
   observer_email: string | null;
   observee_id: string;
   obs_section: string | null;
+  submitted_at: string | null;
 };
 
 export async function GET() {
@@ -78,7 +80,8 @@ export async function GET() {
         `SELECT
            json_extract(feedback, '$.email') AS observer_email,
            recipientId AS observee_id,
-           json_extract(feedback, '$.obs_section') AS obs_section
+           json_extract(feedback, '$.obs_section') AS obs_section,
+           submitted_at AS submitted_at
          FROM feedback
          WHERE json_extract(feedback, '$.feedback_type') = 'la_observation'`,
       )
@@ -86,23 +89,29 @@ export async function GET() {
     getQuarterStart(env).catch(() => null),
   ]);
 
-  const completedKeys = new Set<string>();
+  const completedKeys = new Map<string, string | null>();
   for (const fb of feedbackResult.results) {
     if (!fb.observer_email || !fb.obs_section) continue;
-    completedKeys.add(
-      `${fb.observer_email.toLowerCase()}|${fb.observee_id}|${fb.obs_section}`,
-    );
+    const key = `${fb.observer_email.toLowerCase()}|${fb.observee_id}|${fb.obs_section}`;
+    const existing = completedKeys.get(key);
+    if (existing === undefined || (existing === null && fb.submitted_at)) {
+      completedKeys.set(key, fb.submitted_at);
+    }
   }
 
   const rows: SignupRow[] = signupsResult.results.map((r) => {
     let completed = false;
+    let submitted_at: string | null = null;
     if (quarterStart) {
       const obsDate = getObsDate(r.week, r.day, quarterStart);
       const expected = `${r.section_name} — ${formatDateLA(obsDate)}`;
       const key = `${r.observer_email.toLowerCase()}|${r.observee_id}|${expected}`;
-      completed = completedKeys.has(key);
+      if (completedKeys.has(key)) {
+        completed = true;
+        submitted_at = completedKeys.get(key) ?? null;
+      }
     }
-    return { ...r, completed };
+    return { ...r, completed, submitted_at };
   });
 
   return Response.json(rows);
