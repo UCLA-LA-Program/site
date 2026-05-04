@@ -3,10 +3,6 @@ import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { ObservationAvailabilityRow } from "@/types/db";
 import {
-  OBSERVATION_ACTIVE_ROUND_KEY,
-  OBSERVATION_ROUND_WEEKS_PREFIX,
-} from "@/lib/constants";
-import {
   getObsDate,
   getQuarterStart,
   daysUntil,
@@ -16,6 +12,7 @@ import {
   getApplicableRules,
   getApplicableNotes,
 } from "@/lib/observation-rules";
+import { getAccessibleWeeks } from "@/lib/observation-weeks";
 
 export async function GET() {
   try {
@@ -29,22 +26,10 @@ export async function GET() {
       return new Response("Unauthenticated user.", { status: 401 });
     }
 
-    const activeRound = await env.config.get(OBSERVATION_ACTIVE_ROUND_KEY);
-    if (!activeRound || activeRound === "0") {
-      return new Response("[]", { status: 200 });
-    }
-
-    const weeksRaw =
-      (await env.config.get(
-        `${OBSERVATION_ROUND_WEEKS_PREFIX}${activeRound}`,
-      )) ?? "";
-    const weeks = weeksRaw
-      .split(",")
-      .map((w) => w.trim())
-      .filter(Boolean);
+    const weeks = await getAccessibleWeeks(env, session.user.email);
 
     if (weeks.length === 0) {
-      return Response.json({ slots: [], filters: [] });
+      return Response.json({ slots: [], filters: [], notes: [] });
     }
 
     // Get observer's courses/positions to determine filtering rules and notes

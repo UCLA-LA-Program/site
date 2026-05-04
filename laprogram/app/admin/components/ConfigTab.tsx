@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import useSWRImmutable from "swr/immutable";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
@@ -12,10 +12,12 @@ import { Loader2, Volume2 } from "lucide-react";
 import { fetcher } from "@/lib/utils";
 import {
   FEATURE_FLAGS,
-  OBSERVATION_ACTIVE_ROUND_KEY,
-  OBSERVATION_ROUND_WEEKS_PREFIX,
+  OBSERVATION_ENABLED_WEEKS_KEY,
+  OBSERVATION_WEEK_ALLOWLIST_PREFIX,
+  OBSERVATION_WEEK_RANGE,
   QUARTER_START_KEY,
 } from "@/lib/constants";
+import { parseWeekList } from "@/lib/observation-weeks";
 
 type ConfigData = Record<string, string>;
 
@@ -134,50 +136,64 @@ export function ConfigTab() {
 
       <Card size="sm">
         <CardHeader>
-          <CardTitle>Observation Rounds</CardTitle>
+          <CardTitle>Observation Weeks</CardTitle>
         </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 justify-between mb-2">
-            <span className="text-sm font-medium shrink-0">Active round</span>
-            <RadioGroup
-              value={data[OBSERVATION_ACTIVE_ROUND_KEY] ?? "0"}
-              onValueChange={(v) => setValue(OBSERVATION_ACTIVE_ROUND_KEY, v)}
-              className="flex justify-end gap-4"
-            >
-              {[
-                { value: "0", label: "Disabled" },
-                { value: "1", label: "Round 1" },
-                { value: "2", label: "Round 2" },
-              ].map((opt) => (
-                <label
-                  key={opt.value}
-                  className="flex cursor-pointer items-center gap-1.5 text-sm"
-                >
-                  <RadioGroupItem value={opt.value} />
-                  {opt.label}
-                </label>
-              ))}
-            </RadioGroup>
-          </div>
-          {[1, 2].map((round) => {
-            const key = `${OBSERVATION_ROUND_WEEKS_PREFIX}${round}`;
+        <CardContent className="space-y-4">
+          {(() => {
+            const enabledSet = new Set(
+              parseWeekList(data[OBSERVATION_ENABLED_WEEKS_KEY]),
+            );
             return (
-              <div key={round} className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <span className="text-sm font-medium">Enabled weeks</span>
+                {OBSERVATION_WEEK_RANGE.map((w) => {
+                  const week = String(w);
+                  const checked = enabledSet.has(week);
+                  return (
+                    <label
+                      key={week}
+                      className="flex cursor-pointer items-center gap-1.5 text-sm"
+                    >
+                      <Checkbox
+                        checked={checked}
+                        onCheckedChange={() => {
+                          const next = new Set(enabledSet);
+                          if (checked) next.delete(week);
+                          else next.add(week);
+                          setValue(
+                            OBSERVATION_ENABLED_WEEKS_KEY,
+                            [...next]
+                              .sort((a, b) => parseInt(a) - parseInt(b))
+                              .join(","),
+                          );
+                        }}
+                      />
+                      {week}
+                    </label>
+                  );
+                })}
+              </div>
+            );
+          })()}
+          {parseWeekList(data[OBSERVATION_ENABLED_WEEKS_KEY]).map((week) => {
+            const allowlistKey = `${OBSERVATION_WEEK_ALLOWLIST_PREFIX}${week}`;
+            return (
+              <div key={week} className="space-y-1 rounded-md border p-3">
                 <label
-                  htmlFor={`round-weeks-${round}`}
-                  className="flex-1 text-sm font-medium"
+                  htmlFor={`week-allowlist-${week}`}
+                  className="text-sm font-medium"
                 >
-                  Round {round} weeks
+                  Week {week} allowlist
                   <span className="ml-2 text-xs text-muted-foreground">
-                    e.g. 3,4,5
+                    one email per line; leave empty for everyone
                   </span>
                 </label>
-                <Input
-                  id={`round-weeks-${round}`}
-                  className="w-32"
-                  placeholder="3,4"
-                  value={data[key] ?? ""}
-                  onChange={(e) => setValue(key, e.target.value)}
+                <Textarea
+                  id={`week-allowlist-${week}`}
+                  rows={3}
+                  placeholder={`alice@g.ucla.edu\nbob@g.ucla.edu`}
+                  value={data[allowlistKey] ?? ""}
+                  onChange={(e) => setValue(allowlistKey, e.target.value)}
                 />
               </div>
             );
