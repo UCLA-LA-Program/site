@@ -8,6 +8,7 @@ export type FeedbackUidRow = {
   uid: string | null;
   name: string | null;
   email: string | null;
+  mq_course_change: string | null;
 };
 
 export async function GET() {
@@ -29,7 +30,8 @@ export async function GET() {
          json_extract(f.feedback, '$.feedback_type') AS feedback_type,
          json_extract(f.feedback, '$.name') AS name,
          json_extract(f.feedback, '$.email') AS email,
-         json_extract(f.feedback, '$.uid') AS uid
+         json_extract(f.feedback, '$.uid') AS uid,
+         json_extract(f.feedback, '$.mq_course_change') AS mq_course_change
        FROM feedback f
        WHERE json_extract(f.feedback, '$.feedback_type') IN ('mid_quarter', 'end_of_quarter')
        ORDER BY course, feedback_type, uid`,

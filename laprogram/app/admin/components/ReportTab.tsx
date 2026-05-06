@@ -9,6 +9,7 @@ type UidInformation = {
   uid: string | null;
   name: string | null;
   email: string | null;
+  mq_course_change?: string | null;
 };
 
 function CopyButton({ text, disabled }: { text: string; disabled?: boolean }) {
@@ -42,10 +43,32 @@ function CopyButton({ text, disabled }: { text: string; disabled?: boolean }) {
   );
 }
 
-function downloadExcel(course: string, uids: UidInformation[], type: string) {
+function downloadExcel(
+  course: string,
+  uids: UidInformation[],
+  type: "mid_quarter" | "end_of_quarter",
+) {
   const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(uids);
-  XLSX.utils.book_append_sheet(wb, ws, "UIDs");
+  const uidRows = uids.map((u) => ({
+    uid: u.uid,
+    name: u.name,
+    email: u.email,
+  }));
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(uidRows), "UIDs");
+
+  if (type === "mid_quarter") {
+    const feedbackRows = uids
+      .filter((u) => u.mq_course_change && u.mq_course_change.trim() !== "")
+      .map((u) => ({
+        "What would you change about this course?": u.mq_course_change,
+      }));
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.json_to_sheet(feedbackRows),
+      "Course Change",
+    );
+  }
+
   XLSX.writeFile(wb, `${course} UIDs - ${type}.xlsx`);
 }
 
@@ -78,6 +101,9 @@ function UidLists() {
       uid: row.uid,
       name: row.name,
       email: row.email,
+      ...(row.feedback_type === "mid_quarter" && {
+        mq_course_change: row.mq_course_change,
+      }),
     });
   }
 
@@ -176,6 +202,11 @@ export function ReportTab() {
         <h2 className="text-lg font-semibold">
           Mid &amp; End-of-Quarter Feedback UIDs
         </h2>
+        <p className="text-xs text-muted-foreground">
+          Mid-quarter Excel exports include a second sheet with each
+          student&apos;s &ldquo;What would you change about this course?&rdquo;
+          response.
+        </p>
         <UidLists />
       </div>
     </div>
