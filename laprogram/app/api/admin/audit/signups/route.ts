@@ -21,15 +21,20 @@ export type SignupRow = {
   week: string;
   completed: boolean;
   submitted_at: string | null;
+  feedback: Record<string, unknown> | null;
 };
 
-type SignupQueryRow = Omit<SignupRow, "completed" | "submitted_at">;
+type SignupQueryRow = Omit<
+  SignupRow,
+  "completed" | "submitted_at" | "feedback"
+>;
 
 type FeedbackMatchRow = {
   observer_email: string | null;
   observee_id: string;
   obs_section: string | null;
   submitted_at: string | null;
+  feedback: string | null;
 };
 
 export async function GET() {
@@ -81,7 +86,8 @@ export async function GET() {
            json_extract(feedback, '$.email') AS observer_email,
            recipientId AS observee_id,
            json_extract(feedback, '$.obs_section') AS obs_section,
-           submitted_at AS submitted_at
+           submitted_at AS submitted_at,
+           feedback AS feedback
          FROM feedback
          WHERE json_extract(feedback, '$.feedback_type') = 'la_observation'`,
       )
@@ -89,29 +95,48 @@ export async function GET() {
     getQuarterStart(env).catch(() => null),
   ]);
 
-  const completedKeys = new Map<string, string | null>();
+  type CompletedEntry = {
+    submitted_at: string | null;
+    feedback: Record<string, unknown> | null;
+  };
+
+  const completedKeys = new Map<string, CompletedEntry>();
   for (const fb of feedbackResult.results) {
     if (!fb.observer_email || !fb.obs_section) continue;
     const key = `${fb.observer_email.toLowerCase()}|${fb.observee_id}|${fb.obs_section}`;
+    let parsed: Record<string, unknown> | null = null;
+    if (fb.feedback) {
+      try {
+        parsed = JSON.parse(fb.feedback) as Record<string, unknown>;
+      } catch {
+        parsed = null;
+      }
+    }
     const existing = completedKeys.get(key);
-    if (existing === undefined || (existing === null && fb.submitted_at)) {
-      completedKeys.set(key, fb.submitted_at);
+    if (
+      existing === undefined ||
+      (existing.submitted_at === null && fb.submitted_at)
+    ) {
+      completedKeys.set(key, { submitted_at: fb.submitted_at, feedback: parsed });
     }
   }
 
   const rows: SignupRow[] = signupsResult.results.map((r) => {
     let completed = false;
     let submitted_at: string | null = null;
+    let feedback: Record<string, unknown> | null = null;
     if (quarterStart) {
       const obsDate = getObsDate(r.week, r.day, quarterStart);
       const expected = `${r.section_name} — ${formatDateLA(obsDate)}`;
       const key = `${r.observer_email.toLowerCase()}|${r.observee_id}|${expected}`;
-      if (completedKeys.has(key)) {
+      const entry = completedKeys.get(key);
+      if (entry) {
         completed = true;
-        submitted_at = completedKeys.get(key) ?? null;
+        submitted_at = entry.submitted_at;
+        feedback = entry.feedback;
       }
     }
-    return { ...r, completed, submitted_at };
+    return { ...r, completed, submitted_at, feedback };
   });
 
   return Response.json(rows);

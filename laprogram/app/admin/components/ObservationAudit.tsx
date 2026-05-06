@@ -3,9 +3,10 @@
 import { Fragment, useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { Check, ChevronRight, Clock, Trash2, X } from "lucide-react";
+import { Check, ChevronRight, Clock, Eye, Trash2, X } from "lucide-react";
 import { fetcher, parseSectionTime, minutesToLabel } from "@/lib/utils";
 import { LA_POSITION_MAP } from "@/lib/constants";
+import { observationColumns } from "@/app/feedback/view/columns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
@@ -104,6 +105,9 @@ export function ObservationAudit() {
   const [sortKey, setSortKey] = useState<SortKey>("signed_up");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [expandedFeedback, setExpandedFeedback] = useState<Set<string>>(
+    new Set(),
+  );
   const [toDelete, setToDelete] = useState<SignupRow | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [toPair, setToPair] = useState<UnpairedFeedback | null>(null);
@@ -239,6 +243,15 @@ export function ObservationAudit() {
 
   function toggleExpand(id: string) {
     setExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function toggleFeedback(id: string) {
+    setExpandedFeedback((prev) => {
       const next = new Set(prev);
       if (next.has(id)) next.delete(id);
       else next.add(id);
@@ -583,11 +596,10 @@ export function ObservationAudit() {
                                 groupBy === "observer"
                                   ? r.observee_position
                                   : r.observer_position;
-                              return (
-                                <tr
-                                  key={r.id}
-                                  className="border-t border-border/50"
-                                >
+                              const hasFeedback = !!r.feedback;
+                              const fbOpen = expandedFeedback.has(r.id);
+                              const observationRow = (
+                                <tr className="border-t border-border/50">
                                   <td className="py-1 pr-2">
                                     <div className="font-medium">
                                       {otherName}
@@ -624,7 +636,24 @@ export function ObservationAudit() {
                                       ? formatSubmittedAt(r.submitted_at)
                                       : "—"}
                                   </td>
-                                  <td className="py-1 pr-2 text-right">
+                                  <td className="py-1 pr-2 text-right whitespace-nowrap">
+                                    {hasFeedback && (
+                                      <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          toggleFeedback(r.id);
+                                        }}
+                                        aria-label={
+                                          fbOpen
+                                            ? "Hide feedback"
+                                            : "View feedback"
+                                        }
+                                      >
+                                        <Eye className="size-4" />
+                                      </Button>
+                                    )}
                                     <Button
                                       size="sm"
                                       variant="ghost"
@@ -638,6 +667,19 @@ export function ObservationAudit() {
                                     </Button>
                                   </td>
                                 </tr>
+                              );
+                              const feedbackRow = fbOpen && r.feedback && (
+                                <tr>
+                                  <td colSpan={7} className="p-2">
+                                    <FeedbackDetails feedback={r.feedback} />
+                                  </td>
+                                </tr>
+                              );
+                              return (
+                                <Fragment key={r.id}>
+                                  {observationRow}
+                                  {feedbackRow}
+                                </Fragment>
                               );
                             })}
                           </tbody>
@@ -926,5 +968,37 @@ export function ObservationAudit() {
         </DialogContent>
       </Dialog>
     </div>
+  );
+}
+
+function FeedbackDetails({ feedback }: { feedback: Record<string, unknown> }) {
+  const entries = observationColumns
+    .map((col) => {
+      const raw = feedback[col.key];
+      const empty =
+        raw === undefined ||
+        raw === null ||
+        (typeof raw === "string" && raw.trim() === "");
+      return { col, raw, empty };
+    })
+    .filter((e) => !e.empty);
+
+  if (entries.length === 0) {
+    return (
+      <p className="text-xs text-muted-foreground">No feedback content.</p>
+    );
+  }
+
+  return (
+    <dl className="grid gap-2">
+      {entries.map(({ col, raw }) => (
+        <div key={col.key} className="rounded-md border bg-muted/30 p-2">
+          <dt className="text-xs font-medium text-muted-foreground">
+            {col.header}
+          </dt>
+          <dd>{col.render ? col.render(raw) : String(raw)}</dd>
+        </div>
+      ))}
+    </dl>
   );
 }
