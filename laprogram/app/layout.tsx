@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Space_Mono } from "next/font/google";
 import Link from "next/link";
 
 import "./globals.css";
@@ -22,6 +22,11 @@ export const metadata: Metadata = {
 };
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-sans" });
+const spaceMono = Space_Mono({
+  subsets: ["latin"],
+  weight: "400",
+  variable: "--font-mono",
+});
 
 export default async function RootLayout({
   children,
@@ -37,7 +42,11 @@ export default async function RootLayout({
     <html
       lang="en"
       suppressHydrationWarning
-      className={cn(inter.variable, "font-sans", "antialiased")}
+      className={cn(
+        inter.variable,
+        spaceMono.variable,
+        "font-sans antialiased",
+      )}
     >
       <body className="flex min-h-svh flex-col">
         <ThemeProvider>

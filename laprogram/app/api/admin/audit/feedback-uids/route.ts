@@ -6,6 +6,8 @@ export type FeedbackUidRow = {
   course: string | null;
   feedback_type: "mid_quarter" | "end_of_quarter";
   uid: string | null;
+  name: string | null;
+  email: string | null;
 };
 
 export async function GET() {
@@ -25,11 +27,11 @@ export async function GET() {
       `SELECT DISTINCT
          json_extract(f.feedback, '$.course') AS course,
          json_extract(f.feedback, '$.feedback_type') AS feedback_type,
+         json_extract(f.feedback, '$.name') AS name,
+         json_extract(f.feedback, '$.email') AS email,
          json_extract(f.feedback, '$.uid') AS uid
        FROM feedback f
        WHERE json_extract(f.feedback, '$.feedback_type') IN ('mid_quarter', 'end_of_quarter')
-         AND json_extract(f.feedback, '$.uid') IS NOT NULL
-         AND json_extract(f.feedback, '$.uid') != ''
        ORDER BY course, feedback_type, uid`,
     )
     .all<FeedbackUidRow>();

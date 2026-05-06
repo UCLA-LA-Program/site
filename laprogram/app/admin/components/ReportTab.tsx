@@ -1,8 +1,15 @@
 import { FeedbackUidRow } from "@/app/api/admin/audit/feedback-uids/route";
 import { fetcher } from "@/lib/utils";
-import { Check, Copy, ChevronRight } from "lucide-react";
+import { Check, Copy, ChevronRight, Download } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
+import * as XLSX from "xlsx";
+
+type UidInformation = {
+  uid: string | null;
+  name: string | null;
+  email: string | null;
+};
 
 function CopyButton({ text, disabled }: { text: string; disabled?: boolean }) {
   const [copied, setCopied] = useState(false);
@@ -35,6 +42,13 @@ function CopyButton({ text, disabled }: { text: string; disabled?: boolean }) {
   );
 }
 
+function downloadExcel(course: string, uids: UidInformation[], type: string) {
+  const wb = XLSX.utils.book_new();
+  const ws = XLSX.utils.json_to_sheet(uids);
+  XLSX.utils.book_append_sheet(wb, ws, "UIDs");
+  XLSX.writeFile(wb, `${course} UIDs - ${type}.xlsx`);
+}
+
 function UidLists() {
   const { data: rows } = useSWR<FeedbackUidRow[]>(
     "/api/admin/audit/feedback-uids",
@@ -48,20 +62,26 @@ function UidLists() {
 
   const byCourse = new Map<
     string,
-    { mid_quarter: string[]; end_of_quarter: string[] }
+    {
+      mid_quarter: UidInformation[];
+      end_of_quarter: UidInformation[];
+    }
   >();
   for (const row of rows) {
-    if (!row.uid) continue;
     const course = row.course ?? "(no course)";
     let entry = byCourse.get(course);
     if (!entry) {
       entry = { mid_quarter: [], end_of_quarter: [] };
       byCourse.set(course, entry);
     }
-    entry[row.feedback_type].push(row.uid);
+    entry[row.feedback_type].push({
+      uid: row.uid,
+      name: row.name,
+      email: row.email,
+    });
   }
 
-  const courses = [...byCourse].sort(([a], [b]) => a.localeCompare(b));
+  const courses = [...byCourse].sort();
 
   if (courses.length === 0) {
     return <p className="text-sm text-muted-foreground">No feedback yet.</p>;
@@ -118,10 +138,25 @@ function UidLists() {
                           text={entry[type].join("\n")}
                           disabled={entry[type].length === 0}
                         />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            downloadExcel(course, entry[type], type)
+                          }
+                          className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+                          title="Download Excel"
+                        >
+                          <Download className="size-3" />
+                          Download Excel
+                        </button>
                       </div>
                     </div>
                     <pre className="max-h-64 overflow-auto rounded-md border bg-muted/30 p-2 font-mono text-xs">
-                      {entry[type].length > 0 ? entry[type].join("\n") : "—"}
+                      {entry[type].length > 0
+                        ? entry[type]
+                            .map((u) => `${u.uid}\t${u.name}\t${u.email}`)
+                            .join("\n")
+                        : "—"}
                     </pre>
                   </div>
                 ))}
