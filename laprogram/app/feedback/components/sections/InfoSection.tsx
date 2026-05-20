@@ -20,12 +20,16 @@ export const InfoSection = withForm({
         {({ la, role, feedbackType, course }) =>
           la &&
           role === "student" &&
-          feedbackType === "mid_quarter" &&
+          (feedbackType === "mid_quarter" ||
+            feedbackType === "end_of_quarter") &&
           course.includes("CS 118") && (
             <>
               <FieldSeparator />
               <p className="rounded-md border border-primary/20 bg-primary/5 px-4 py-3 text-sm font-mono text-primary">
-                CTF Code: {"cs118{1/2way_f33dbACK}"}
+                CTF Code:{" "}
+                {feedbackType === "mid_quarter"
+                  ? "cs118{1/2way_f33dbACK}"
+                  : "cs118{thanks!-joy_and_arnav}"}
               </p>
             </>
           )
