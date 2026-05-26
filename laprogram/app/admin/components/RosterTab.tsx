@@ -15,7 +15,7 @@ import { X } from "lucide-react";
 import { LA_POSITION_MAP, IMAGE_SIZE } from "@/lib/constants";
 import { fetcher } from "@/lib/utils";
 import { formatName, getNamePart } from "@/lib/name";
-import { useTableSort } from "@/lib/use-table-sort";
+import { useTableSort } from "@/hooks/use-table-sort";
 import { Button } from "@/components/ui/button";
 import type { RosterUser } from "@/app/api/admin/roster/route";
 import Image from "next/image";

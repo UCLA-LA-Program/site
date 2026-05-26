@@ -1,6 +1,6 @@
 import { FeedbackUidRow } from "@/app/api/admin/audit/feedback-uids/route";
 import { fetcher } from "@/lib/utils";
-import { useToggleSet } from "@/lib/use-toggle-set";
+import { useToggleSet } from "@/hooks/use-toggle-set";
 import { Check, Copy, ChevronRight, Download } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
