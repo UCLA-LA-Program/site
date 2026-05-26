@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Input } from "@/components/ui/input";
 import {
   Combobox,
   ComboboxCollection,
@@ -21,6 +20,9 @@ import { Button } from "@/components/ui/button";
 import type { RosterUser } from "@/app/api/admin/roster/route";
 import Image from "next/image";
 import { NameSortHeader } from "./NameSortHeader";
+import { SearchBar } from "./SearchBar";
+import { PositionFilter } from "./PositionFilter";
+import { CourseTypeFilter } from "./CourseTypeFilter";
 
 type RosterSortKey = "first_name" | "last_name" | "email" | "courses";
 
@@ -97,26 +99,12 @@ export function RosterTab() {
   return (
     <div className="space-y-3 max-w-3xl self-center">
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search name or email…"
-            value={rosterQuery}
-            onChange={(e) => setRosterQuery(e.target.value)}
-            className="max-w-xs"
-          />
-          {rosterQuery && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setRosterQuery("")}
-            >
-              Clear
-            </Button>
-          )}
-          <span className="ml-auto self-center text-xs text-muted-foreground">
-            {filteredRoster.length} of {roster.length}
-          </span>
-        </div>
+        <SearchBar
+          query={rosterQuery}
+          setQuery={setRosterQuery}
+          filtered={filteredRoster.length}
+          total={roster.length}
+        />
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <Combobox
@@ -173,100 +161,17 @@ export function RosterTab() {
             </div>
           )}
         </div>
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Combobox
-              items={positionOptions}
-              multiple
-              value={rosterPositions}
-              onValueChange={(v: string[]) => setRosterPositions(v)}
-              filter={(item: string, query: string) => {
-                const label = LA_POSITION_MAP.get(item) ?? item;
-                return (
-                  item.toLowerCase().includes(query.toLowerCase()) ||
-                  label.toLowerCase().includes(query.toLowerCase())
-                );
-              }}
-            >
-              <ComboboxInput
-                placeholder="Filter roles…"
-                className="w-[28rem]"
-              />
-              <ComboboxContent>
-                <ComboboxEmpty>No roles</ComboboxEmpty>
-                <ComboboxList>
-                  <ComboboxCollection>
-                    {(item: string) => (
-                      <ComboboxItem key={item} value={item}>
-                        {LA_POSITION_MAP.get(item) ?? item}
-                      </ComboboxItem>
-                    )}
-                  </ComboboxCollection>
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
-            {rosterPositions.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setRosterPositions([])}
-              >
-                Clear
-              </Button>
-            )}
-          </div>
-          {rosterPositions.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {rosterPositions.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() =>
-                    setRosterPositions(rosterPositions.filter((x) => x !== p))
-                  }
-                  className="inline-flex items-center gap-1 rounded-sm bg-muted px-2 py-1 text-xs font-medium hover:bg-muted/70"
-                >
-                  {LA_POSITION_MAP.get(p) ?? p}
-                  <X className="h-3 w-3 opacity-60" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {courseTypeOptions.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() =>
-                setRosterCourseTypes(
-                  rosterCourseTypes.includes(t)
-                    ? rosterCourseTypes.filter((x) => x !== t)
-                    : [...rosterCourseTypes, t],
-                )
-              }
-              className={`inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium ${
-                rosterCourseTypes.includes(t)
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted hover:bg-muted/70"
-              }`}
-            >
-              {t}
-              {rosterCourseTypes.includes(t) && (
-                <X className="h-3 w-3 opacity-60" />
-              )}
-            </button>
-          ))}
-          {rosterCourseTypes.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setRosterCourseTypes([])}
-            >
-              Clear
-            </Button>
-          )}
-        </div>
+        <PositionFilter
+          options={positionOptions}
+          value={rosterPositions}
+          onChange={setRosterPositions}
+          inputClassName="w-[28rem]"
+        />
+        <CourseTypeFilter
+          options={courseTypeOptions}
+          value={rosterCourseTypes}
+          onChange={setRosterCourseTypes}
+        />
       </div>
       <table className="w-full table-fixed text-sm">
         <colgroup>

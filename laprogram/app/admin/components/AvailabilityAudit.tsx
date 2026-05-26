@@ -3,12 +3,16 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { ChevronDown, Pencil, X } from "lucide-react";
+import { ChevronDown, Pencil } from "lucide-react";
 import { fetcher, getCurrentWeek } from "@/lib/utils";
 import { formatName, getNamePart } from "@/lib/name";
 import { useTableSort } from "@/lib/use-table-sort";
+import { useToggleSet } from "@/lib/use-toggle-set";
 import { LA_POSITION_MAP, QUARTER_START_KEY } from "@/lib/constants";
 import { NameSortHeader } from "./NameSortHeader";
+import { SearchBar } from "./SearchBar";
+import { PositionFilter } from "./PositionFilter";
+import { CourseTypeFilter } from "./CourseTypeFilter";
 import { ScheduleCard } from "@/app/observations/schedule/ScheduleCard";
 import type { Section } from "@/types/db";
 import {
@@ -26,16 +30,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Combobox,
-  ComboboxCollection,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
-import { Input } from "@/components/ui/input";
 import type { AvailabilityAuditRow } from "@/app/api/admin/audit/availability/route";
 
 const RESET_POSITIONS = [...LA_POSITION_MAP.entries()].map(
@@ -64,7 +58,7 @@ export function AvailabilityAudit() {
   const [maxWeeks, setMaxWeeks] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const [resetPositions, setResetPositions] = useState<Set<string>>(new Set());
+  const [resetPositions, togglePosition] = useToggleSet<string>();
   const [confirmOpen, setConfirmOpen] = useState(false);
   const {
     sortKey,
@@ -95,15 +89,6 @@ export function AvailabilityAudit() {
     resetPositions.size === 0
       ? "All roles"
       : `${resetPositions.size} role${resetPositions.size === 1 ? "" : "s"}`;
-
-  function togglePosition(value: string) {
-    setResetPositions((prev) => {
-      const next = new Set(prev);
-      if (next.has(value)) next.delete(value);
-      else next.add(value);
-      return next;
-    });
-  }
 
   async function runReset() {
     setResetting(true);
@@ -225,105 +210,22 @@ export function AvailabilityAudit() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Input
-          placeholder="Search name or email…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="max-w-xs"
-        />
-        {query && (
-          <Button variant="ghost" size="sm" onClick={() => setQuery("")}>
-            Clear
-          </Button>
-        )}
-        <span className="ml-auto text-xs text-muted-foreground">
-          {entries.length} of {allEntries.length}
-        </span>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Combobox
-          items={positionOptions}
-          multiple
-          value={positionFilter}
-          onValueChange={(v: string[]) => setPositionFilter(v)}
-          filter={(item: string, query: string) => {
-            const label = LA_POSITION_MAP.get(item) ?? item;
-            return (
-              item.toLowerCase().includes(query.toLowerCase()) ||
-              label.toLowerCase().includes(query.toLowerCase())
-            );
-          }}
-        >
-          <ComboboxInput placeholder="Filter roles…" className="w-48" />
-          <ComboboxContent>
-            <ComboboxEmpty>No roles</ComboboxEmpty>
-            <ComboboxList>
-              <ComboboxCollection>
-                {(item: string) => (
-                  <ComboboxItem key={item} value={item}>
-                    {LA_POSITION_MAP.get(item) ?? item}
-                  </ComboboxItem>
-                )}
-              </ComboboxCollection>
-            </ComboboxList>
-          </ComboboxContent>
-        </Combobox>
-        {positionFilter.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setPositionFilter([])}
-          >
-            Clear
-          </Button>
-        )}
-      </div>
-      {positionFilter.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {positionFilter.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() =>
-                setPositionFilter(positionFilter.filter((x) => x !== p))
-              }
-              className="inline-flex items-center gap-1 rounded-sm bg-muted px-2 py-1 text-xs font-medium hover:bg-muted/70"
-            >
-              {LA_POSITION_MAP.get(p) ?? p}
-              <X className="h-3 w-3 opacity-60" />
-            </button>
-          ))}
-        </div>
-      )}
-      <div className="flex flex-wrap items-center gap-1.5">
-        {courseTypeOptions.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() =>
-              setCourseTypes(
-                courseTypes.includes(t)
-                  ? courseTypes.filter((x) => x !== t)
-                  : [...courseTypes, t],
-              )
-            }
-            className={`inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium ${
-              courseTypes.includes(t)
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/70"
-            }`}
-          >
-            {t}
-            {courseTypes.includes(t) && <X className="h-3 w-3 opacity-60" />}
-          </button>
-        ))}
-        {courseTypes.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={() => setCourseTypes([])}>
-            Clear
-          </Button>
-        )}
-      </div>
+      <SearchBar
+        query={query}
+        setQuery={setQuery}
+        filtered={entries.length}
+        total={allEntries.length}
+      />
+      <PositionFilter
+        options={positionOptions}
+        value={positionFilter}
+        onChange={setPositionFilter}
+      />
+      <CourseTypeFilter
+        options={courseTypeOptions}
+        value={courseTypes}
+        onChange={setCourseTypes}
+      />
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="max-weeks" className="text-sm text-muted-foreground">
           Show LAs with at least
