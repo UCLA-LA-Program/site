@@ -5,7 +5,10 @@ import useSWR from "swr";
 import { toast } from "sonner";
 import { ChevronDown, Pencil, X } from "lucide-react";
 import { fetcher, getCurrentWeek } from "@/lib/utils";
+import { formatName, getNamePart } from "@/lib/name";
+import { useTableSort } from "@/lib/use-table-sort";
 import { LA_POSITION_MAP, QUARTER_START_KEY } from "@/lib/constants";
+import { NameSortHeader } from "./NameSortHeader";
 import { ScheduleCard } from "@/app/observations/schedule/ScheduleCard";
 import type { Section } from "@/types/db";
 import {
@@ -63,8 +66,12 @@ export function AvailabilityAudit() {
   const [resetting, setResetting] = useState(false);
   const [resetPositions, setResetPositions] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [sortKey, setSortKey] = useState<SortKey>("first_name");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
+  const {
+    sortKey,
+    sortDir,
+    toggle: toggleSort,
+    arrow: sortArrow,
+  } = useTableSort<SortKey>("first_name", ["unavailable"]);
   const [compact, setCompact] = useState(false);
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [courseTypes, setCourseTypes] = useState<string[]>([]);
@@ -170,13 +177,6 @@ export function AvailabilityAudit() {
     return weeks.filter((w) => !e.weeks[w]).length;
   }
 
-  function getNamePart(name: string, part: "first" | "last") {
-    const parts = name.trim().split(/\s+/);
-    return part === "first"
-      ? (parts[0] ?? "")
-      : (parts[parts.length - 1] ?? "");
-  }
-
   const filtered = allEntries.filter((e) => {
     const q = query.trim().toLowerCase();
     if (
@@ -214,19 +214,6 @@ export function AvailabilityAudit() {
       ) * dir
     );
   });
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDir(key === "unavailable" ? "desc" : "asc");
-    }
-  }
-
-  function sortArrow(key: SortKey) {
-    return sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : "";
-  }
 
   if (allEntries.length === 0) {
     return (
@@ -515,19 +502,7 @@ export function AvailabilityAudit() {
           <thead>
             <tr className="border-b text-left text-muted-foreground">
               <th className="pb-2 pr-2 font-medium select-none">
-                <span
-                  className="cursor-pointer hover:text-foreground"
-                  onClick={() => toggleSort("first_name")}
-                >
-                  First{sortArrow("first_name")}
-                </span>
-                <span className="mx-1 text-muted-foreground/50">/</span>
-                <span
-                  className="cursor-pointer hover:text-foreground"
-                  onClick={() => toggleSort("last_name")}
-                >
-                  Last{sortArrow("last_name")}
-                </span>
+                <NameSortHeader toggle={toggleSort} arrow={sortArrow} />
               </th>
               <th className="pb-2 pr-2 font-medium">Email</th>
               <th className="pb-2 pr-2 font-medium">Section</th>
@@ -553,13 +528,10 @@ export function AvailabilityAudit() {
           <tbody>
             {entries.map((entry) => {
               const unavailable = getUnavailable(entry);
-              const parts = entry.la_name.trim().split(/\s+/);
-              const last = parts[parts.length - 1];
-              const first = parts.slice(0, -1).join(" ");
-              const displayName =
-                sortKey === "last_name"
-                  ? `${last}, ${first}`
-                  : `${first} ${last}`;
+              const displayName = formatName(
+                entry.la_name,
+                sortKey === "last_name",
+              );
               return (
                 <tr
                   key={`${entry.la_id}|${entry.section_id}`}

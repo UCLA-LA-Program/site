@@ -5,7 +5,10 @@ import useSWR from "swr";
 import { toast } from "sonner";
 import { Check, ChevronRight, Clock, Eye, Trash2, X } from "lucide-react";
 import { fetcher, parseSectionTime, minutesToLabel } from "@/lib/utils";
+import { formatName, getNamePart } from "@/lib/name";
+import { useTableSort } from "@/lib/use-table-sort";
 import { LA_POSITION_MAP } from "@/lib/constants";
+import { NameSortHeader } from "./NameSortHeader";
 import { observationColumns } from "@/app/feedback/view/columns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -83,12 +86,6 @@ type SortKey =
   | "completed"
   | "signed_up";
 
-function getNamePart(name: string, part: "first" | "last") {
-  const parts = name.trim().split(/\s+/);
-  return part === "first"
-    ? (parts[0] ?? "")
-    : (parts[parts.length - 1] ?? "");
-}
 type StatusFilter = "all" | "done" | "pending";
 
 type GroupedPerson = {
@@ -114,8 +111,12 @@ export function ObservationAudit() {
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [courseTypes, setCourseTypes] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("signed_up");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
+  const {
+    sortKey,
+    sortDir,
+    toggle: toggleSort,
+    arrow: sortArrow,
+  } = useTableSort<SortKey>("first_name", ["signed_up", "completed"]);
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [expandedFeedback, setExpandedFeedback] = useState<Set<string>>(
     new Set(),
@@ -251,18 +252,6 @@ export function ObservationAudit() {
       (a.pendingCount - b.pendingCount) * dir || a.name.localeCompare(b.name)
     );
   });
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDir(key === "completed" || key === "signed_up" ? "desc" : "asc");
-    }
-  }
-
-  const sortArrow = (key: SortKey) =>
-    sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : "";
 
   function toggleExpand(id: string) {
     setExpanded((prev) => {
@@ -498,22 +487,11 @@ export function ObservationAudit() {
             <tr className="border-b text-left text-muted-foreground">
               <th className="w-6 pb-2" />
               <th className="pb-2 pr-2 font-medium select-none">
-                <span className="mr-1 text-muted-foreground/70">
-                  {groupBy === "observer" ? "Observer:" : "Observee:"}
-                </span>
-                <span
-                  className="cursor-pointer hover:text-foreground"
-                  onClick={() => toggleSort("first_name")}
-                >
-                  First{sortArrow("first_name")}
-                </span>
-                <span className="mx-1 text-muted-foreground/50">/</span>
-                <span
-                  className="cursor-pointer hover:text-foreground"
-                  onClick={() => toggleSort("last_name")}
-                >
-                  Last{sortArrow("last_name")}
-                </span>
+                <NameSortHeader
+                  toggle={toggleSort}
+                  arrow={sortArrow}
+                  prefix={groupBy === "observer" ? "Observer:" : "Observee:"}
+                />
               </th>
               <th
                 className="cursor-pointer pb-2 pr-2 font-medium select-none hover:text-foreground"
@@ -559,15 +537,7 @@ export function ObservationAudit() {
                       )}
                     </td>
                     <td className="py-1.5 pr-2 font-medium">
-                      {(() => {
-                        const parts = p.name.trim().split(/\s+/);
-                        if (parts.length < 2) return p.name;
-                        const last = parts[parts.length - 1];
-                        const first = parts.slice(0, -1).join(" ");
-                        return sortKey === "last_name"
-                          ? `${last}, ${first}`
-                          : `${first} ${last}`;
-                      })()}
+                      {formatName(p.name, sortKey === "last_name")}
                     </td>
                     <td className="py-1.5 pr-2 text-muted-foreground">
                       {p.email}
