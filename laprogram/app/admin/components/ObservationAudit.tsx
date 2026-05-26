@@ -3,22 +3,20 @@
 import { Fragment, useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { Check, ChevronRight, Clock, Eye, Trash2, X } from "lucide-react";
+import { Check, ChevronRight, Clock, Eye, Trash2 } from "lucide-react";
 import { fetcher, parseSectionTime, minutesToLabel } from "@/lib/utils";
+import { formatName, getNamePart } from "@/lib/name";
+import { useTableSort } from "@/hooks/use-table-sort";
+import { useToggleSet } from "@/hooks/use-toggle-set";
 import { LA_POSITION_MAP } from "@/lib/constants";
+import { NameSortHeader } from "./NameSortHeader";
+import { SearchBar } from "./SearchBar";
+import { PositionFilter } from "./PositionFilter";
+import { CourseTypeFilter } from "./CourseTypeFilter";
 import { observationColumns } from "@/app/feedback/view/columns";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import {
-  Combobox,
-  ComboboxCollection,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
 import {
   Dialog,
   DialogContent,
@@ -59,6 +57,20 @@ function formatSubmittedAt(s: string | null): string {
   });
 }
 
+function StatusBadge({ completed }: { completed: boolean }) {
+  return completed ? (
+    <span className="inline-flex items-center gap-1 rounded-sm bg-green-500/15 px-1.5 py-0.5 text-green-700 dark:text-green-400">
+      <Check className="size-3" />
+      Done
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-muted-foreground">
+      <Clock className="size-3" />
+      Pending
+    </span>
+  );
+}
+
 function formatTimeRange(time: string) {
   try {
     const [start, end] = parseSectionTime(time);
@@ -76,7 +88,13 @@ function formatTimeRange(time: string) {
 }
 
 type GroupBy = "observer" | "observee";
-type SortKey = "name" | "email" | "completed" | "signed_up";
+type SortKey =
+  | "first_name"
+  | "last_name"
+  | "email"
+  | "completed"
+  | "signed_up";
+
 type StatusFilter = "all" | "done" | "pending";
 
 type GroupedPerson = {
@@ -102,12 +120,14 @@ export function ObservationAudit() {
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [courseTypes, setCourseTypes] = useState<string[]>([]);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
-  const [sortKey, setSortKey] = useState<SortKey>("signed_up");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
-  const [expandedFeedback, setExpandedFeedback] = useState<Set<string>>(
-    new Set(),
-  );
+  const {
+    sortKey,
+    sortDir,
+    toggle: toggleSort,
+    arrow: sortArrow,
+  } = useTableSort<SortKey>("first_name", ["signed_up", "completed"]);
+  const [expanded, toggleExpand, setExpanded] = useToggleSet<string>();
+  const [expandedFeedback, toggleFeedback] = useToggleSet<string>();
   const [toDelete, setToDelete] = useState<SignupRow | null>(null);
   const [deleting, setDeleting] = useState(false);
   const [toPair, setToPair] = useState<UnpairedFeedback | null>(null);
@@ -216,7 +236,18 @@ export function ObservationAudit() {
 
   const sorted = [...enriched].sort((a, b) => {
     const dir = sortDir === "asc" ? 1 : -1;
-    if (sortKey === "name") return a.name.localeCompare(b.name) * dir;
+    if (sortKey === "first_name")
+      return (
+        getNamePart(a.name, "first").localeCompare(
+          getNamePart(b.name, "first"),
+        ) * dir
+      );
+    if (sortKey === "last_name")
+      return (
+        getNamePart(a.name, "last").localeCompare(
+          getNamePart(b.name, "last"),
+        ) * dir
+      );
     if (sortKey === "email") return a.email.localeCompare(b.email) * dir;
     if (sortKey === "completed") {
       return (
@@ -228,36 +259,6 @@ export function ObservationAudit() {
       (a.pendingCount - b.pendingCount) * dir || a.name.localeCompare(b.name)
     );
   });
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir(sortDir === "asc" ? "desc" : "asc");
-    } else {
-      setSortKey(key);
-      setSortDir(key === "completed" || key === "signed_up" ? "desc" : "asc");
-    }
-  }
-
-  const sortArrow = (key: SortKey) =>
-    sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : "";
-
-  function toggleExpand(id: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
-
-  function toggleFeedback(id: string) {
-    setExpandedFeedback((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
 
   function expandAll() {
     setExpanded(new Set(sorted.map((p) => p.id)));
@@ -330,78 +331,17 @@ export function ObservationAudit() {
         sign-ups and may not be fully accurate. Expect these numbers to shift
         after the observation-flow refactor between round 1 and round 2.
       </div>
-      <div className="flex items-center gap-2">
-        <Input
-          placeholder="Search name or email…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="max-w-xs"
-        />
-        {query && (
-          <Button variant="ghost" size="sm" onClick={() => setQuery("")}>
-            Clear
-          </Button>
-        )}
-        <span className="ml-auto text-xs text-muted-foreground">
-          {sorted.length} of {peopleMap.size}
-        </span>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-2">
-        <Combobox
-          items={positionOptions}
-          multiple
-          value={positionFilter}
-          onValueChange={(v: string[]) => setPositionFilter(v)}
-          filter={(item: string, query: string) => {
-            const label = LA_POSITION_MAP.get(item) ?? item;
-            return (
-              item.toLowerCase().includes(query.toLowerCase()) ||
-              label.toLowerCase().includes(query.toLowerCase())
-            );
-          }}
-        >
-          <ComboboxInput placeholder="Filter roles…" className="w-48" />
-          <ComboboxContent>
-            <ComboboxEmpty>No roles</ComboboxEmpty>
-            <ComboboxList>
-              <ComboboxCollection>
-                {(item: string) => (
-                  <ComboboxItem key={item} value={item}>
-                    {LA_POSITION_MAP.get(item) ?? item}
-                  </ComboboxItem>
-                )}
-              </ComboboxCollection>
-            </ComboboxList>
-          </ComboboxContent>
-        </Combobox>
-        {positionFilter.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setPositionFilter([])}
-          >
-            Clear
-          </Button>
-        )}
-      </div>
-      {positionFilter.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {positionFilter.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() =>
-                setPositionFilter(positionFilter.filter((x) => x !== p))
-              }
-              className="inline-flex items-center gap-1 rounded-sm bg-muted px-2 py-1 text-xs font-medium hover:bg-muted/70"
-            >
-              {LA_POSITION_MAP.get(p) ?? p}
-              <X className="h-3 w-3 opacity-60" />
-            </button>
-          ))}
-        </div>
-      )}
+      <SearchBar
+        query={query}
+        setQuery={setQuery}
+        filtered={sorted.length}
+        total={peopleMap.size}
+      />
+      <PositionFilter
+        options={positionOptions}
+        value={positionFilter}
+        onChange={setPositionFilter}
+      />
 
       <div className="flex flex-wrap items-center gap-2">
         <ToggleGroup
@@ -440,46 +380,23 @@ export function ObservationAudit() {
         </div>
       </div>
 
-      <div className="flex flex-wrap items-center gap-1.5">
-        {courseTypeOptions.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() =>
-              setCourseTypes(
-                courseTypes.includes(t)
-                  ? courseTypes.filter((x) => x !== t)
-                  : [...courseTypes, t],
-              )
-            }
-            className={`inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium ${
-              courseTypes.includes(t)
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/70"
-            }`}
-          >
-            {t}
-            {courseTypes.includes(t) && <X className="h-3 w-3 opacity-60" />}
-          </button>
-        ))}
-        {courseTypes.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={() => setCourseTypes([])}>
-            Clear
-          </Button>
-        )}
-      </div>
+      <CourseTypeFilter
+        options={courseTypeOptions}
+        value={courseTypes}
+        onChange={setCourseTypes}
+      />
 
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
             <tr className="border-b text-left text-muted-foreground">
               <th className="w-6 pb-2" />
-              <th
-                className="cursor-pointer pb-2 pr-2 font-medium select-none hover:text-foreground"
-                onClick={() => toggleSort("name")}
-              >
-                {groupBy === "observer" ? "Observer" : "Observee"}
-                {sortArrow("name")}
+              <th className="pb-2 pr-2 font-medium select-none">
+                <NameSortHeader
+                  toggle={toggleSort}
+                  arrow={sortArrow}
+                  prefix={groupBy === "observer" ? "Observer:" : "Observee:"}
+                />
               </th>
               <th
                 className="cursor-pointer pb-2 pr-2 font-medium select-none hover:text-foreground"
@@ -524,7 +441,9 @@ export function ObservationAudit() {
                         />
                       )}
                     </td>
-                    <td className="py-1.5 pr-2 font-medium">{p.name}</td>
+                    <td className="py-1.5 pr-2 font-medium">
+                      {formatName(p.name, sortKey === "last_name")}
+                    </td>
                     <td className="py-1.5 pr-2 text-muted-foreground">
                       {p.email}
                     </td>
@@ -619,17 +538,7 @@ export function ObservationAudit() {
                                     {formatTimeRange(r.time)}
                                   </td>
                                   <td className="py-1 pr-2 whitespace-nowrap">
-                                    {r.completed ? (
-                                      <span className="inline-flex items-center gap-1 rounded-sm bg-green-500/15 px-1.5 py-0.5 text-green-700 dark:text-green-400">
-                                        <Check className="size-3" />
-                                        Done
-                                      </span>
-                                    ) : (
-                                      <span className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-muted-foreground">
-                                        <Clock className="size-3" />
-                                        Pending
-                                      </span>
-                                    )}
+                                    <StatusBadge completed={r.completed} />
                                   </td>
                                   <td className="py-1 pr-2 whitespace-nowrap text-muted-foreground">
                                     {r.completed
@@ -879,17 +788,7 @@ export function ObservationAudit() {
                             Wk {s.week} · {s.day} {formatTimeRange(s.time)}
                           </td>
                           <td className="px-2 py-1.5 whitespace-nowrap">
-                            {s.completed ? (
-                              <span className="inline-flex items-center gap-1 rounded-sm bg-green-500/15 px-1.5 py-0.5 text-green-700 dark:text-green-400">
-                                <Check className="size-3" />
-                                Done
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 rounded-sm bg-muted px-1.5 py-0.5 text-muted-foreground">
-                                <Clock className="size-3" />
-                                Pending
-                              </span>
-                            )}
+                            <StatusBadge completed={s.completed} />
                           </td>
                           <td className="px-2 py-1.5 text-right">
                             <Button

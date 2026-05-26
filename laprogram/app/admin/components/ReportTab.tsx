@@ -1,5 +1,6 @@
 import { FeedbackUidRow } from "@/app/api/admin/audit/feedback-uids/route";
 import { fetcher } from "@/lib/utils";
+import { useToggleSet } from "@/hooks/use-toggle-set";
 import { Check, Copy, ChevronRight, Download } from "lucide-react";
 import { useState } from "react";
 import useSWR from "swr";
@@ -77,7 +78,7 @@ function UidLists() {
     "/api/admin/audit/feedback-uids",
     fetcher,
   );
-  const [expanded, setExpanded] = useState<Set<string>>(new Set());
+  const [expanded, toggle] = useToggleSet<string>();
 
   if (!rows) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -111,15 +112,6 @@ function UidLists() {
 
   if (courses.length === 0) {
     return <p className="text-sm text-muted-foreground">No feedback yet.</p>;
-  }
-
-  function toggle(course: string) {
-    setExpanded((prev) => {
-      const next = new Set(prev);
-      if (next.has(course)) next.delete(course);
-      else next.add(course);
-      return next;
-    });
   }
 
   return (

@@ -3,9 +3,16 @@
 import { useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
-import { ChevronDown, Pencil, X } from "lucide-react";
+import { ChevronDown, Pencil } from "lucide-react";
 import { fetcher, getCurrentWeek } from "@/lib/utils";
+import { formatName, getNamePart } from "@/lib/name";
+import { useTableSort } from "@/hooks/use-table-sort";
+import { useToggleSet } from "@/hooks/use-toggle-set";
 import { LA_POSITION_MAP, QUARTER_START_KEY } from "@/lib/constants";
+import { NameSortHeader } from "./NameSortHeader";
+import { SearchBar } from "./SearchBar";
+import { PositionFilter } from "./PositionFilter";
+import { CourseTypeFilter } from "./CourseTypeFilter";
 import { ScheduleCard } from "@/app/observations/schedule/ScheduleCard";
 import type { Section } from "@/types/db";
 import {
@@ -23,28 +30,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  Combobox,
-  ComboboxCollection,
-  ComboboxContent,
-  ComboboxEmpty,
-  ComboboxInput,
-  ComboboxItem,
-  ComboboxList,
-} from "@/components/ui/combobox";
-import { Input } from "@/components/ui/input";
 import type { AvailabilityAuditRow } from "@/app/api/admin/audit/availability/route";
 
 const RESET_POSITIONS = [...LA_POSITION_MAP.entries()].map(
   ([value, label]) => ({ value, label }),
 );
 
-type SortKey =
-  | "first_name"
-  | "last_name"
-  | "unavailable_desc"
-  | "unavailable_asc"
-  | "position";
+type SortKey = "first_name" | "last_name" | "unavailable" | "position";
 
 type SectionEntry = {
   la_id: string;
@@ -66,9 +58,14 @@ export function AvailabilityAudit() {
   const [maxWeeks, setMaxWeeks] = useState<string>("");
   const [copied, setCopied] = useState(false);
   const [resetting, setResetting] = useState(false);
-  const [resetPositions, setResetPositions] = useState<Set<string>>(new Set());
+  const [resetPositions, togglePosition] = useToggleSet<string>();
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [sortKey, setSortKey] = useState<SortKey>("first_name");
+  const {
+    sortKey,
+    sortDir,
+    toggle: toggleSort,
+    arrow: sortArrow,
+  } = useTableSort<SortKey>("first_name", ["unavailable"]);
   const [compact, setCompact] = useState(false);
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [courseTypes, setCourseTypes] = useState<string[]>([]);
@@ -92,15 +89,6 @@ export function AvailabilityAudit() {
     resetPositions.size === 0
       ? "All roles"
       : `${resetPositions.size} role${resetPositions.size === 1 ? "" : "s"}`;
-
-  function togglePosition(value: string) {
-    setResetPositions((prev) => {
-      const next = new Set(prev);
-      if (next.has(value)) next.delete(value);
-      else next.add(value);
-      return next;
-    });
-  }
 
   async function runReset() {
     setResetting(true);
@@ -174,13 +162,6 @@ export function AvailabilityAudit() {
     return weeks.filter((w) => !e.weeks[w]).length;
   }
 
-  function getNamePart(name: string, part: "first" | "last") {
-    const parts = name.trim().split(/\s+/);
-    return part === "first"
-      ? (parts[0] ?? "")
-      : (parts[parts.length - 1] ?? "");
-  }
-
   const filtered = allEntries.filter((e) => {
     const q = query.trim().toLowerCase();
     if (
@@ -201,23 +182,23 @@ export function AvailabilityAudit() {
   });
 
   const entries = [...filtered].sort((a, b) => {
-    if (sortKey === "unavailable_desc")
-      return getUnavailable(b) - getUnavailable(a);
-    if (sortKey === "unavailable_asc")
-      return getUnavailable(a) - getUnavailable(b);
-    if (sortKey === "position") return a.position.localeCompare(b.position);
+    const dir = sortDir === "asc" ? 1 : -1;
+    if (sortKey === "unavailable")
+      return (getUnavailable(a) - getUnavailable(b)) * dir;
+    if (sortKey === "position")
+      return a.position.localeCompare(b.position) * dir;
     if (sortKey === "last_name")
-      return getNamePart(a.la_name, "last").localeCompare(
-        getNamePart(b.la_name, "last"),
+      return (
+        getNamePart(a.la_name, "last").localeCompare(
+          getNamePart(b.la_name, "last"),
+        ) * dir
       );
-    return getNamePart(a.la_name, "first").localeCompare(
-      getNamePart(b.la_name, "first"),
+    return (
+      getNamePart(a.la_name, "first").localeCompare(
+        getNamePart(b.la_name, "first"),
+      ) * dir
     );
   });
-
-  function sortArrow(key: SortKey) {
-    return sortKey === key ? " ↓" : "";
-  }
 
   if (allEntries.length === 0) {
     return (
@@ -229,105 +210,22 @@ export function AvailabilityAudit() {
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center gap-2">
-        <Input
-          placeholder="Search name or email…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="max-w-xs"
-        />
-        {query && (
-          <Button variant="ghost" size="sm" onClick={() => setQuery("")}>
-            Clear
-          </Button>
-        )}
-        <span className="ml-auto text-xs text-muted-foreground">
-          {entries.length} of {allEntries.length}
-        </span>
-      </div>
-      <div className="flex flex-wrap items-center gap-2">
-        <Combobox
-          items={positionOptions}
-          multiple
-          value={positionFilter}
-          onValueChange={(v: string[]) => setPositionFilter(v)}
-          filter={(item: string, query: string) => {
-            const label = LA_POSITION_MAP.get(item) ?? item;
-            return (
-              item.toLowerCase().includes(query.toLowerCase()) ||
-              label.toLowerCase().includes(query.toLowerCase())
-            );
-          }}
-        >
-          <ComboboxInput placeholder="Filter roles…" className="w-48" />
-          <ComboboxContent>
-            <ComboboxEmpty>No roles</ComboboxEmpty>
-            <ComboboxList>
-              <ComboboxCollection>
-                {(item: string) => (
-                  <ComboboxItem key={item} value={item}>
-                    {LA_POSITION_MAP.get(item) ?? item}
-                  </ComboboxItem>
-                )}
-              </ComboboxCollection>
-            </ComboboxList>
-          </ComboboxContent>
-        </Combobox>
-        {positionFilter.length > 0 && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => setPositionFilter([])}
-          >
-            Clear
-          </Button>
-        )}
-      </div>
-      {positionFilter.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {positionFilter.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() =>
-                setPositionFilter(positionFilter.filter((x) => x !== p))
-              }
-              className="inline-flex items-center gap-1 rounded-sm bg-muted px-2 py-1 text-xs font-medium hover:bg-muted/70"
-            >
-              {LA_POSITION_MAP.get(p) ?? p}
-              <X className="h-3 w-3 opacity-60" />
-            </button>
-          ))}
-        </div>
-      )}
-      <div className="flex flex-wrap items-center gap-1.5">
-        {courseTypeOptions.map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() =>
-              setCourseTypes(
-                courseTypes.includes(t)
-                  ? courseTypes.filter((x) => x !== t)
-                  : [...courseTypes, t],
-              )
-            }
-            className={`inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium ${
-              courseTypes.includes(t)
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted hover:bg-muted/70"
-            }`}
-          >
-            {t}
-            {courseTypes.includes(t) && <X className="h-3 w-3 opacity-60" />}
-          </button>
-        ))}
-        {courseTypes.length > 0 && (
-          <Button variant="ghost" size="sm" onClick={() => setCourseTypes([])}>
-            Clear
-          </Button>
-        )}
-      </div>
+      <SearchBar
+        query={query}
+        setQuery={setQuery}
+        filtered={entries.length}
+        total={allEntries.length}
+      />
+      <PositionFilter
+        options={positionOptions}
+        value={positionFilter}
+        onChange={setPositionFilter}
+      />
+      <CourseTypeFilter
+        options={courseTypeOptions}
+        value={courseTypes}
+        onChange={setCourseTypes}
+      />
       <div className="flex flex-wrap items-center gap-2">
         <label htmlFor="max-weeks" className="text-sm text-muted-foreground">
           Show LAs with at least
@@ -505,45 +403,22 @@ export function AvailabilityAudit() {
           </colgroup>
           <thead>
             <tr className="border-b text-left text-muted-foreground">
-              <th className="cursor-pointer pb-2 pr-2 font-medium select-none">
-                <span
-                  className="hover:text-foreground"
-                  onClick={() => setSortKey("first_name")}
-                >
-                  First{sortArrow("first_name")}
-                </span>
-                <span className="mx-1 text-muted-foreground/50">/</span>
-                <span
-                  className="hover:text-foreground"
-                  onClick={() => setSortKey("last_name")}
-                >
-                  Last{sortArrow("last_name")}
-                </span>
+              <th className="pb-2 pr-2 font-medium select-none">
+                <NameSortHeader toggle={toggleSort} arrow={sortArrow} />
               </th>
               <th className="pb-2 pr-2 font-medium">Email</th>
               <th className="pb-2 pr-2 font-medium">Section</th>
               <th
-                className="cursor-pointer whitespace-nowrap pb-2 pr-2 font-medium"
-                onClick={() => setSortKey("position")}
+                className="cursor-pointer whitespace-nowrap pb-2 pr-2 font-medium select-none hover:text-foreground"
+                onClick={() => toggleSort("position")}
               >
                 Position{sortArrow("position")}
               </th>
               <th
-                className="cursor-pointer whitespace-nowrap pb-2 px-1 text-center font-medium"
-                onClick={() =>
-                  setSortKey(
-                    sortKey === "unavailable_desc"
-                      ? "unavailable_asc"
-                      : "unavailable_desc",
-                  )
-                }
+                className="cursor-pointer whitespace-nowrap pb-2 px-1 text-center font-medium select-none hover:text-foreground"
+                onClick={() => toggleSort("unavailable")}
               >
-                Total
-                {sortKey === "unavailable_desc"
-                  ? " ↓"
-                  : sortKey === "unavailable_asc"
-                    ? " ↑"
-                    : ""}
+                Total{sortArrow("unavailable")}
               </th>
               {weeks.map((w) => (
                 <th key={w} className="pb-2 px-1 text-center font-medium">
@@ -555,13 +430,10 @@ export function AvailabilityAudit() {
           <tbody>
             {entries.map((entry) => {
               const unavailable = getUnavailable(entry);
-              const parts = entry.la_name.trim().split(/\s+/);
-              const last = parts[parts.length - 1];
-              const first = parts.slice(0, -1).join(" ");
-              const displayName =
-                sortKey === "last_name"
-                  ? `${last}, ${first}`
-                  : `${first} ${last}`;
+              const displayName = formatName(
+                entry.la_name,
+                sortKey === "last_name",
+              );
               return (
                 <tr
                   key={`${entry.la_id}|${entry.section_id}`}

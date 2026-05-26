@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import useSWR from "swr";
-import { Input } from "@/components/ui/input";
 import {
   Combobox,
   ComboboxCollection,
@@ -15,9 +14,15 @@ import {
 import { X } from "lucide-react";
 import { LA_POSITION_MAP, IMAGE_SIZE } from "@/lib/constants";
 import { fetcher } from "@/lib/utils";
+import { formatName, getNamePart } from "@/lib/name";
+import { useTableSort } from "@/hooks/use-table-sort";
 import { Button } from "@/components/ui/button";
 import type { RosterUser } from "@/app/api/admin/roster/route";
 import Image from "next/image";
+import { NameSortHeader } from "./NameSortHeader";
+import { SearchBar } from "./SearchBar";
+import { PositionFilter } from "./PositionFilter";
+import { CourseTypeFilter } from "./CourseTypeFilter";
 
 type RosterSortKey = "first_name" | "last_name" | "email" | "courses";
 
@@ -27,9 +32,12 @@ export function RosterTab() {
   const [rosterCourseTypes, setRosterCourseTypes] = useState<string[]>([]);
   const [rosterCourses, setRosterCourses] = useState<string[]>([]);
   const [rosterPositions, setRosterPositions] = useState<string[]>([]);
-  const [rosterSortKey, setRosterSortKey] =
-    useState<RosterSortKey>("first_name");
-  const [rosterSortDir, setRosterSortDir] = useState<"asc" | "desc">("asc");
+  const {
+    sortKey,
+    sortDir,
+    toggle: toggleSort,
+    arrow: sortArrow,
+  } = useTableSort<RosterSortKey>("first_name");
 
   if (!roster) {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
@@ -78,54 +86,25 @@ export function RosterTab() {
       return true;
     })
     .sort((a, b) => {
-      const dir = rosterSortDir === "asc" ? 1 : -1;
+      const dir = sortDir === "asc" ? 1 : -1;
       const get = (u: RosterUser) => {
-        if (rosterSortKey === "courses")
+        if (sortKey === "courses")
           return u.courses.map((c) => c.course_name).join(",");
-        if (rosterSortKey === "email") return u.email ?? "";
-        const parts = u.name.trim().split(/\s+/);
-        return rosterSortKey === "first_name"
-          ? (parts[0] ?? "")
-          : (parts[parts.length - 1] ?? "");
+        if (sortKey === "email") return u.email ?? "";
+        return getNamePart(u.name, sortKey === "last_name" ? "last" : "first");
       };
       return get(a).localeCompare(get(b)) * dir;
     });
 
-  function toggleRosterSort(key: RosterSortKey) {
-    if (rosterSortKey === key) {
-      setRosterSortDir(rosterSortDir === "asc" ? "desc" : "asc");
-    } else {
-      setRosterSortKey(key);
-      setRosterSortDir("asc");
-    }
-  }
-
-  const sortArrow = (key: RosterSortKey) =>
-    rosterSortKey === key ? (rosterSortDir === "asc" ? " ↑" : " ↓") : "";
-
   return (
     <div className="space-y-3 max-w-3xl self-center">
       <div className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Input
-            placeholder="Search name or email…"
-            value={rosterQuery}
-            onChange={(e) => setRosterQuery(e.target.value)}
-            className="max-w-xs"
-          />
-          {rosterQuery && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setRosterQuery("")}
-            >
-              Clear
-            </Button>
-          )}
-          <span className="ml-auto self-center text-xs text-muted-foreground">
-            {filteredRoster.length} of {roster.length}
-          </span>
-        </div>
+        <SearchBar
+          query={rosterQuery}
+          setQuery={setRosterQuery}
+          filtered={filteredRoster.length}
+          total={roster.length}
+        />
         <div className="space-y-1.5">
           <div className="flex items-center gap-2">
             <Combobox
@@ -182,100 +161,17 @@ export function RosterTab() {
             </div>
           )}
         </div>
-        <div className="space-y-1.5">
-          <div className="flex items-center gap-2">
-            <Combobox
-              items={positionOptions}
-              multiple
-              value={rosterPositions}
-              onValueChange={(v: string[]) => setRosterPositions(v)}
-              filter={(item: string, query: string) => {
-                const label = LA_POSITION_MAP.get(item) ?? item;
-                return (
-                  item.toLowerCase().includes(query.toLowerCase()) ||
-                  label.toLowerCase().includes(query.toLowerCase())
-                );
-              }}
-            >
-              <ComboboxInput
-                placeholder="Filter roles…"
-                className="w-[28rem]"
-              />
-              <ComboboxContent>
-                <ComboboxEmpty>No roles</ComboboxEmpty>
-                <ComboboxList>
-                  <ComboboxCollection>
-                    {(item: string) => (
-                      <ComboboxItem key={item} value={item}>
-                        {LA_POSITION_MAP.get(item) ?? item}
-                      </ComboboxItem>
-                    )}
-                  </ComboboxCollection>
-                </ComboboxList>
-              </ComboboxContent>
-            </Combobox>
-            {rosterPositions.length > 0 && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => setRosterPositions([])}
-              >
-                Clear
-              </Button>
-            )}
-          </div>
-          {rosterPositions.length > 0 && (
-            <div className="flex flex-wrap gap-1.5">
-              {rosterPositions.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() =>
-                    setRosterPositions(rosterPositions.filter((x) => x !== p))
-                  }
-                  className="inline-flex items-center gap-1 rounded-sm bg-muted px-2 py-1 text-xs font-medium hover:bg-muted/70"
-                >
-                  {LA_POSITION_MAP.get(p) ?? p}
-                  <X className="h-3 w-3 opacity-60" />
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <div className="flex flex-wrap items-center gap-1.5">
-          {courseTypeOptions.map((t) => (
-            <button
-              key={t}
-              type="button"
-              onClick={() =>
-                setRosterCourseTypes(
-                  rosterCourseTypes.includes(t)
-                    ? rosterCourseTypes.filter((x) => x !== t)
-                    : [...rosterCourseTypes, t],
-                )
-              }
-              className={`inline-flex items-center gap-1 rounded-sm px-2 py-1 text-xs font-medium ${
-                rosterCourseTypes.includes(t)
-                  ? "bg-primary text-primary-foreground"
-                  : "bg-muted hover:bg-muted/70"
-              }`}
-            >
-              {t}
-              {rosterCourseTypes.includes(t) && (
-                <X className="h-3 w-3 opacity-60" />
-              )}
-            </button>
-          ))}
-          {rosterCourseTypes.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => setRosterCourseTypes([])}
-            >
-              Clear
-            </Button>
-          )}
-        </div>
+        <PositionFilter
+          options={positionOptions}
+          value={rosterPositions}
+          onChange={setRosterPositions}
+          inputClassName="w-[28rem]"
+        />
+        <CourseTypeFilter
+          options={courseTypeOptions}
+          value={rosterCourseTypes}
+          onChange={setRosterCourseTypes}
+        />
       </div>
       <table className="w-full table-fixed text-sm">
         <colgroup>
@@ -287,23 +183,11 @@ export function RosterTab() {
           <tr className="border-b text-left text-muted-foreground">
             <th className="pb-2 font-medium">Photo</th>
             <th className="pb-2 font-medium select-none">
-              <span
-                className="cursor-pointer hover:text-foreground"
-                onClick={() => toggleRosterSort("first_name")}
-              >
-                First{sortArrow("first_name")}
-              </span>
-              <span className="mx-1 text-muted-foreground/50">/</span>
-              <span
-                className="cursor-pointer hover:text-foreground"
-                onClick={() => toggleRosterSort("last_name")}
-              >
-                Last{sortArrow("last_name")}
-              </span>
+              <NameSortHeader toggle={toggleSort} arrow={sortArrow} />
             </th>
             <th
               className="cursor-pointer pb-2 font-medium select-none hover:text-foreground"
-              onClick={() => toggleRosterSort("courses")}
+              onClick={() => toggleSort("courses")}
             >
               Courses{sortArrow("courses")}
             </th>
@@ -333,15 +217,7 @@ export function RosterTab() {
               </td>
               <td className="py-2">
                 <div className="font-medium">
-                  {(() => {
-                    const parts = user.name.trim().split(/\s+/);
-                    if (parts.length < 2) return user.name;
-                    const last = parts[parts.length - 1];
-                    const first = parts.slice(0, -1).join(" ");
-                    return rosterSortKey === "last_name"
-                      ? `${last}, ${first}`
-                      : `${first} ${last}`;
-                  })()}
+                  {formatName(user.name, sortKey === "last_name")}
                 </div>
                 <div className="text-muted-foreground">{user.email}</div>
               </td>
