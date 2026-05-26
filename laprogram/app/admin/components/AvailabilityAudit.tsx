@@ -39,12 +39,7 @@ const RESET_POSITIONS = [...LA_POSITION_MAP.entries()].map(
   ([value, label]) => ({ value, label }),
 );
 
-type SortKey =
-  | "first_name"
-  | "last_name"
-  | "unavailable_desc"
-  | "unavailable_asc"
-  | "position";
+type SortKey = "first_name" | "last_name" | "unavailable" | "position";
 
 type SectionEntry = {
   la_id: string;
@@ -69,6 +64,7 @@ export function AvailabilityAudit() {
   const [resetPositions, setResetPositions] = useState<Set<string>>(new Set());
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [sortKey, setSortKey] = useState<SortKey>("first_name");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc");
   const [compact, setCompact] = useState(false);
   const [positionFilter, setPositionFilter] = useState<string[]>([]);
   const [courseTypes, setCourseTypes] = useState<string[]>([]);
@@ -201,22 +197,35 @@ export function AvailabilityAudit() {
   });
 
   const entries = [...filtered].sort((a, b) => {
-    if (sortKey === "unavailable_desc")
-      return getUnavailable(b) - getUnavailable(a);
-    if (sortKey === "unavailable_asc")
-      return getUnavailable(a) - getUnavailable(b);
-    if (sortKey === "position") return a.position.localeCompare(b.position);
+    const dir = sortDir === "asc" ? 1 : -1;
+    if (sortKey === "unavailable")
+      return (getUnavailable(a) - getUnavailable(b)) * dir;
+    if (sortKey === "position")
+      return a.position.localeCompare(b.position) * dir;
     if (sortKey === "last_name")
-      return getNamePart(a.la_name, "last").localeCompare(
-        getNamePart(b.la_name, "last"),
+      return (
+        getNamePart(a.la_name, "last").localeCompare(
+          getNamePart(b.la_name, "last"),
+        ) * dir
       );
-    return getNamePart(a.la_name, "first").localeCompare(
-      getNamePart(b.la_name, "first"),
+    return (
+      getNamePart(a.la_name, "first").localeCompare(
+        getNamePart(b.la_name, "first"),
+      ) * dir
     );
   });
 
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "unavailable" ? "desc" : "asc");
+    }
+  }
+
   function sortArrow(key: SortKey) {
-    return sortKey === key ? " ↓" : "";
+    return sortKey === key ? (sortDir === "asc" ? " ↑" : " ↓") : "";
   }
 
   if (allEntries.length === 0) {
@@ -505,17 +514,17 @@ export function AvailabilityAudit() {
           </colgroup>
           <thead>
             <tr className="border-b text-left text-muted-foreground">
-              <th className="cursor-pointer pb-2 pr-2 font-medium select-none">
+              <th className="pb-2 pr-2 font-medium select-none">
                 <span
-                  className="hover:text-foreground"
-                  onClick={() => setSortKey("first_name")}
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => toggleSort("first_name")}
                 >
                   First{sortArrow("first_name")}
                 </span>
                 <span className="mx-1 text-muted-foreground/50">/</span>
                 <span
-                  className="hover:text-foreground"
-                  onClick={() => setSortKey("last_name")}
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => toggleSort("last_name")}
                 >
                   Last{sortArrow("last_name")}
                 </span>
@@ -523,27 +532,16 @@ export function AvailabilityAudit() {
               <th className="pb-2 pr-2 font-medium">Email</th>
               <th className="pb-2 pr-2 font-medium">Section</th>
               <th
-                className="cursor-pointer whitespace-nowrap pb-2 pr-2 font-medium"
-                onClick={() => setSortKey("position")}
+                className="cursor-pointer whitespace-nowrap pb-2 pr-2 font-medium select-none hover:text-foreground"
+                onClick={() => toggleSort("position")}
               >
                 Position{sortArrow("position")}
               </th>
               <th
-                className="cursor-pointer whitespace-nowrap pb-2 px-1 text-center font-medium"
-                onClick={() =>
-                  setSortKey(
-                    sortKey === "unavailable_desc"
-                      ? "unavailable_asc"
-                      : "unavailable_desc",
-                  )
-                }
+                className="cursor-pointer whitespace-nowrap pb-2 px-1 text-center font-medium select-none hover:text-foreground"
+                onClick={() => toggleSort("unavailable")}
               >
-                Total
-                {sortKey === "unavailable_desc"
-                  ? " ↓"
-                  : sortKey === "unavailable_asc"
-                    ? " ↑"
-                    : ""}
+                Total{sortArrow("unavailable")}
               </th>
               {weeks.map((w) => (
                 <th key={w} className="pb-2 px-1 text-center font-medium">

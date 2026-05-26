@@ -76,7 +76,19 @@ function formatTimeRange(time: string) {
 }
 
 type GroupBy = "observer" | "observee";
-type SortKey = "name" | "email" | "completed" | "signed_up";
+type SortKey =
+  | "first_name"
+  | "last_name"
+  | "email"
+  | "completed"
+  | "signed_up";
+
+function getNamePart(name: string, part: "first" | "last") {
+  const parts = name.trim().split(/\s+/);
+  return part === "first"
+    ? (parts[0] ?? "")
+    : (parts[parts.length - 1] ?? "");
+}
 type StatusFilter = "all" | "done" | "pending";
 
 type GroupedPerson = {
@@ -216,7 +228,18 @@ export function ObservationAudit() {
 
   const sorted = [...enriched].sort((a, b) => {
     const dir = sortDir === "asc" ? 1 : -1;
-    if (sortKey === "name") return a.name.localeCompare(b.name) * dir;
+    if (sortKey === "first_name")
+      return (
+        getNamePart(a.name, "first").localeCompare(
+          getNamePart(b.name, "first"),
+        ) * dir
+      );
+    if (sortKey === "last_name")
+      return (
+        getNamePart(a.name, "last").localeCompare(
+          getNamePart(b.name, "last"),
+        ) * dir
+      );
     if (sortKey === "email") return a.email.localeCompare(b.email) * dir;
     if (sortKey === "completed") {
       return (
@@ -474,12 +497,23 @@ export function ObservationAudit() {
           <thead>
             <tr className="border-b text-left text-muted-foreground">
               <th className="w-6 pb-2" />
-              <th
-                className="cursor-pointer pb-2 pr-2 font-medium select-none hover:text-foreground"
-                onClick={() => toggleSort("name")}
-              >
-                {groupBy === "observer" ? "Observer" : "Observee"}
-                {sortArrow("name")}
+              <th className="pb-2 pr-2 font-medium select-none">
+                <span className="mr-1 text-muted-foreground/70">
+                  {groupBy === "observer" ? "Observer:" : "Observee:"}
+                </span>
+                <span
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => toggleSort("first_name")}
+                >
+                  First{sortArrow("first_name")}
+                </span>
+                <span className="mx-1 text-muted-foreground/50">/</span>
+                <span
+                  className="cursor-pointer hover:text-foreground"
+                  onClick={() => toggleSort("last_name")}
+                >
+                  Last{sortArrow("last_name")}
+                </span>
               </th>
               <th
                 className="cursor-pointer pb-2 pr-2 font-medium select-none hover:text-foreground"
@@ -524,7 +558,17 @@ export function ObservationAudit() {
                         />
                       )}
                     </td>
-                    <td className="py-1.5 pr-2 font-medium">{p.name}</td>
+                    <td className="py-1.5 pr-2 font-medium">
+                      {(() => {
+                        const parts = p.name.trim().split(/\s+/);
+                        if (parts.length < 2) return p.name;
+                        const last = parts[parts.length - 1];
+                        const first = parts.slice(0, -1).join(" ");
+                        return sortKey === "last_name"
+                          ? `${last}, ${first}`
+                          : `${first} ${last}`;
+                      })()}
+                    </td>
                     <td className="py-1.5 pr-2 text-muted-foreground">
                       {p.email}
                     </td>
