@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
 import { ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useToggleSet } from "@/hooks/use-toggle-set";
 import type { Column } from "./columns";
 import type { AnonFeedback } from "./columns";
 
@@ -21,16 +21,7 @@ interface FeedbackTableProps {
 }
 
 export function FeedbackTable({ columns, data }: FeedbackTableProps) {
-  const [expandedRows, setExpandedRows] = useState<Set<number>>(new Set());
-
-  function toggleRow(idx: number) {
-    setExpandedRows((prev) => {
-      const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx);
-      else next.add(idx);
-      return next;
-    });
-  }
+  const [expandedRows, toggleRow] = useToggleSet<number>();
 
   return (
     <div className="overflow-auto rounded-md border">
