@@ -44,6 +44,10 @@ function CopyButton({ text, disabled }: { text: string; disabled?: boolean }) {
   );
 }
 
+function formatUidLines(uids: UidInformation[]) {
+  return uids.map((u) => `${u.uid}\t${u.name}\t${u.email}`).join("\n");
+}
+
 function downloadExcel(
   course: string,
   uids: UidInformation[],
@@ -153,7 +157,7 @@ function UidLists() {
                           {entry[type].length}
                         </span>
                         <CopyButton
-                          text={entry[type].join("\n")}
+                          text={formatUidLines(entry[type])}
                           disabled={entry[type].length === 0}
                         />
                         <button
@@ -171,9 +175,7 @@ function UidLists() {
                     </div>
                     <pre className="max-h-64 overflow-auto rounded-md border bg-muted/30 p-2 font-mono text-xs">
                       {entry[type].length > 0
-                        ? entry[type]
-                            .map((u) => `${u.uid}\t${u.name}\t${u.email}`)
-                            .join("\n")
+                        ? formatUidLines(entry[type])
                         : "—"}
                     </pre>
                   </div>
