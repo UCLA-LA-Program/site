@@ -2,6 +2,7 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { backupDatabase } from "@/lib/backup";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
+import { EVENT, SYSTEM_ACTOR, eventStmt } from "@/lib/events";
 
 interface WithdrewRecord {
   id: string;
@@ -179,6 +180,20 @@ export async function POST(request: Request) {
           .bind(withdrewUser.id),
         db.prepare("DELETE FROM user WHERE id = ?").bind(withdrewUser.id),
         */
+        // Logged inside the same batch: the rows that would have carried this
+        // timestamp are exactly the ones being deleted.
+        eventStmt(db, {
+          action: EVENT.UserWithdraw,
+          entityType: "user",
+          entityId: withdrewUser.id,
+          actor: SYSTEM_ACTOR,
+          target: { id: withdrewUser.id, email: withdrewLAEmail },
+          details: {
+            name: withdrewLAName,
+            reverted_availability: revertStmts.length / 2,
+            affected_observers: observeeObs.results.map((o) => o.observer_email),
+          },
+        }),
       ]);
 
       if (!hasCronSecret) {

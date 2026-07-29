@@ -6,10 +6,11 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Plus, CalendarClock, User, MapPin, Filter, Info } from "lucide-react";
 import { toast } from "sonner";
-import { fetcher, getObsDate, hydrateDates, nowLA } from "@/lib/utils";
+import { fetcher, hydrateDates, parseQuarterStart } from "@/lib/utils";
+import { nowLA, weekdayDate } from "@/lib/time";
 import { differenceInCalendarDays, isSameDay } from "date-fns";
-import { DAY_INDEX, LA_POSITION_MAP } from "@/lib/constants";
-import type { ObservationAvailability } from "@/types/db";
+import { LA_POSITION_MAP, SECTION_WEEKDAYS } from "@/lib/constants";
+import type { ObservationAvailability, ObservationSlot } from "@/types/db";
 import type { MyObservation } from "./types";
 import { formatDateLA, formatTimeLA } from "./types";
 import { PendingChanges } from "./components/PendingChanges";
@@ -24,16 +25,14 @@ import {
 } from "@/lib/constants";
 import { TZDate } from "@date-fns/tz";
 
-type DateTab = { week: string; date: TZDate; label: string };
+type DateTab = { week: number; date: TZDate; label: string };
 
-function buildDateTabs(
-  weeks: string[],
-  quarterStart: TZDate | string,
-): DateTab[] {
+function buildDateTabs(weeks: number[], quarterStart: string): DateTab[] {
+  const start = parseQuarterStart(quarterStart);
   const tabs: DateTab[] = [];
-  for (const week of weeks.sort((a, b) => parseInt(a) - parseInt(b))) {
-    for (const day of DAY_INDEX.slice(0, 5)) {
-      const date = getObsDate(week, day, quarterStart);
+  for (const week of weeks) {
+    for (const dayOfWeek of SECTION_WEEKDAYS) {
+      const date = weekdayDate(start, week, dayOfWeek);
       tabs.push({
         week,
         date,
@@ -49,10 +48,10 @@ export function SignUp({
   weeks,
 }: {
   quarterStart: string;
-  weeks: string[];
+  weeks: number[];
 }) {
   const { data: openData, mutate: mutateOpen } = useSWR<{
-    slots: ObservationAvailability[];
+    slots: ObservationSlot[];
     filters: string[];
     notes: string[];
   }>(
@@ -83,7 +82,7 @@ export function SignUp({
   // Count slots per tab from ISO dates
   const slotCounts = new Map<string, number>();
   for (const slot of openSlots ?? []) {
-    const label = formatDateLA(slot.time_start);
+    const label = formatDateLA(slot.start_at);
     slotCounts.set(label, (slotCounts.get(label) ?? 0) + 1);
   }
 
@@ -179,7 +178,7 @@ export function SignUp({
   const available = (openSlots ?? []).filter(
     (s) =>
       selectedDate &&
-      isSameDay(s.time_start, selectedDate) &&
+      isSameDay(s.start_at, selectedDate) &&
       !pendingAdds.has(s.id),
   );
   const pendingAddSlots = (openSlots ?? []).filter((s) =>
@@ -192,10 +191,10 @@ export function SignUp({
   const futureObs: MyObservation[] = [];
 
   for (const obs of myObservations ?? []) {
-    if (obs.time_start < nowLA()) {
+    if (obs.start_at < nowLA()) {
       pastObs.push(obs);
     } else if (
-      differenceInCalendarDays(obs.time_start, nowLA()) <
+      differenceInCalendarDays(obs.start_at, nowLA()) <
       OBSERVATION_CHANGE_DAYS_LIMIT
     ) {
       upcomingObs.push(obs);
@@ -302,7 +301,7 @@ export function SignUp({
                 <div className="space-y-2">
                   {available
                     .sort(
-                      (a, b) => a.time_start.getTime() - b.time_start.getTime(),
+                      (a, b) => a.start_at.getTime() - b.start_at.getTime(),
                     )
                     .map((slot) => (
                       <div
@@ -326,8 +325,8 @@ export function SignUp({
                           <div className="mt-1 flex items-center gap-3 text-xs text-muted-foreground">
                             <span className="flex items-center gap-1">
                               <CalendarClock className="size-3" />
-                              {formatTimeLA(slot.time_start)}–
-                              {formatTimeLA(slot.time_end)}
+                              {formatTimeLA(slot.start_at)}–
+                              {formatTimeLA(slot.end_at)}
                             </span>
                             <span className="flex items-center gap-1">
                               <MapPin className="size-3" />

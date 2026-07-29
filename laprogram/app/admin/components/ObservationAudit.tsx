@@ -4,11 +4,11 @@ import { Fragment, useState } from "react";
 import useSWR from "swr";
 import { toast } from "sonner";
 import { Check, ChevronRight, Clock, Eye, Trash2 } from "lucide-react";
-import { fetcher, parseSectionTime, minutesToLabel } from "@/lib/utils";
+import { fetcher } from "@/lib/utils";
 import { formatName, getNamePart } from "@/lib/name";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useToggleSet } from "@/hooks/use-toggle-set";
-import { LA_POSITION_MAP } from "@/lib/constants";
+import { LA_POSITION_MAP, TIMEZONE } from "@/lib/constants";
 import { NameSortHeader } from "./NameSortHeader";
 import { SearchBar } from "./SearchBar";
 import { PositionFilter } from "./PositionFilter";
@@ -43,13 +43,13 @@ function positionLabel(p: string | null) {
   return parts.map((x) => LA_POSITION_MAP.get(x) ?? x).join(", ");
 }
 
-function formatSubmittedAt(s: string | null): string {
-  if (!s) return "—";
-  const iso = s.includes("T") ? s : s.replace(" ", "T") + "Z";
+/** Renders a stored instant in LA time. */
+function formatInstant(iso: string | null): string {
+  if (!iso) return "—";
   const date = new Date(iso);
   if (isNaN(date.getTime())) return "—";
   return date.toLocaleString("en-US", {
-    timeZone: "America/Los_Angeles",
+    timeZone: TIMEZONE,
     month: "numeric",
     day: "numeric",
     hour: "numeric",
@@ -71,20 +71,33 @@ function StatusBadge({ completed }: { completed: boolean }) {
   );
 }
 
-function formatTimeRange(time: string) {
-  try {
-    const [start, end] = parseSectionTime(time);
-    const startLabel = minutesToLabel(start);
-    const endLabel = minutesToLabel(end);
-    const startPeriod = startLabel.slice(-2);
-    const endPeriod = endLabel.slice(-2);
-    if (startPeriod === endPeriod) {
-      return `${startLabel.slice(0, -3)}-${endLabel}`;
-    }
-    return `${startLabel}-${endLabel}`;
-  } catch {
-    return time;
+/** '9:20-9:50 AM' for a slot, collapsing the period when both halves match. */
+function formatTimeRange(startAt: string | null, endAt: string | null) {
+  if (!startAt || !endAt) return "—";
+  const startLabel = formatClockLA(startAt);
+  const endLabel = formatClockLA(endAt);
+  if (startLabel.slice(-2) === endLabel.slice(-2)) {
+    return `${startLabel.slice(0, -3)}-${endLabel}`;
   }
+  return `${startLabel}-${endLabel}`;
+}
+
+function formatClockLA(iso: string): string {
+  return new Date(iso).toLocaleString("en-US", {
+    timeZone: TIMEZONE,
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+/** 'Wk 5 · Monday' for a slot. */
+function formatSlotDay(week: number, startAt: string | null): string {
+  if (!startAt) return `Wk ${week}`;
+  const day = new Date(startAt).toLocaleString("en-US", {
+    timeZone: TIMEZONE,
+    weekday: "long",
+  });
+  return `Wk ${week} · ${day}`;
 }
 
 type GroupBy = "observer" | "observee";
@@ -534,15 +547,22 @@ export function ObservationAudit() {
                                     {r.course_name} {r.section_name}
                                   </td>
                                   <td className="py-1 pr-2 whitespace-nowrap text-muted-foreground">
-                                    Wk {r.week} · {r.day}{" "}
-                                    {formatTimeRange(r.time)}
+                                    {formatSlotDay(r.week, r.start_at)}{" "}
+                                    {formatTimeRange(r.start_at, r.end_at)}
                                   </td>
                                   <td className="py-1 pr-2 whitespace-nowrap">
                                     <StatusBadge completed={r.completed} />
                                   </td>
-                                  <td className="py-1 pr-2 whitespace-nowrap text-muted-foreground">
+                                  <td
+                                    className="py-1 pr-2 whitespace-nowrap text-muted-foreground"
+                                    title={
+                                      r.signed_up_at
+                                        ? `Signed up ${formatInstant(r.signed_up_at)}`
+                                        : undefined
+                                    }
+                                  >
                                     {r.completed
-                                      ? formatSubmittedAt(r.submitted_at)
+                                      ? formatInstant(r.submitted_at)
                                       : "—"}
                                   </td>
                                   <td className="py-1 pr-2 text-right whitespace-nowrap">
@@ -785,7 +805,8 @@ export function ObservationAudit() {
                             {s.course_name} {s.section_name}
                           </td>
                           <td className="px-2 py-1.5 whitespace-nowrap">
-                            Wk {s.week} · {s.day} {formatTimeRange(s.time)}
+                            {formatSlotDay(s.week, s.start_at)}{" "}
+                            {formatTimeRange(s.start_at, s.end_at)}
                           </td>
                           <td className="px-2 py-1.5 whitespace-nowrap">
                             <StatusBadge completed={s.completed} />
@@ -840,10 +861,10 @@ export function ObservationAudit() {
                   <span className="font-medium text-foreground">
                     {toDelete.observee_name}
                   </span>{" "}
-                  in {toDelete.course_name} {toDelete.section_name} (Wk{" "}
-                  {toDelete.week}, {toDelete.day}{" "}
-                  {formatTimeRange(toDelete.time)})? The availability slot will
-                  be reopened.
+                  in {toDelete.course_name} {toDelete.section_name} (
+                  {formatSlotDay(toDelete.week, toDelete.start_at)}{" "}
+                  {formatTimeRange(toDelete.start_at, toDelete.end_at)})? The
+                  availability slot will be reopened.
                 </>
               )}
             </DialogDescription>

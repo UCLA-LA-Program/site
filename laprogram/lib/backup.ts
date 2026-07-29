@@ -1,6 +1,5 @@
-import { TZDate } from "@date-fns/tz";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { TIMEZONE } from "./constants";
+import { isoNow } from "./time";
 
 const TABLES = [
   "user",
@@ -13,6 +12,7 @@ const TABLES = [
   "section_assignment",
   "availability",
   "observation",
+  "event_log",
 ];
 
 export async function backupDatabase() {
@@ -25,7 +25,7 @@ export async function backupDatabase() {
     backup[table] = results;
   }
 
-  const timestamp = TZDate.tz(TIMEZONE).toISOString().replace(/[:.]/g, "-");
+  const timestamp = isoNow().replace(/[:.]/g, "-");
   const key = `backups/${timestamp}.json`;
 
   await env.db_backups.put(key, JSON.stringify(backup, null, 2), {

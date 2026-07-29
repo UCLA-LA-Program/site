@@ -5,6 +5,7 @@ import useSWR from "swr";
 import { toast } from "sonner";
 import { ChevronDown, Pencil } from "lucide-react";
 import { fetcher, getCurrentWeek } from "@/lib/utils";
+import { clockLabel, dayName } from "@/lib/time";
 import { formatName, getNamePart } from "@/lib/name";
 import { useTableSort } from "@/hooks/use-table-sort";
 import { useToggleSet } from "@/hooks/use-toggle-set";
@@ -44,14 +45,20 @@ type SectionEntry = {
   la_email: string;
   course_name: string;
   section_name: string;
-  section_time: string;
   section_id: string;
-  section_day: string;
-  section_time_raw: string;
+  day_of_week: number | null;
+  start_time: string | null;
+  end_time: string | null;
   section_location: string;
   position: string;
-  weeks: Record<string, number>;
+  weeks: Record<number, number>;
 };
+
+/** 'Monday 9:00 AM–9:50 AM', or an em dash if the section has no time yet. */
+function sectionTimeLabel(e: SectionEntry): string {
+  if (!e.day_of_week || !e.start_time || !e.end_time) return "—";
+  return `${dayName(e.day_of_week)} ${clockLabel(e.start_time)}–${clockLabel(e.end_time)}`;
+}
 
 export function AvailabilityAudit() {
   const [query, setQuery] = useState("");
@@ -121,7 +128,7 @@ export function AvailabilityAudit() {
 
   // Build section entries grouped by la_id + section_id
   const map = new Map<string, SectionEntry>();
-  const weekSet = new Set<string>();
+  const weekSet = new Set<number>();
 
   for (const row of data) {
     const key = `${row.la_id}|${row.section_id}`;
@@ -133,10 +140,10 @@ export function AvailabilityAudit() {
         la_email: row.la_email,
         course_name: row.course_name,
         section_name: row.section_name,
-        section_time: row.section_time,
         section_id: row.section_id,
-        section_day: row.section_day,
-        section_time_raw: row.section_time_raw,
+        day_of_week: row.day_of_week,
+        start_time: row.start_time,
+        end_time: row.end_time,
         section_location: row.section_location,
         position: row.position,
         weeks: {},
@@ -150,7 +157,7 @@ export function AvailabilityAudit() {
   }
 
   const allEntries = [...map.values()];
-  const weeks = [...weekSet].sort((a, b) => Number(a) - Number(b));
+  const weeks = [...weekSet].sort((a, b) => a - b);
   const positionOptions = [
     ...new Set(allEntries.map((e) => e.position)),
   ].sort();
@@ -349,8 +356,9 @@ export function AvailabilityAudit() {
                   section_id: editing.section_id,
                   course_name: editing.course_name,
                   section_name: editing.section_name,
-                  day: editing.section_day,
-                  time: editing.section_time_raw,
+                  day_of_week: editing.day_of_week,
+                  start_time: editing.start_time,
+                  end_time: editing.end_time,
                   location: editing.section_location,
                 } satisfies Section
               }
@@ -455,7 +463,7 @@ export function AvailabilityAudit() {
                   </td>
                   <td className="truncate py-1.5 pr-2 text-muted-foreground">
                     {entry.course_name} {entry.section_name} (
-                    {entry.section_time})
+                    {sectionTimeLabel(entry)})
                   </td>
                   <td className="truncate py-1.5 pr-2 text-muted-foreground">
                     {entry.position}

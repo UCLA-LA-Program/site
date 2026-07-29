@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { getObsDate, getQuarterStart } from "@/lib/utils";
+import { fromISO } from "@/lib/time";
 import { formatDateLA } from "@/app/observations/signup/types";
 
 export type UnpairedFeedback = {
@@ -22,8 +22,7 @@ type SignupKeyRow = {
   observer_email: string;
   observee_id: string;
   section_name: string;
-  day: string;
-  week: string;
+  start_at: string | null;
 };
 
 export async function GET() {
@@ -38,15 +37,14 @@ export async function GET() {
 
   const { env } = await getCloudflareContext({ async: true });
 
-  const [signupsResult, feedbackResult, quarterStart] = await Promise.all([
+  const [signupsResult, feedbackResult] = await Promise.all([
     env.data
       .prepare(
         `SELECT
            observer.email AS observer_email,
            o.observee_id AS observee_id,
            s.section_name AS section_name,
-           s.day AS day,
-           a.week AS week
+           a.start_at AS start_at
          FROM observation o
          JOIN availability a ON o.availability_id = a.id
          JOIN section s ON a.section_id = s.id
@@ -70,18 +68,15 @@ export async function GET() {
          WHERE json_extract(f.feedback, '$.feedback_type') = 'la_observation'`,
       )
       .all<FeedbackRow>(),
-    getQuarterStart(env).catch(() => null),
   ]);
 
   const validKeys = new Set<string>();
-  if (quarterStart) {
-    for (const s of signupsResult.results) {
-      const obsDate = getObsDate(s.week, s.day, quarterStart);
-      const expected = `${s.section_name} — ${formatDateLA(obsDate)}`;
-      validKeys.add(
-        `${s.observer_email.toLowerCase()}|${s.observee_id}|${expected}`,
-      );
-    }
+  for (const s of signupsResult.results) {
+    if (!s.start_at) continue;
+    const expected = `${s.section_name} — ${formatDateLA(fromISO(s.start_at))}`;
+    validKeys.add(
+      `${s.observer_email.toLowerCase()}|${s.observee_id}|${expected}`,
+    );
   }
 
   const unpaired = feedbackResult.results.filter((f) => {

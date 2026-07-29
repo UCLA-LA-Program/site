@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Plus, X, Check } from "lucide-react";
-import type { ObservationAvailability } from "@/types/db";
+import type { ObservationSlot } from "@/types/db";
 import { LA_POSITION_MAP } from "@/lib/constants";
 import type { MyObservation } from "../types";
 import { formatDateLA, formatTimeLA } from "../types";
@@ -12,7 +12,7 @@ function PendingRow({
   strikethrough,
   action,
 }: {
-  slot: ObservationAvailability;
+  slot: ObservationSlot;
   strikethrough?: boolean;
   action: React.ReactNode;
 }) {
@@ -26,12 +26,12 @@ function PendingRow({
             <>
               {LA_POSITION_MAP.get(slot.la_position) ?? slot.la_position}{" "}
               &middot; {slot.course_name} {slot.section_name} &middot;{" "}
-              {formatDateLA(slot.time_start)}{" "}
+              {formatDateLA(slot.start_at)}{" "}
             </>
           )}
         </p>
         <p className={`text-xs text-muted-foreground ${strike}`}>
-          {formatTimeLA(slot.time_start)}–{formatTimeLA(slot.time_end)} &middot;{" "}
+          {formatTimeLA(slot.start_at)}–{formatTimeLA(slot.end_at)} &middot;{" "}
           {slot.location}
         </p>
       </div>
@@ -47,7 +47,7 @@ export function PendingChanges({
   onUndoRemove,
   onConfirm,
 }: {
-  addSlots: ObservationAvailability[];
+  addSlots: ObservationSlot[];
   removeSlots: MyObservation[];
   onUndoAdd: (id: string) => void;
   onUndoRemove: (id: string) => void;

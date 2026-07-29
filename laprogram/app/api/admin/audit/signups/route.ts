@@ -1,7 +1,7 @@
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
-import { getObsDate, getQuarterStart } from "@/lib/utils";
+import { fromISO } from "@/lib/time";
 import { formatDateLA } from "@/app/observations/signup/types";
 
 export type SignupRow = {
@@ -16,9 +16,11 @@ export type SignupRow = {
   observee_position: string | null;
   course_name: string;
   section_name: string;
-  day: string;
-  time: string;
-  week: string;
+  week: number;
+  start_at: string | null;
+  end_at: string | null;
+  /** When the observer signed up. Null for sign-ups predating the migration. */
+  signed_up_at: string | null;
   completed: boolean;
   submitted_at: string | null;
   feedback: Record<string, unknown> | null;
@@ -52,12 +54,13 @@ export async function GET() {
   // TODO: logic for extracting completed observations is not good. This should be refactored
   // once the major sign-up changes go through in a few weeks this quarter
 
-  const [signupsResult, feedbackResult, quarterStart] = await Promise.all([
+  const [signupsResult, feedbackResult] = await Promise.all([
     env.data
       .prepare(
         `SELECT
            o.id AS id,
            o.observer_id AS observer_id,
+           o.created_at AS signed_up_at,
            observer.name AS observer_name,
            observer.email AS observer_email,
            (SELECT GROUP_CONCAT(DISTINCT position)
@@ -69,15 +72,15 @@ export async function GET() {
               FROM course WHERE userId = o.observee_id) AS observee_position,
            s.course_name AS course_name,
            s.section_name AS section_name,
-           s.day AS day,
-           a.time AS time,
-           a.week AS week
+           a.week AS week,
+           a.start_at AS start_at,
+           a.end_at AS end_at
          FROM observation o
          JOIN availability a ON o.availability_id = a.id
          JOIN section s ON a.section_id = s.id
          JOIN "user" observer ON o.observer_id = observer.id
          JOIN "user" observee ON o.observee_id = observee.id
-         ORDER BY a.week, s.day, a.time, observer.name COLLATE NOCASE`,
+         ORDER BY a.start_at, observer.name COLLATE NOCASE`,
       )
       .all<SignupQueryRow>(),
     env.data
@@ -92,7 +95,6 @@ export async function GET() {
          WHERE json_extract(feedback, '$.feedback_type') = 'la_observation'`,
       )
       .all<FeedbackMatchRow>(),
-    getQuarterStart(env).catch(() => null),
   ]);
 
   type CompletedEntry = {
@@ -125,9 +127,10 @@ export async function GET() {
     let completed = false;
     let submitted_at: string | null = null;
     let feedback: Record<string, unknown> | null = null;
-    if (quarterStart) {
-      const obsDate = getObsDate(r.week, r.day, quarterStart);
-      const expected = `${r.section_name} — ${formatDateLA(obsDate)}`;
+    // The form stored the slot as a label ("1A — 5/12"); rebuild it from the
+    // slot's own instant to find the matching submission.
+    if (r.start_at) {
+      const expected = `${r.section_name} — ${formatDateLA(fromISO(r.start_at))}`;
       const key = `${r.observer_email.toLowerCase()}|${r.observee_id}|${expected}`;
       const entry = completedKeys.get(key);
       if (entry) {

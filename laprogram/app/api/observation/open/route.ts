@@ -1,13 +1,8 @@
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getAuth } from "@/lib/auth";
 import { headers } from "next/headers";
-import { ObservationAvailabilityRow } from "@/types/db";
-import {
-  getObsDate,
-  getQuarterStart,
-  daysUntil,
-  parseTimeRange,
-} from "@/lib/utils";
+import { ObservationAvailability } from "@/types/db";
+import { laDayBoundary } from "@/lib/time";
 import {
   getApplicableRules,
   getApplicableNotes,
@@ -40,6 +35,9 @@ export async function GET() {
     const positions = observerCourses.results.map((r) => r.position);
     const { descriptions, filter } = getApplicableRules(positions);
 
+    // Slots become unavailable at the end of the day before they happen.
+    const cutoff = laDayBoundary(1);
+
     const result = await env.data
       .prepare(
         `SELECT user.name AS la_name,
@@ -47,16 +45,16 @@ export async function GET() {
         course.position AS la_position,
         section.course_name AS course_name,
         section.section_name AS section_name,
-        section.day AS day,
         section.location AS location,
         availability.id AS id,
-        availability.week AS week,
-        availability.time AS time
+        availability.start_at AS start_at,
+        availability.end_at AS end_at
         FROM availability
         JOIN user ON availability.la_id = user.id
         JOIN section ON availability.section_id = section.id
         JOIN course ON availability.la_id = course.userId AND section.course_name = course.course_name
         WHERE availability.status = 'open'
+        AND availability.start_at >= ?
         AND availability.la_id <> ?
         AND availability.id NOT IN (
           SELECT availability_id FROM observation WHERE observer_id = ?
@@ -66,23 +64,20 @@ export async function GET() {
         )
         AND availability.week IN (${weeks.map(() => "?").join(", ")})`,
       )
-      .bind(session.user.id, session.user.id, session.user.id, ...weeks)
-      .all<ObservationAvailabilityRow>();
+      .bind(
+        cutoff,
+        session.user.id,
+        session.user.id,
+        session.user.id,
+        ...weeks,
+      )
+      .all<ObservationAvailability>();
 
     if (!result) {
       return new Response("Encountered database error.", { status: 500 });
     }
 
-    // Filter out past slots, apply observation rules, and parse time ranges
-    const quarterStart = await getQuarterStart(env);
-    const slots = result.results
-      .filter((s) => daysUntil(getObsDate(s.week, s.day, quarterStart)) > 0)
-      .filter(filter)
-      .map(({ week, day, time, ...rest }) => ({
-        ...rest,
-        ...parseTimeRange(week, day, time, quarterStart),
-      }));
-
+    const slots = result.results.filter(filter);
     const notes = getApplicableNotes(observerCourses.results);
 
     return Response.json({ slots, filters: descriptions, notes });

@@ -5,6 +5,8 @@ import { v7 as uuidv7 } from "uuid";
 import { Id } from "@/types/db";
 import { headers } from "next/headers";
 import { anonFeedbackSchema } from "@/app/feedback/view/columns";
+import { isoNow } from "@/lib/time";
+import { EVENT, eventStmt } from "@/lib/events";
 import { sortBy } from "lodash";
 
 export async function POST(request: Request) {
@@ -29,13 +31,29 @@ export async function POST(request: Request) {
       .bind(feedback.la, feedback.course)
       ?.run<Id>();
 
-    await env.data
-      ?.prepare(
-        `INSERT INTO feedback (id, recipientId, feedback, submitted_at)
-      VALUES (?1, ?2, ?3, datetime('now'))`,
-      )
-      .bind(uuidv7(), recipient?.results[0].id, JSON.stringify(feedback))
-      .run();
+    const recipientId = recipient?.results[0].id;
+    const feedbackId = uuidv7();
+    const submittedAt = isoNow();
+
+    await env.data.batch([
+      env.data
+        .prepare(
+          `INSERT INTO feedback (id, recipientId, feedback, submitted_at, created_at)
+      VALUES (?1, ?2, ?3, ?4, ?4)`,
+        )
+        .bind(feedbackId, recipientId, JSON.stringify(feedback), submittedAt),
+      eventStmt(env.data, {
+        action: EVENT.FeedbackSubmit,
+        entityType: "feedback",
+        entityId: feedbackId,
+        target: { id: recipientId },
+        details: {
+          feedback_type: feedback.feedback_type,
+          role: feedback.role,
+          course: feedback.course,
+        },
+      }),
+    ]);
   } catch {
     return new Response("Encountered database error.", { status: 500 });
   }

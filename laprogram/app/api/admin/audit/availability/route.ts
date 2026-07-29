@@ -8,13 +8,15 @@ export type AvailabilityAuditRow = {
   la_email: string;
   course_name: string;
   section_name: string;
-  section_time: string;
   section_id: string;
-  section_day: string;
-  section_time_raw: string;
+  /** ISO weekday, 1 = Monday. */
+  day_of_week: number | null;
+  /** Wall-clock 'HH:MM' in LA. */
+  start_time: string | null;
+  end_time: string | null;
   section_location: string;
   position: string;
-  week: string | null;
+  week: number | null;
   slot_count: number;
 };
 
@@ -38,9 +40,9 @@ export async function GET() {
          u.email AS la_email,
          s.course_name,
          s.section_name,
-         s.day || ' ' || s.time AS section_time,
-         s.day AS section_day,
-         s.time AS section_time_raw,
+         s.day_of_week AS day_of_week,
+         s.start_time AS start_time,
+         s.end_time AS end_time,
          s.location AS section_location,
          sa.section_id,
          c.position,

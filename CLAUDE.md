@@ -159,8 +159,55 @@ All tables live in a single D1 database (`data`). The init migration (`migration
 - **Auth tables** (managed by BetterAuth — do not edit): `user`, `session`, `account`, `verification`
 - **`course`** — course assignments. Composite primary key `(userId, course_name, position)`. Indexed on `course_name` for listing all LAs in a course.
 - **`feedback`** — feedback submissions linking a giver to a recipient (references `user.id`). Stores form data as a JSON string in the `feedback` column. Indexed on `recipientId`.
+- **`event_log`** — append-only audit trail (see below).
 
 A default admin user (`pdt.laprogram@gmail.com`, role `admin`) is seeded in the init migration. Test data can be loaded from `scripts/testing.sql`.
+
+#### Time formats
+
+`migrations/0005_standard_timestamps.sql` put every app-owned time value on a fixed format. Nothing should be splitting a time string apart outside `lib/time.ts`.
+
+| Kind | Storage | Example | Helpers |
+|------|---------|---------|---------|
+| Instant | TEXT, ISO-8601 UTC with ms | `2026-07-29T04:12:33.123Z` | `isoNow()`, `toISO()`, `fromISO()`, SQL `SQL_NOW` |
+| Time of day | TEXT, 24h `HH:MM` (LA wall time) | `09:20` | `clockToMinutes()`, `minutesToClock()`, `clockLabel()` |
+| Day of week | INTEGER, ISO weekday | `1` = Monday | `dayName()`, `dayOfWeek()` |
+| Quarter week | INTEGER | `5` | `getCurrentWeek()` |
+
+- `section` stores a **recurring** meeting pattern: `day_of_week` + `start_time`/`end_time`. It has no instants because a section repeats weekly.
+- `availability` stores **real instants** (`start_at`/`end_at`), computed on write from `QUARTER_START` + week + the section's weekday via `weekdayInstant()`. Queries filter on `start_at` directly rather than recomputing dates — use `laDayBoundary(n)` for "n calendar days out in LA" cutoffs.
+- Messy times from Airtable are normalized once, at ingest, in `init-sections`. Everything downstream sees `HH:MM`.
+- `QUARTER_START` stays a plain `yyyy-MM-dd` date in KV — it is a calendar day, not an instant.
+
+BetterAuth's tables were deliberately left alone; it already writes ISO-8601 UTC into them.
+
+#### Observability
+
+Every app table carries nullable `created_at` / `updated_at`. `updated_at` is maintained by `AFTER UPDATE` triggers, so plain `UPDATE` statements stay observable without every call site remembering. `availability` also has `status_changed_at`, stamped by trigger on any open/hidden/taken flip — including bulk resets.
+
+These columns are nullable because rows predating the migration have no known creation time; they carry `NULL` rather than a value that would claim they were created at migration time.
+
+For anything that **deletes** the row it describes (observation cancellations, admin removals, withdraws), a row timestamp cannot survive — those go to `event_log` instead, via `lib/events.ts`:
+
+```ts
+import { EVENT, eventStmt, recordEvent } from "@/lib/events";
+
+// Prefer eventStmt inside an existing db.batch() so the log cannot drift
+// from the change it describes.
+await db.batch([ ...changes, eventStmt(db, { action: EVENT.ObservationSignup, ... })]);
+
+// recordEvent runs standalone and never throws.
+await recordEvent(db, { action: EVENT.AvailabilityReset, ... });
+```
+
+Actions are `domain.verb`, so a prefix match gets a whole domain:
+
+```bash
+npx wrangler d1 execute data --remote --command \
+  "SELECT * FROM event_log WHERE action LIKE 'observation.%' ORDER BY occurred_at DESC LIMIT 20"
+```
+
+`actor_email` / `target_email` are denormalized on purpose — `process-withdraws` deletes users, and the log has no foreign keys so it outlives what it describes.
 
 ### Migrations
 
