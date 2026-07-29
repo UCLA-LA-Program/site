@@ -6,6 +6,7 @@ import { Id } from "@/types/db";
 import { headers } from "next/headers";
 import { anonFeedbackSchema } from "@/app/feedback/view/columns";
 import { sortBy } from "lodash";
+import { isQuarterFeedbackType, sendFeedbackConfirmation } from "@/lib/email";
 
 export async function POST(request: Request) {
   const request_json = await request.json();
@@ -17,8 +18,8 @@ export async function POST(request: Request) {
   }
 
   const feedback = parsed.data;
+  const { env, ctx } = getCloudflareContext();
   try {
-    const { env } = getCloudflareContext();
     const recipient = await env.data
       ?.prepare(
         `SELECT user.id AS id
@@ -38,6 +39,25 @@ export async function POST(request: Request) {
       .run();
   } catch {
     return new Response("Encountered database error.", { status: 500 });
+  }
+
+  // Confirmation only goes out for the two student feedback types that carry a
+  // UID. Sent after the response so a slow or failing SES call can't turn a
+  // successful submission into an error for the student.
+  if (
+    feedback.role === "student" &&
+    isQuarterFeedbackType(feedback.feedback_type)
+  ) {
+    ctx.waitUntil(
+      sendFeedbackConfirmation({
+        email: feedback.email,
+        name: feedback.name,
+        feedbackType: feedback.feedback_type,
+        course: feedback.course,
+        la: feedback.la,
+        uid: feedback.uid,
+      }),
+    );
   }
 
   return new Response(null, { status: 200 });

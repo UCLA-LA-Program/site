@@ -48,7 +48,7 @@ npx wrangler d1 execute data --local --file scripts/testing.sql
   - `/login` — email-based magic link login via BetterAuth
   - `/settings` — user settings: avatar upload, course info display (auth required)
   - `/api/auth/[...all]` — BetterAuth catch-all API route
-  - `/api/feedback` — POST (public): submit feedback; GET (auth): retrieve feedback for current user
+  - `/api/feedback` — POST (public): submit feedback, and for student mid-/end-of-quarter submissions email the submitter a confirmation; GET (auth): retrieve feedback for current user
   - `/api/la` — GET (public): list all LAs with name, course, position, image
   - `/api/la/self` — GET (auth): get current user's course positions
   - `/api/settings/avatar` — POST (auth): upload and transform avatar image
@@ -60,8 +60,18 @@ npx wrangler d1 execute data --local --file scripts/testing.sql
 - Uses a single Cloudflare D1 database (`data` binding) for all storage — auth tables (`user`, `session`, `account`, `verification`) and app tables (`course`, `feedback`) share one DB.
 - The `user` table includes BetterAuth admin fields (`role`, `banned`, `banReason`, `banExpires`) and an `impersonatedBy` field on `session`.
 - The `auth.ts` module calls `getCloudflareContext()` to access the D1 binding at runtime — this is async, so a singleton pattern wraps the auth instance.
-- Magic links are sent via AWS SES (`lib/email.ts`). Before sending, the `user` table is checked — if no account exists for the email, a "no account found" email is sent instead of the magic link.
+- Magic links are sent via AWS SES (`lib/email/`). Before sending, the `user` table is checked — if no account exists for the email, nothing is sent (the attempt is logged instead), so the login form can't be used to probe for accounts.
 - Pages requiring auth (`/settings`, `/feedback/view`) wrap their client component in a server component that checks the session via `getAuth()` and redirects to `/login`. The client component does not handle auth checks.
+
+#### Email (`lib/email/`)
+
+All outbound mail goes through **AWS SES**, called as a signed REST request rather than through the AWS SDK — `@aws-sdk/client-sesv2` is far too large for a Worker bundle. `aws4fetch` does SigV4 signing with WebCrypto in a few KB.
+
+- `ses.ts` — the transport. `sendEmail()` POSTs to the SES v2 `outbound-emails` endpoint with both an HTML and a text part, so SES builds a `multipart/alternative` message. It returns a boolean instead of throwing: email is never load-bearing for a request. In `NODE_ENV=development` it logs the message to the console instead of sending, so local dev needs no AWS credentials.
+- `render.tsx` — an email is authored **once** as a list of blocks (`heading`, `text`, `button`, `note`, `facts`, `bullets`, …) and `renderEmail()` renders it twice: to HTML and to plain text. Single-sourcing means the text fallback can't drift from the HTML. Mark a block `htmlOnly: true` for HTML-only affordances (e.g. a copy-paste link fallback) so it's dropped from the text version.
+- HTML is built from `@react-email/components`, which carries the email-client workarounds worth having (Outlook conditional wrapper tables, the MSO padding hack on buttons, the preheader whitespace trick). Rendering uses `renderToStaticMarkup` from `react-dom/server` — **do not** import `@react-email/render`: it pulls in `html-to-text` and `js-beautify` (~130 KB gzipped) for features this app doesn't use. Components alone cost under 5 KB gzipped.
+- `templates.ts` — one function per email returning blocks. Add new emails here, not in route handlers.
+- Callers should send inside `ctx.waitUntil()` so a slow SES call doesn't delay the user's response.
 
 #### Feedback form (`app/feedback/`)
 
@@ -150,6 +160,10 @@ Wrangler supports all resources used in this project (Workers, D1, KV, R2, secre
 - `BETTER_AUTH_URL` — base URL of the app. **Must match the port you're running on:** `http://localhost:3000` for `npm run dev`, `http://localhost:8787` for `npm run preview`. Update this when switching between the two. Use the production domain for prod.
 - `NEXT_PUBLIC_BUCKET_URL` — public URL of the R2 bucket for avatar images.
 - `NEXTJS_ENV` — set in `.dev.vars` for local dev (`development`).
+- `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` — IAM credentials for SES email sending. The IAM user only needs `ses:SendEmail`.
+- `AWS_REGION` — SES region (defaults to `us-east-1`). Must be the region where the sending domain is verified.
+- `SES_FROM_ADDRESS` — verified sender address (defaults to `admin@laprogramucla.com`).
+- `SES_CONFIGURATION_SET` — optional SES configuration set for bounce/complaint tracking.
 - Copy `.env.example` to `.env` and fill in values for local development.
 
 ### Database Schema
