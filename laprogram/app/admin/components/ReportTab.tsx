@@ -44,18 +44,25 @@ function CopyButton({ text, disabled }: { text: string; disabled?: boolean }) {
   );
 }
 
-function downloadExcel(
-  course: string,
+type FeedbackType = "mid_quarter" | "end_of_quarter";
+
+/** Adds a UID sheet — plus, for mid-quarter, a course-change sheet — to `wb`. */
+function appendSheets(
+  wb: XLSX.WorkBook,
   uids: UidInformation[],
-  type: "mid_quarter" | "end_of_quarter",
+  type: FeedbackType,
+  prefix = "",
 ) {
-  const wb = XLSX.utils.book_new();
   const uidRows = uids.map((u) => ({
     uid: u.uid,
     name: u.name,
     email: u.email,
   }));
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.json_to_sheet(uidRows), "UIDs");
+  XLSX.utils.book_append_sheet(
+    wb,
+    XLSX.utils.json_to_sheet(uidRows),
+    `${prefix}UIDs`,
+  );
 
   if (type === "mid_quarter") {
     const feedbackRows = uids
@@ -66,11 +73,29 @@ function downloadExcel(
     XLSX.utils.book_append_sheet(
       wb,
       XLSX.utils.json_to_sheet(feedbackRows),
-      "Course Change",
+      `${prefix}Course Change`,
     );
   }
+}
 
+function downloadExcel(
+  course: string,
+  uids: UidInformation[],
+  type: FeedbackType,
+) {
+  const wb = XLSX.utils.book_new();
+  appendSheets(wb, uids, type);
   XLSX.writeFile(wb, `${course} UIDs - ${type}.xlsx`);
+}
+
+function downloadCombinedExcel(
+  course: string,
+  entry: Record<FeedbackType, UidInformation[]>,
+) {
+  const wb = XLSX.utils.book_new();
+  appendSheets(wb, entry.mid_quarter, "mid_quarter", "Mid-Quarter ");
+  appendSheets(wb, entry.end_of_quarter, "end_of_quarter", "End-of-Quarter ");
+  XLSX.writeFile(wb, `${course} UIDs.xlsx`);
 }
 
 function UidLists() {
@@ -84,13 +109,7 @@ function UidLists() {
     return <p className="text-sm text-muted-foreground">Loading…</p>;
   }
 
-  const byCourse = new Map<
-    string,
-    {
-      mid_quarter: UidInformation[];
-      end_of_quarter: UidInformation[];
-    }
-  >();
+  const byCourse = new Map<string, Record<FeedbackType, UidInformation[]>>();
   for (const row of rows) {
     const course = row.course ?? "(no course)";
     let entry = byCourse.get(course);
@@ -136,6 +155,19 @@ function UidLists() {
                   {entry.mid_quarter.length} mid · {entry.end_of_quarter.length}{" "}
                   end
                 </span>
+              </button>
+              <button
+                type="button"
+                disabled={
+                  entry.mid_quarter.length === 0 &&
+                  entry.end_of_quarter.length === 0
+                }
+                onClick={() => downloadCombinedExcel(course, entry)}
+                className="inline-flex items-center gap-1 rounded-sm px-1.5 py-0.5 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 disabled:hover:bg-transparent"
+                title="Download both mid- and end-of-quarter sheets in one Excel file"
+              >
+                <Download className="size-3" />
+                Download Both
               </button>
             </div>
             {isExpanded && (
@@ -197,7 +229,8 @@ export function ReportTab() {
         <p className="text-xs text-muted-foreground">
           Mid-quarter Excel exports include a second sheet with each
           student&apos;s &ldquo;What would you change about this course?&rdquo;
-          response.
+          response. &ldquo;Download Both&rdquo; puts the mid- and
+          end-of-quarter sheets in a single file.
         </p>
         <UidLists />
       </div>
