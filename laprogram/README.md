@@ -125,3 +125,13 @@ npx shadcn add <component>
 ```
 
 Never copy-paste shadcn component source manually — always use the CLI.
+
+## New Quarter
+
+To set up for a new quarter, you will need to:
+- Create a SQLite (D1) + bucket (R2) for app data + profile images respectively
+  - Go into Cloudflare and create a new D1 database, name it something sensible like data-w25
+  - Create a new R2 bucket, name it something sensible like storage-w25
+  - You do not need to create a replacement for db-backups or config
+  - Go into `wrangler.jsonc` and replace the `database_name` and `bucket_name` respectively
+  - Push your commit to main to lock in these changes. You may need to run migrations; refer above to the database section to learn how to apply the migrations.
