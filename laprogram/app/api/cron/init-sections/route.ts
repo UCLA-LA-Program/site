@@ -127,7 +127,7 @@ export async function POST(request: Request) {
         : null;
 
       const match = raw.match(
-        /^(.+?):\s*([MTWRF]);?\s+(.*)\(([^)]+)\)\s+(.+)$/,
+        /^(.+?):\s*([MTWRF]+);?\s*(.+?)\s*\(([^)]+)\)\s+(.+)$/,
       );
       if (!match || !id) {
         errors.push(`Failed to parse section: ${raw}`);
@@ -135,7 +135,10 @@ export async function POST(request: Request) {
       }
 
       const [, courseName, dayAbbr, rawTime, sectionName, location] = match;
-      const day = dayMap[dayAbbr] ?? dayAbbr;
+      const day = dayAbbr
+        .split("")
+        .map((d) => dayMap[d] ?? d)
+        .join("/");
       const time = standardizeTime(rawTime.replace(/\([^)]*\)/g, "").trim());
 
       stmts.push(
