@@ -108,6 +108,8 @@ To get a copy of production data onto your local checkout, run:
 
 This wipes your local wrangler D1 database data, downloads the remote `data` database, and replays it into your local copy. 
 
+If you ever need to wipe your local D1 data, run `rm -rf .wrangler/state/v3/d1` in the `laprogram` directory.
+
 ## Authentication
 
 Magic link login via BetterAuth. Server config in `lib/auth.ts`, client in `lib/auth-client.ts`.
