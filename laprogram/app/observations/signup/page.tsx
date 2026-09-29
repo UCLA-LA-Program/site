@@ -36,7 +36,6 @@ export default async function ObservationsPage() {
   }
 
   const quarterStart = (await env.config.get(QUARTER_START_KEY)) ?? "";
-  const sortedWeeks = [...weeks].sort((a, b) => parseInt(a) - parseInt(b));
 
-  return <SignUp quarterStart={quarterStart} weeks={sortedWeeks} />;
+  return <SignUp quarterStart={quarterStart} weeks={weeks} />;
 }

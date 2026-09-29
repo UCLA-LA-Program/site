@@ -3,7 +3,14 @@ import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import type { AirtableRecord } from "@/lib/airtable";
 import { backupDatabase } from "@/lib/backup";
-import { defaultAvailabilityTime } from "@/lib/utils";
+import { getQuarterStart } from "@/lib/utils";
+import {
+  defaultAvailabilityWindow,
+  toISO,
+  weekdayInstant,
+} from "@/lib/time";
+import { EVENT, SYSTEM_ACTOR, recordEvent } from "@/lib/events";
+import { OBSERVATION_WEEK_RANGE } from "@/lib/constants";
 
 export async function POST(request: Request) {
   try {
@@ -73,6 +80,10 @@ export async function POST(request: Request) {
     let message = "";
     let staleCount = 0;
 
+    // Default availability slots are real instants, so they need the quarter's
+    // start date to exist before any of them can be written.
+    const quarterStart = await getQuarterStart(env);
+
     for (const record of allRecords) {
       const email = (
         Array.isArray(record.fields.Email)
@@ -115,9 +126,15 @@ export async function POST(request: Request) {
 
       for (const rawName of airtableSections) {
         const section = await db
-          .prepare("SELECT id, time FROM section WHERE raw = ?")
+          .prepare(
+            "SELECT id, day_of_week, end_time FROM section WHERE raw = ?",
+          )
           .bind(rawName)
-          .first<{ id: string; time: string }>();
+          .first<{
+            id: string;
+            day_of_week: number | null;
+            end_time: string | null;
+          }>();
 
         if (!section) {
           errors.push(
@@ -136,19 +153,45 @@ export async function POST(request: Request) {
               )
               .bind(user.id, section.id),
           );
-          const availTime = defaultAvailabilityTime(section.time);
-          for (const week of [3, 4, 5, 6, 7, 8, 9, 10]) {
+
+          if (!section.day_of_week || !section.end_time) {
+            errors.push(
+              `Added ${email} to ${section.id} without default availability: section has no scheduled time`,
+            );
+            message += `adding ${email} ${section.id} (no default availability)\n`;
+            continue;
+          }
+
+          const window = defaultAvailabilityWindow(section.end_time);
+          for (const week of OBSERVATION_WEEK_RANGE) {
             insertStmts.push(
               db
                 .prepare(
-                  `INSERT OR IGNORE INTO availability (id, la_id, section_id, time, week, status) VALUES (?, ?, ?, ?, ?, 'open')`,
+                  `INSERT OR IGNORE INTO availability
+                     (id, la_id, section_id, week, start_at, end_at, status)
+                   VALUES (?, ?, ?, ?, ?, ?, 'open')`,
                 )
                 .bind(
                   crypto.randomUUID(),
                   user.id,
                   section.id,
-                  availTime,
-                  String(week),
+                  week,
+                  toISO(
+                    weekdayInstant(
+                      quarterStart,
+                      week,
+                      section.day_of_week,
+                      window.start,
+                    ),
+                  ),
+                  toISO(
+                    weekdayInstant(
+                      quarterStart,
+                      week,
+                      section.day_of_week,
+                      window.end,
+                    ),
+                  ),
                 ),
             );
           }
@@ -172,6 +215,18 @@ export async function POST(request: Request) {
     if (insertStmts.length > 0 || deleteStmts.length > 0) {
       await db.batch([...insertStmts, ...deleteStmts]);
     }
+
+    await recordEvent(db, {
+      action: EVENT.SyncSectionAssignments,
+      entityType: "section_assignment",
+      actor: SYSTEM_ACTOR,
+      details: {
+        records: allRecords.length,
+        added: insertStmts.length,
+        removed_stale: staleCount,
+        errors: errors.length,
+      },
+    });
 
     const summary =
       `Processed ${allRecords.length} records. Added: ${insertStmts.length}, Removed stale: ${staleCount}\n${message}` +

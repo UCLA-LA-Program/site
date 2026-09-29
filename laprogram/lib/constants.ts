@@ -18,15 +18,8 @@ export const OBSERVATION_WEEK_RANGE = [3, 4, 5, 6, 7, 8, 9, 10];
 export const OBSERVATION_CHANGE_DAYS_LIMIT = 2;
 export const OBSERVATION_FUTURE_LIMIT = 5;
 
-export const DAY_INDEX = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
+/** Weekdays sections actually meet, as ISO weekdays (1 = Monday). */
+export const SECTION_WEEKDAYS = [1, 2, 3, 4, 5];
 
 export const IMAGE_SIZE = 500;
 

@@ -20,14 +20,14 @@ export function parseWeekList(raw: string | null | undefined): string[] {
 }
 
 /**
- * Returns the weeks the given user is permitted to sign up for. A week is
- * accessible if it is in the enabled-weeks list and either has no allowlist
+ * Returns the weeks the given user is permitted to sign up for, sorted. A week
+ * is accessible if it is in the enabled-weeks list and either has no allowlist
  * or the user's email is on it.
  */
 export async function getAccessibleWeeks(
   env: CloudflareEnv,
   userEmail: string,
-): Promise<string[]> {
+): Promise<number[]> {
   const enabled = parseWeekList(
     await env.config.get(OBSERVATION_ENABLED_WEEKS_KEY),
   );
@@ -39,10 +39,14 @@ export async function getAccessibleWeeks(
   );
   const allowlists = await env.config.get(allowlistKeys);
 
-  return enabled.filter((w) => {
-    const list = parseAllowlist(
-      allowlists.get(`${OBSERVATION_WEEK_ALLOWLIST_PREFIX}${w}`),
-    );
-    return list.length === 0 || list.includes(email);
-  });
+  return enabled
+    .filter((w) => {
+      const list = parseAllowlist(
+        allowlists.get(`${OBSERVATION_WEEK_ALLOWLIST_PREFIX}${w}`),
+      );
+      return list.length === 0 || list.includes(email);
+    })
+    .map(Number)
+    .filter((w) => Number.isInteger(w))
+    .sort((a, b) => a - b);
 }

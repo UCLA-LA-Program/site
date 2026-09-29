@@ -23,12 +23,14 @@ export async function GET() {
         `SELECT section.id AS section_id,
         section.course_name,
         section.section_name,
-        section.day,
-        section.time,
-        section.location        
+        section.day_of_week,
+        section.start_time,
+        section.end_time,
+        section.location
         FROM section_assignment
         JOIN section ON section_assignment.section_id = section.id
-        WHERE section_assignment.la_id = ?`,
+        WHERE section_assignment.la_id = ?
+        ORDER BY section.day_of_week, section.start_time`,
       )
       .bind(session.user.id)
       .all<Section>();

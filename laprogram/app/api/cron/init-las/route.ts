@@ -7,8 +7,8 @@ import {
 import { backupDatabase } from "@/lib/backup";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
-import { TZDate } from "@date-fns/tz";
-import { TIMEZONE } from "@/lib/constants";
+import { SQL_NOW, isoNow } from "@/lib/time";
+import { EVENT, SYSTEM_ACTOR, recordEvent } from "@/lib/events";
 
 export async function POST(request: Request) {
   try {
@@ -102,7 +102,7 @@ export async function POST(request: Request) {
         : record.fields[
             "Assigned Sections (click or mouseover to see all info)"
           ];
-      const now = TZDate.tz(TIMEZONE).toISOString();
+      const now = isoNow();
 
       if (!name || !email) {
         errors.push(`Skipping record ${record.id}: missing name or email`);
@@ -146,8 +146,11 @@ export async function POST(request: Request) {
           courseStmts.push(
             db
               .prepare(
-                `INSERT INTO course (userId, course_name, position) VALUES (?1, ?2, ?3)
-                ON CONFLICT (userId, course_name) DO UPDATE SET position=?3`,
+                `INSERT INTO course (userId, course_name, position, updated_at)
+                 VALUES (?1, ?2, ?3, ${SQL_NOW})
+                ON CONFLICT (userId, course_name) DO UPDATE SET
+                  position = ?3,
+                  updated_at = excluded.updated_at`,
               )
               .bind(userId, courseName, position),
           );
@@ -165,14 +168,29 @@ export async function POST(request: Request) {
       courseStmts.push(
         db
           .prepare(
-            `INSERT INTO course (userId, course_name, position) VALUES ("no_user_id", ?1, "")
-                ON CONFLICT (userId, course_name) DO UPDATE SET position=""`,
+            `INSERT INTO course (userId, course_name, position, updated_at)
+             VALUES ("no_user_id", ?1, "", ${SQL_NOW})
+                ON CONFLICT (userId, course_name) DO UPDATE SET
+                  position = "",
+                  updated_at = excluded.updated_at`,
           )
           .bind(courseName),
       );
     }
 
     await db.batch([...userStmts, ...courseStmts]);
+
+    await recordEvent(db, {
+      action: EVENT.SyncLAs,
+      entityType: "course",
+      actor: SYSTEM_ACTOR,
+      details: {
+        records: allRecords.length,
+        users: userStmts.length,
+        courses: courseStmts.length,
+        errors: errors.length,
+      },
+    });
 
     const summary =
       `Processed ${allRecords.length} records. Users: ${userStmts.length}, Courses: ${courseStmts.length}` +

@@ -1,7 +1,9 @@
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
-import { getCurrentWeek } from "@/lib/utils";
+import { getCurrentWeek, parseQuarterStart } from "@/lib/utils";
+import { toISO, weekdayInstant } from "@/lib/time";
+import { EVENT, eventStmt } from "@/lib/events";
 import { QUARTER_START_KEY } from "@/lib/constants";
 import { AvailabilityRow } from "@/types/db";
 
@@ -13,8 +15,12 @@ interface AvailabilityPayload {
 
 interface AvailabilityWeek {
   week: number;
-  time: string;
+  /** Wall-clock 'HH:MM' in LA. */
+  start_time: string;
+  end_time: string;
 }
+
+const CLOCK = /^([01]\d|2[0-3]):[0-5]\d$/;
 
 export async function POST(request: Request) {
   try {
@@ -38,6 +44,12 @@ export async function POST(request: Request) {
       return new Response("Missing section_id or weeks", { status: 400 });
     }
 
+    if (
+      weeks.some((w) => !CLOCK.test(w.start_time) || !CLOCK.test(w.end_time))
+    ) {
+      return new Response("Times must be 'HH:MM'", { status: 400 });
+    }
+
     const isAdmin = session.user.role === "admin";
     const userId = la_id && isAdmin ? la_id : session.user.id;
 
@@ -52,15 +64,29 @@ export async function POST(request: Request) {
       return new Response("No section assignment found", { status: 403 });
     }
 
+    // The weekday a slot lands on comes from the section it belongs to.
+    const section = await db
+      .prepare("SELECT day_of_week FROM section WHERE id = ?")
+      .bind(section_id)
+      .first<{ day_of_week: number | null }>();
+
+    if (!section?.day_of_week) {
+      return new Response("Section has no scheduled day", { status: 409 });
+    }
+
+    const quarterStartRaw = (await env.config.get(QUARTER_START_KEY)) ?? "";
+    if (!quarterStartRaw) {
+      return new Response("QUARTER_START not configured", { status: 409 });
+    }
+    const quarterStart = parseQuarterStart(quarterStartRaw);
+
     // filter to just the availabilities in the future (only those can be edited)
-    const currentWeek = getCurrentWeek(
-      (await env.config.get(QUARTER_START_KEY)) ?? "",
-    );
+    const currentWeek = getCurrentWeek(quarterStartRaw);
 
     // grab future existing availability + statuses by week
     const existingAvailability = await db
       .prepare(
-        "SELECT id, CAST(week as INTEGER) as week, status FROM availability WHERE la_id = ? AND section_id = ? AND CAST(week AS INTEGER) >= ?",
+        "SELECT id, week, status FROM availability WHERE la_id = ? AND section_id = ? AND week >= ?",
       )
       .bind(userId, section_id, currentWeek)
       .all<{ id: string; week: number; status: string }>();
@@ -95,22 +121,54 @@ export async function POST(request: Request) {
       stmts.push(
         db
           .prepare(
-            "INSERT INTO availability (id, la_id, section_id, time, week, status) VALUES (?, ?, ?, ?, ?, ?)",
+            `INSERT INTO availability
+               (id, la_id, section_id, week, start_at, end_at, status)
+             VALUES (?, ?, ?, ?, ?, ?, ?)`,
           )
           .bind(
             crypto.randomUUID(),
             userId,
             section_id,
-            w.time,
-            w.week.toString(),
+            w.week,
+            toISO(
+              weekdayInstant(
+                quarterStart,
+                w.week,
+                section.day_of_week,
+                w.start_time,
+              ),
+            ),
+            toISO(
+              weekdayInstant(
+                quarterStart,
+                w.week,
+                section.day_of_week,
+                w.end_time,
+              ),
+            ),
             status,
           ),
       );
     }
 
-    if (stmts.length > 0) {
-      await db.batch(stmts);
-    }
+    stmts.push(
+      eventStmt(db, {
+        action: EVENT.AvailabilitySave,
+        entityType: "availability",
+        entityId: section_id,
+        actor: { id: session.user.id, email: session.user.email },
+        target: userId === session.user.id ? null : { id: userId },
+        details: {
+          section_id,
+          removed: deleteIds.length,
+          inserted: weeksToInsert.length,
+          weeks: weeksToInsert.map((w) => w.week),
+          on_behalf_of: userId === session.user.id ? null : userId,
+        },
+      }),
+    );
+
+    await db.batch(stmts);
 
     return Response.json({
       success: true,
@@ -146,22 +204,18 @@ export async function GET(request: Request) {
     const isAdmin = session.user.role === "admin";
     const userId = laIdParam && isAdmin ? laIdParam : session.user.id;
 
-    let result;
-    if (sectionId) {
-      result = await db
-        .prepare(
-          "SELECT id, section_id, time, CAST(week AS INTEGER) as week, status FROM availability WHERE la_id = ? AND section_id = ?",
-        )
-        .bind(userId, sectionId)
-        .all<AvailabilityRow>();
-    } else {
-      result = await db
-        .prepare(
-          "SELECT id, section_id, time, CAST(week AS INTEGER) as week, status FROM availability WHERE la_id = ?",
-        )
-        .bind(userId)
-        .all<AvailabilityRow>();
-    }
+    const columns = "id, section_id, week, start_at, end_at, status";
+    const result = sectionId
+      ? await db
+          .prepare(
+            `SELECT ${columns} FROM availability WHERE la_id = ? AND section_id = ?`,
+          )
+          .bind(userId, sectionId)
+          .all<AvailabilityRow>()
+      : await db
+          .prepare(`SELECT ${columns} FROM availability WHERE la_id = ?`)
+          .bind(userId)
+          .all<AvailabilityRow>();
 
     return Response.json(result.results);
   } catch (error) {

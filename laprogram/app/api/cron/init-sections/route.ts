@@ -2,6 +2,8 @@ import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { backupDatabase } from "@/lib/backup";
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
+import { SQL_NOW } from "@/lib/time";
+import { EVENT, SYSTEM_ACTOR, recordEvent } from "@/lib/events";
 
 interface SectionRecord {
   fields: Record<string, string>;
@@ -66,20 +68,22 @@ export async function POST(request: Request) {
       });
     }
 
-    const dayMap: Record<string, string> = {
-      M: "Monday",
-      T: "Tuesday",
-      W: "Wednesday",
-      R: "Thursday",
-      F: "Friday",
-    };
+    // ISO weekday, 1 = Monday.
+    const dayMap: Record<string, number> = { M: 1, T: 2, W: 3, R: 4, F: 5 };
 
     function to24(hour: number, period: string): number {
       if (period === "am") return hour === 12 ? 0 : hour;
       return hour === 12 ? 12 : hour + 12;
     }
 
-    function standardizeTime(raw: string): string {
+    /**
+     * Airtable section times arrive in whatever shape a human typed them
+     * ("2-2:50pm", "9 - 9:50 a"). This is the one place that mess is
+     * untangled: everything downstream sees 'HH:MM'.
+     */
+    function standardizeTime(
+      raw: string,
+    ): { start: string; end: string } | null {
       const cleaned = raw
         .replace(/\*/g, "")
         .replace(/\s*-\s*/g, "-")
@@ -87,10 +91,9 @@ export async function POST(request: Request) {
 
       const parts = cleaned.split("-").map((part) => {
         const m = part.trim().match(/^(\d+)(?::(\d+))?(am|pm|a|p)?$/i);
-        if (!m) return { text: part.trim(), hour: 0, mins: "00", period: "" };
+        if (!m) return null;
         const [, hours, minutes, period] = m;
         return {
-          text: part.trim(),
           hour: parseInt(hours),
           mins: minutes ?? "00",
           period: period
@@ -101,17 +104,25 @@ export async function POST(request: Request) {
         };
       });
 
+      if (parts.length !== 2 || parts.some((p) => p === null)) return null;
+      const [start, end] = parts as NonNullable<(typeof parts)[number]>[];
+
       // Infer missing am/pm on start from end time
-      if (parts.length === 2 && !parts[0].period && parts[1].period) {
-        const endPeriod = parts[1].period;
-        const start24 = to24(parts[0].hour, endPeriod);
-        const end24 = to24(parts[1].hour, endPeriod);
+      if (!start.period && end.period) {
+        const endPeriod = end.period;
+        const start24 = to24(start.hour, endPeriod);
+        const end24 = to24(end.hour, endPeriod);
         // If assuming same period makes start > end, flip to opposite
-        parts[0].period =
+        start.period =
           start24 <= end24 ? endPeriod : endPeriod === "am" ? "pm" : "am";
       }
 
-      return parts.map((p) => `${p.hour}:${p.mins}${p.period}`).join("-");
+      const clock = (p: { hour: number; mins: string; period: string }) => {
+        const h = p.period ? to24(p.hour, p.period) : p.hour;
+        return `${String(h).padStart(2, "0")}:${p.mins.padStart(2, "0")}`;
+      };
+
+      return { start: clock(start), end: clock(end) };
     }
 
     const db = env.data;
@@ -135,31 +146,39 @@ export async function POST(request: Request) {
       }
 
       const [, courseName, dayAbbr, rawTime, sectionName, location] = match;
-      const day = dayMap[dayAbbr] ?? dayAbbr;
+      const dayOfWeek = dayMap[dayAbbr] ?? null;
       const time = standardizeTime(rawTime.replace(/\([^)]*\)/g, "").trim());
+
+      if (!dayOfWeek || !time) {
+        errors.push(`Failed to parse section time or day: ${raw}`);
+        continue;
+      }
 
       stmts.push(
         db
           .prepare(
-            `INSERT INTO section (id, raw, course_name, section_name, day, time, location, ta_name, ta_email)
-           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `INSERT INTO section (id, raw, course_name, section_name, day_of_week, start_time, end_time, location, ta_name, ta_email, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ${SQL_NOW})
            ON CONFLICT (id) DO UPDATE SET
             raw = excluded.raw,
             course_name = excluded.course_name,
             section_name = excluded.section_name,
-            day = excluded.day,
-            time = excluded.time,
+            day_of_week = excluded.day_of_week,
+            start_time = excluded.start_time,
+            end_time = excluded.end_time,
             location = excluded.location,
             ta_name = excluded.ta_name,
-            ta_email = excluded.ta_email`,
+            ta_email = excluded.ta_email,
+            updated_at = excluded.updated_at`,
           )
           .bind(
             id,
             raw,
             courseName.trim(),
             sectionName.trim(),
-            day,
-            time,
+            dayOfWeek,
+            time.start,
+            time.end,
             location.trim(),
             taName,
             taEmail,
@@ -170,6 +189,17 @@ export async function POST(request: Request) {
     if (stmts.length > 0) {
       await db.batch(stmts);
     }
+
+    await recordEvent(db, {
+      action: EVENT.SyncSections,
+      entityType: "section",
+      actor: SYSTEM_ACTOR,
+      details: {
+        records: allRecords.length,
+        written: stmts.length,
+        errors: errors.length,
+      },
+    });
 
     const summary =
       `Processed ${allRecords.length} records. Sections: ${stmts.length}` +

@@ -35,7 +35,7 @@ export const ObservationPicker = withForm({
               form.setFieldValue("la", obs.la_name);
               form.setFieldValue(
                 "obs_section",
-                `${obs.section_name} — ${formatDateLA(obs.time_start)}`,
+                `${obs.section_name} — ${formatDateLA(obs.start_at)}`,
               );
               form.setFieldValue("obs_la_position", obs.la_position);
             }
@@ -43,7 +43,7 @@ export const ObservationPicker = withForm({
         >
           <div className="space-y-2">
             {observations
-              .sort((a, b) => a.time_start.getTime() - b.time_start.getTime())
+              .sort((a, b) => a.start_at.getTime() - b.start_at.getTime())
               .map((obs) => (
                 <label
                   key={obs.id}
@@ -73,7 +73,7 @@ export const ObservationPicker = withForm({
                         {LA_POSITION_MAP.get(obs.la_position) ??
                           obs.la_position}{" "}
                         &middot; {obs.course_name} {obs.section_name} &middot;{" "}
-                        {formatDateLA(obs.time_start)}
+                        {formatDateLA(obs.start_at)}
                       </p>
                     </div>
                   </div>

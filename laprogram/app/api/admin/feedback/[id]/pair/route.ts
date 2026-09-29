@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { EVENT, recordEvent } from "@/lib/events";
 
 export async function POST(
   request: Request,
@@ -50,6 +51,16 @@ export async function POST(
   if (!result.meta.changes) {
     return new Response("Feedback not found", { status: 404 });
   }
+
+  // updated_at moves by trigger; the log keeps what the edit actually was,
+  // since it rewrites the submitter recorded inside the feedback JSON.
+  await recordEvent(env.data, {
+    action: EVENT.FeedbackPair,
+    entityType: "feedback",
+    entityId: id,
+    actor: { id: session.user.id, email: session.user.email },
+    details: { paired_name: body.name, paired_email: body.email },
+  });
 
   return Response.json({ success: true });
 }

@@ -6,12 +6,12 @@
 INSERT OR IGNORE INTO user
   (id, name, email, emailVerified, createdAt, updatedAt)
 VALUES
-  ('play_user',    'Play PedLcc', 'play@test.com',         1, datetime('now'), datetime('now')),
-  ('fb_new_user',  'Play New',    'play+new@test.com',     1, datetime('now'), datetime('now')),
-  ('fb_ret_user',  'Play Ret',    'play+ret@test.com',     1, datetime('now'), datetime('now')),
-  ('fb_ped_user',  'Play Ped',    'play+ped@test.com',     1, datetime('now'), datetime('now')),
-  ('fb_lcc_user',  'Play Lcc',    'play+lcc@test.com',     1, datetime('now'), datetime('now')),
-  ('fb_rlcc_user', 'Play RetLcc', 'play+ret_lcc@test.com', 1, datetime('now'), datetime('now'));
+  ('play_user',    'Play PedLcc', 'play@test.com',         1, strftime('%Y-%m-%dT%H:%M:%fZ','now'), strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  ('fb_new_user',  'Play New',    'play+new@test.com',     1, strftime('%Y-%m-%dT%H:%M:%fZ','now'), strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  ('fb_ret_user',  'Play Ret',    'play+ret@test.com',     1, strftime('%Y-%m-%dT%H:%M:%fZ','now'), strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  ('fb_ped_user',  'Play Ped',    'play+ped@test.com',     1, strftime('%Y-%m-%dT%H:%M:%fZ','now'), strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  ('fb_lcc_user',  'Play Lcc',    'play+lcc@test.com',     1, strftime('%Y-%m-%dT%H:%M:%fZ','now'), strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+  ('fb_rlcc_user', 'Play RetLcc', 'play+ret_lcc@test.com', 1, strftime('%Y-%m-%dT%H:%M:%fZ','now'), strftime('%Y-%m-%dT%H:%M:%fZ','now'));
 
 -- Course positions
 INSERT OR IGNORE INTO course (userId, course_name, position) VALUES

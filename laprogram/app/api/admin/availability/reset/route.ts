@@ -1,6 +1,7 @@
 import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
+import { EVENT, recordEvent } from "@/lib/events";
 
 const VALID_POSITIONS = new Set([
   "new",
@@ -51,6 +52,18 @@ export async function POST(request: Request) {
           .bind(...positions);
 
   const result = await stmt.run();
+
+  // Per-slot status_changed_at is maintained by trigger; this records who
+  // pulled the lever and how wide the blast radius was.
+  await recordEvent(env.data, {
+    action: EVENT.AvailabilityReset,
+    entityType: "availability",
+    actor: { id: session.user.id, email: session.user.email },
+    details: {
+      positions: positions.length === 0 ? "all" : positions,
+      reset: result.meta.changes,
+    },
+  });
 
   return Response.json({ reset: result.meta.changes });
 }

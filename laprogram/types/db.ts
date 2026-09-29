@@ -20,21 +20,26 @@ export type Section = {
   section_id: string;
   course_name: string;
   section_name: string;
-  day: string;
-  time: string; // e.g. "9:00-9:50"
+  /** ISO weekday, 1 = Monday. Null if the section has never been synced. */
+  day_of_week: number | null;
+  /** Wall-clock 'HH:MM' in LA. */
+  start_time: string | null;
+  end_time: string | null;
   location: string;
 };
 
 export type AvailabilityRow = {
   id: string;
   section_id: string;
-  time: string; // e.g. "9:10-9:40"
   week: number;
+  /** Instants. Null on rows created before the timestamp migration. */
+  start_at: string | null;
+  end_at: string | null;
   status: "open" | "hidden" | "taken";
 };
 
-/** Raw DB query result — includes week/day/time before API transformation. */
-export type ObservationAvailabilityRow = {
+/** An open slot as the API returns it: instants, already resolved. */
+export type ObservationAvailability = {
   id: string;
   la_name: string;
   la_email: string;
@@ -42,16 +47,15 @@ export type ObservationAvailabilityRow = {
   course_name: string;
   section_name: string;
   location: string;
-  week: string;
-  day: string;
-  time: string;
+  start_at: string;
+  end_at: string;
 };
 
-/** API response — week/day/time replaced with parsed datetimes. */
-export type ObservationAvailability = Omit<
-  ObservationAvailabilityRow,
-  "week" | "day" | "time"
+/** The same slot client-side, after `hydrateDates`. */
+export type ObservationSlot = Omit<
+  ObservationAvailability,
+  "start_at" | "end_at"
 > & {
-  time_start: TZDate;
-  time_end: TZDate;
+  start_at: TZDate;
+  end_at: TZDate;
 };

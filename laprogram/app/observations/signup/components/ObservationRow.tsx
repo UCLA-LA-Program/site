@@ -41,10 +41,10 @@ export function ObservationRow({
           <p className="text-muted-foreground">
             {LA_POSITION_MAP.get(obs.la_position) ?? obs.la_position} &middot;{" "}
             {obs.course_name} {obs.section_name} &middot;{" "}
-            {formatDateLA(obs.time_start)}
+            {formatDateLA(obs.start_at)}
           </p>
           <p className="text-xs text-muted-foreground">
-            {formatTimeLA(obs.time_start)}–{formatTimeLA(obs.time_end)} &middot;{" "}
+            {formatTimeLA(obs.start_at)}–{formatTimeLA(obs.end_at)} &middot;{" "}
             {obs.location}
           </p>
           {obs.ta_name && (

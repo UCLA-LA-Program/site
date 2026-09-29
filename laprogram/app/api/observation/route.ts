@@ -1,12 +1,8 @@
 import { getAuth } from "@/lib/auth";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { headers } from "next/headers";
-import {
-  parseTimeRange,
-  getQuarterStart,
-  getObsDate,
-  daysUntil,
-} from "@/lib/utils";
+import { laDayBoundary } from "@/lib/time";
+import { EVENT, eventStmt } from "@/lib/events";
 import { OBSERVATION_FUTURE_LIMIT } from "@/lib/constants";
 
 export async function POST(request: Request) {
@@ -36,9 +32,10 @@ export async function POST(request: Request) {
     const slot = await db
       .prepare(
         `SELECT availability.id, availability.la_id, availability.section_id,
-        availability.time, availability.week, section.day
+        availability.week, availability.start_at, availability.end_at,
+        observee.email AS la_email
         FROM availability
-        JOIN section ON availability.section_id = section.id
+        JOIN user observee ON availability.la_id = observee.id
         WHERE availability.id = ? AND availability.status = 'open'`,
       )
       .bind(availability_id)
@@ -46,9 +43,10 @@ export async function POST(request: Request) {
         id: string;
         la_id: string;
         section_id: string;
-        time: string;
-        week: string;
-        day: string;
+        week: number;
+        start_at: string | null;
+        end_at: string | null;
+        la_email: string;
       }>();
 
     if (!slot) {
@@ -84,27 +82,25 @@ export async function POST(request: Request) {
       );
     }
 
-    const quarterStart = await getQuarterStart(env);
-    if (daysUntil(getObsDate(slot.week, slot.day, quarterStart)) <= 0) {
+    // Sign-ups close at the end of the day before the observation.
+    const cutoff = laDayBoundary(1);
+    if (!slot.start_at || slot.start_at < cutoff) {
       return new Response("Cannot sign up for past observations", {
         status: 400,
       });
     }
 
-    const observerObs = await db
+    const upcoming = await db
       .prepare(
-        `SELECT availability.week AS week, section.day AS day
+        `SELECT COUNT(*) AS count
          FROM observation
          JOIN availability ON observation.availability_id = availability.id
-         JOIN section ON availability.section_id = section.id
-         WHERE observation.observer_id = ?`,
+         WHERE observation.observer_id = ? AND availability.start_at >= ?`,
       )
-      .bind(observerId)
-      .all<{ week: string; day: string }>();
-    const futureCount = observerObs.results.filter(
-      (o) => daysUntil(getObsDate(o.week, o.day, quarterStart)) > 0,
-    ).length;
-    if (futureCount >= OBSERVATION_FUTURE_LIMIT) {
+      .bind(observerId, cutoff)
+      .first<{ count: number }>();
+
+    if ((upcoming?.count ?? 0) >= OBSERVATION_FUTURE_LIMIT) {
       return new Response(
         `You can only have ${OBSERVATION_FUTURE_LIMIT} upcoming observations at a time. Complete or cancel one before signing up for another.`,
         { status: 400 },
@@ -127,6 +123,20 @@ export async function POST(request: Request) {
           "UPDATE availability SET status = 'hidden' WHERE la_id = ? AND status = 'open'",
         )
         .bind(slot.la_id),
+      eventStmt(db, {
+        action: EVENT.ObservationSignup,
+        entityType: "observation",
+        entityId: observationId,
+        actor: { id: observerId, email: session.user.email },
+        target: { id: slot.la_id, email: slot.la_email },
+        details: {
+          availability_id,
+          section_id: slot.section_id,
+          week: slot.week,
+          start_at: slot.start_at,
+          end_at: slot.end_at,
+        },
+      }),
     ]);
 
     const openCount = await db
@@ -170,43 +180,30 @@ export async function GET() {
     const result = await db
       .prepare(
         `SELECT observation.id AS id,
+        observation.created_at AS signed_up_at,
         user.name AS la_name,
         user.email AS la_email,
         user.image AS la_image,
         course.position AS la_position,
         section.course_name AS course_name,
         section.section_name AS section_name,
-        section.day AS day,
-        availability.week AS week,
-        availability.time AS time,
         section.location AS location,
         section.ta_name AS ta_name,
-        section.ta_email AS ta_email
+        section.ta_email AS ta_email,
+        availability.start_at AS start_at,
+        availability.end_at AS end_at
         FROM observation
         JOIN availability ON observation.availability_id = availability.id
         JOIN section ON availability.section_id = section.id
         JOIN user ON observation.observee_id = user.id
         JOIN course ON observation.observee_id = course.userId AND section.course_name = course.course_name
-        WHERE observation.observer_id = ?`,
+        WHERE observation.observer_id = ?
+        ORDER BY availability.start_at`,
       )
       .bind(session.user.id)
       .all();
 
-    const quarterStart = await getQuarterStart(env);
-    const observations = result.results.map((r) => {
-      const { week, day, time, ...rest } = r as Record<string, unknown>;
-      return {
-        ...rest,
-        ...parseTimeRange(
-          week as string,
-          day as string,
-          time as string,
-          quarterStart,
-        ),
-      };
-    });
-
-    return Response.json(observations);
+    return Response.json(result.results);
   } catch (error) {
     const message = error instanceof Error ? error.message : "Unknown error";
     return new Response(`Failed to fetch observations: ${message}`, {

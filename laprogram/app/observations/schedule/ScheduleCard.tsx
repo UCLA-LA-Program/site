@@ -14,18 +14,20 @@ import { Slider } from "@/components/ui/slider";
 import { CheckCircle2, Loader2, Lock, Users } from "lucide-react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { fetcher } from "@/lib/utils";
 import {
-  defaultAvailabilityTime,
-  parseTime,
-  parseSectionTime,
-  minutesToLabel,
-  minutesToTimeStr,
-  fetcher,
-} from "@/lib/utils";
+  clockToMinutes,
+  dayName,
+  defaultAvailabilityWindow,
+  fromISO,
+  minutesLabel,
+  minutesToClock,
+} from "@/lib/time";
 import { AvailabilityRow, Section } from "@/types/db";
+import { OBSERVATION_WEEK_RANGE } from "@/lib/constants";
 import useSWRImmutable from "swr/immutable";
 
-const WEEKS = [3, 4, 5, 6, 7, 8, 9, 10] as const;
+const WEEKS = OBSERVATION_WEEK_RANGE;
 const STEP = 10; // minutes
 const MIN_RANGE = 30; // minutes
 
@@ -33,7 +35,6 @@ type CourseSchedule = {
   sectionId: string;
   sectionStart: number;
   sectionEnd: number;
-  day: string;
   weekSlots: Map<number, WeekSlot>;
   timeRange: [number, number];
 };
@@ -43,35 +44,50 @@ type WeekSlot = {
   timeRange: [number, number];
 };
 
+/** Minutes since midnight in LA for a stored instant. */
+function slotMinutes(iso: string | null): number | null {
+  if (!iso) return null;
+  const d = fromISO(iso);
+  return d.getHours() * 60 + d.getMinutes();
+}
+
 function buildSectionSchedule(
   section: Section,
   availability: AvailabilityRow[],
   currentWeek: number,
-): CourseSchedule {
-  const [sectionStart, sectionEnd] = parseSectionTime(section.time);
+): CourseSchedule | null {
+  if (!section.start_time || !section.end_time) return null;
+
+  const sectionStart = clockToMinutes(section.start_time);
+  const sectionEnd = clockToMinutes(section.end_time);
   const sectionAvail = availability.filter(
     (a) => a.section_id === section.section_id,
   );
 
   const weekSlots = new Map<number, WeekSlot>();
-  const defaultTime = defaultAvailabilityTime(section.time);
-  let [defaultStart, defaultEnd] = parseSectionTime(defaultTime);
+  const fallback = defaultAvailabilityWindow(section.end_time);
+  let defaultStart = clockToMinutes(fallback.start);
+  let defaultEnd = clockToMinutes(fallback.end);
 
   const futureAvail = sectionAvail.find((a) => a.week >= currentWeek);
-  if (futureAvail) {
-    const [s, e] = futureAvail.time.split("-").map(parseTime);
-    defaultStart = s;
-    defaultEnd = e;
+  const futureStart = slotMinutes(futureAvail?.start_at ?? null);
+  const futureEnd = slotMinutes(futureAvail?.end_at ?? null);
+  if (futureStart !== null && futureEnd !== null) {
+    defaultStart = futureStart;
+    defaultEnd = futureEnd;
   }
 
   for (const week of WEEKS) {
     const weekAvail = sectionAvail.find((a) => a.week === week);
-    if (weekAvail) {
-      const [s, e] = weekAvail.time.split("-").map(parseTime);
-      weekSlots.set(week, { selected: true, timeRange: [s, e] });
+    const start = slotMinutes(weekAvail?.start_at ?? null);
+    const end = slotMinutes(weekAvail?.end_at ?? null);
+    if (weekAvail && start !== null && end !== null) {
+      weekSlots.set(week, { selected: true, timeRange: [start, end] });
     } else {
       weekSlots.set(week, {
-        selected: false,
+        // A slot with no instants predates the timestamp migration; it still
+        // counts as selected, it just falls back to the default window.
+        selected: !!weekAvail,
         timeRange: [defaultStart, defaultEnd],
       });
     }
@@ -81,7 +97,6 @@ function buildSectionSchedule(
     sectionId: section.section_id,
     sectionStart,
     sectionEnd,
-    day: section.day,
     weekSlots,
     timeRange: [defaultStart, defaultEnd],
   };
@@ -129,7 +144,9 @@ export function ScheduleCard({
 
   // Build schedules once availability loads
   if (availability && !schedule) {
-    setSchedule(buildSectionSchedule(section, availability, currentWeek));
+    setSchedule(
+      buildSectionSchedule(section, availability, currentWeek) ?? undefined,
+    );
   }
 
   const signupCounts = availability
@@ -140,11 +157,14 @@ export function ScheduleCard({
     if (!schedule) return;
 
     setSaving(true);
-    const weeks: { week: number; time: string }[] = [];
+    const weeks: { week: number; start_time: string; end_time: string }[] = [];
     for (const [week, slot] of schedule.weekSlots) {
       if (slot.selected) {
-        const timeStr = `${minutesToTimeStr(slot.timeRange[0])}-${minutesToTimeStr(slot.timeRange[1])}`;
-        weeks.push({ week, time: timeStr });
+        weeks.push({
+          week,
+          start_time: minutesToClock(slot.timeRange[0]),
+          end_time: minutesToClock(slot.timeRange[1]),
+        });
       }
     }
 
@@ -161,7 +181,8 @@ export function ScheduleCard({
       const freshAvailability = await mutateAvailability();
       if (section && freshAvailability) {
         setSchedule(
-          buildSectionSchedule(section, freshAvailability, currentWeek),
+          buildSectionSchedule(section, freshAvailability, currentWeek) ??
+            undefined,
         );
       }
       setDirty(false);
@@ -228,8 +249,9 @@ export function ScheduleCard({
           {section.course_name} {section.section_name}
         </CardTitle>
         <CardDescription>
-          {section.day} &middot; {minutesToLabel(schedule.sectionStart)}–
-          {minutesToLabel(schedule.sectionEnd)} &middot; {section.location}
+          {dayName(section.day_of_week)} &middot;{" "}
+          {minutesLabel(schedule.sectionStart)}–
+          {minutesLabel(schedule.sectionEnd)} &middot; {section.location}
         </CardDescription>
         <CardAction>
           <div className="flex flex-col items-end gap-2">
@@ -286,8 +308,8 @@ export function ScheduleCard({
                 minStepsBetweenThumbs={MIN_RANGE / STEP}
               />
               <span className="w-32 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-                {minutesToLabel(schedule.timeRange[0])}-
-                {minutesToLabel(schedule.timeRange[1])}
+                {minutesLabel(schedule.timeRange[0])}-
+                {minutesLabel(schedule.timeRange[1])}
               </span>
             </div>
           </div>
@@ -348,8 +370,8 @@ export function ScheduleCard({
                       showThumbs={false}
                     />
                     <span className="w-32 shrink-0 text-right text-xs text-muted-foreground tabular-nums">
-                      {minutesToLabel(slot.timeRange[0])}-
-                      {minutesToLabel(slot.timeRange[1])}
+                      {minutesLabel(slot.timeRange[0])}-
+                      {minutesLabel(slot.timeRange[1])}
                     </span>
                   </div>
                 )}
