@@ -132,6 +132,14 @@ To set up for a new quarter, you will need to:
 - Create a SQLite (D1) + bucket (R2) for app data + profile images respectively
   - Go into Cloudflare and create a new D1 database, name it something sensible like data-w25
   - Create a new R2 bucket, name it something sensible like storage-w25
-  - You do not need to create a replacement for db-backups or config
+  - You do not need to create a replacement for `db-backups` or `config`
+  - Do not delete the old databases/buckets.
+- Update the wrangler config to use the new resources for the database/bucket bindings
   - Go into `wrangler.jsonc` and replace the `database_name` and `bucket_name` respectively
-  - Push your commit to main to lock in these changes. You may need to run migrations; refer above to the database section to learn how to apply the migrations.
+  - Push your commit to main to lock in these changes.
+- Go into the Cloudflare worker's settings and replace the `AIRTABLE_BASE_ID` with the base ID for this quarter. You can validate this change locally using your own `.env` and dev environment to make sure the ID is the correct one.
+- You may need to apply all of the database migrations. Refer above to see the command to run to populate the tables.
+  - This will allow you to log into the site using the PDT email in order to access the admin account.
+- Update the configs in Admin -> Configuration to match that of the current quarter. Disable all of the observation toggles, etc.
+- Run the syncs in Airtable Sync. Verify that this produces good data in the roster. If this does not look OK, there is likely an issue with the Airtable base's columns. You can use Claude to validate it; point it to the code in `app/api/cron`.
+- You may need to update stale links. These are not consolidated. The largest offender will likely be the link to the LA Roster in `app/login/Login.tsx`, which NEEDS to be correct so that LAs can look up which email is associated to their account. Fix others as you find them.
