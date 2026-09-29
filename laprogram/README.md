@@ -10,6 +10,8 @@ Install dependencies:
 npm i
 ```
 
+You may need a copy of the environment variables. Refer to the next section; ask a previous PDT member for a copy of some working ones. 
+
 Run the development server:
 
 ```bash
@@ -24,29 +26,32 @@ To preview on the local Cloudflare Workers runtime (uses Wrangler + Miniflare un
 npm run preview
 ```
 
+This will open a copy of the app on [http://localhost:8787](http://localhost:8787). Typically, the standard `npm run dev` should work, but you may need to use `preview` if you want to test things like emails. Be careful, as this enhanced functionality may have unintended side effects like sending actual emails to people.
+
 ### Environment Variables
 
 Copy `.env.example` to `.env` and fill in the values:
 
 - `BETTER_AUTH_SECRET` — secret for signing auth tokens
-- `BETTER_AUTH_URL` — base URL of the app. **Must match the port you're running on:** `http://localhost:3000` for `npm run dev`, `http://localhost:8787` for `npm run preview`. Update this value when switching between the two.
+- `TURNSTILE_SECRET_KEY` — secret for Cloudflare Turnstile (DDOS protection)
+- `POSTMARK_SERVER_TOKEN` — token for Postmark, our email service
+- `AIRTABLE_API_KEY` — API key for Airtable access as our SOT
+- `AIRTABLE_BASE_ID` — This quarter's Airtable base ID; can be retrieved through the URL
+- `BETTER_AUTH_URL` — base URL of the app. **Must match the port you're running on:** `http://localhost:3000` for `npm run dev`, `http://localhost:8787` for `npm run preview`. Those two commands should auto-set this environment variable for you but if you are running into weird issues related to the URL while testing locally this is why.
 - `NEXT_PUBLIC_BUCKET_URL` — public URL of the R2 bucket (used for avatar images)
-
-For the Cloudflare preview/deploy runtime, local env vars go in `.dev.vars`.
+- `NEXT_PUBLIC_TURNSTILE_SITE_KEY` — Cloudflare Turnstile site key
 
 ## Deploying
+
+To manually deploy, run
 
 ```bash
 npm run deploy
 ```
 
-This builds with OpenNext and deploys to Cloudflare Workers. Production secrets are set with:
+This builds with OpenNext and deploys to Cloudflare Workers. You typically will not need to manually deploy. Merging a PR to main triggers a deployment automatically.
 
-```bash
-npx wrangler secret put BETTER_AUTH_SECRET
-npx wrangler secret put NEXT_PUBLIC_BETTER_AUTH_URL
-npx wrangler secret put NEXT_PUBLIC_BUCKET_URL
-```
+Set production secrets in the Cloudflare UI. Using the CLI is rather flaky.
 
 ## Cloudflare Bindings
 
@@ -94,11 +99,20 @@ npx wrangler d1 execute data --remote --command "SELECT * FROM user"
 npx wrangler d1 execute data --local --file scripts/testing.sql
 ```
 
+### Testing with production data
+To get a copy of production data onto your local checkout, run:
+
+```sh
+.scripts/fetchremote.sh
+```
+
+This wipes your local wrangler D1 database data, downloads the remote `data` database, and replays it into your local copy. 
+
 ## Authentication
 
 Magic link login via BetterAuth. Server config in `lib/auth.ts`, client in `lib/auth-client.ts`.
 
-- Magic links are sent via AWS SES (`lib/email.ts`). Before sending, the email is checked against the `user` table — if no account exists, a "no account found" email is sent instead.
+- Magic links are sent via Postmark (`lib/email.ts`). Before sending, the email is checked against the `user` table — if no account exists, a "no account found" email is sent instead.
 - Pages requiring auth (`/settings`, `/feedback/view`) use a server component wrapper that checks the session and redirects to `/login` if unauthenticated.
 - The feedback form is public for students and TAs, but LA-specific feedback types (Head LA, Observation) require login.
 
