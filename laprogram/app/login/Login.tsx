@@ -128,11 +128,11 @@ export function Login({
               <CardDescription>
                 Enter your email and we&apos;ll send you a login link.
                 <p className="mt-2 text-xs text-muted-foreground">
-                  If you are a S&apos;26 LA, we&apos;ve created an account for
+                  If you are a F&apos;26 LA, we&apos;ve created an account for
                   you using the email you used to apply to the LA Program!
                   Don&apos;t remember which email that is? Check the{" "}
                   <a
-                    href="https://airtable.com/appboW9PSW85WiaBG/shri8amfLacrzmO1u/tblIB5cYh8jdQinds"
+                    href="https://airtable.com/appvV09rrcE1jI2iG/shrwbcHNoz0uhAdle"
                     className="underline-offset-2 hover:underline text-primary"
                     target="_blank"
                     rel="noopener noreferrer"
