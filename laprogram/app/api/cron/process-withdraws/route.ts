@@ -194,26 +194,18 @@ export async function POST(request: Request) {
     }
 
     /*
-    if (affectedObservers.size > 0 && process.env.POSTMARK_SERVER_TOKEN) {
-      await fetch("https://api.postmarkapp.com/email/batchWithTemplates", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-          "X-Postmark-Server-Token": process.env.POSTMARK_SERVER_TOKEN,
-        },
-        body: JSON.stringify({
-          Messages: [...affectedObservers].map(([email, withdrawnNames]) => ({
-            From: "admin@laprogramucla.com",
-            To: email,
-            TemplateId: 44230508,
-            TemplateModel: {
-              name: observerNames.get(email),
-              la_name: withdrawnNames.join(", "),
-            },
-          })),
-        }),
-      });
+    if (affectedObservers.size > 0) {
+      await sendEmails(
+        [...affectedObservers].map(([email, withdrawnNames]) => ({
+          to: email,
+          ...renderEmail(
+            observationCancelledEmail(
+              observerNames.get(email) ?? "there",
+              withdrawnNames,
+            ),
+          ),
+        })),
+      );
     }
     */
 
