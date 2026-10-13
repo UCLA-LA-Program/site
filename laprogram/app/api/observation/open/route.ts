@@ -37,8 +37,7 @@ export async function GET() {
       .prepare("SELECT course_name, position FROM course WHERE userId = ?")
       .bind(session.user.id)
       .all<{ course_name: string; position: string }>();
-    const positions = observerCourses.results.map((r) => r.position);
-    const { descriptions, filter } = getApplicableRules(positions);
+    const { descriptions, filter } = getApplicableRules(observerCourses.results);
 
     const result = await env.data
       .prepare(

@@ -6,23 +6,51 @@ import { isLS7 } from "./utils";
 
 type ObservationRule = {
   description: string;
-  applies: (observerPositions: string[]) => boolean;
-  filter: (slot: { la_position: string }) => boolean;
+  applies: (observerCourses: { course_name: string; position: string }[]) => boolean;
+  filter: (slot: { la_position: string; course_name: string }) => boolean;
 };
+
+const COURSE_RESTRICTIONS: ReadonlyArray<{
+  courseName: string;
+  description: string;
+}> = [
+  {
+    courseName: "PHYSCI 107",
+    description: "PHYSCI 107 slots are only visible to PHYSCI 107 LAs.",
+  },
+];
 
 const OBSERVATION_RULES: ObservationRule[] = [
   {
     description: "Ped Heads can only observe New LAs.",
-    applies: (positions) => positions.some((p) => p.includes("ped")),
-    filter: (slot) => slot.la_position === "new",
+    applies: (courses: { course_name: string; position: string }[]) =>
+      courses.some((c) => c.position.includes("ped")),
+    filter: (slot: { la_position: string; course_name: string }) =>
+      slot.la_position === "new",
   },
+  ...COURSE_RESTRICTIONS.map(
+    ({ courseName, description }): ObservationRule => ({
+      description,
+      applies: (
+        courses: { course_name: string; position: string }[],
+      ) =>
+        !courses.some((c) =>
+          c.course_name.toLowerCase().includes(courseName.toLowerCase()),
+        ),
+      filter: (slot: { la_position: string; course_name: string }) =>
+        !slot.course_name.toLowerCase().includes(courseName.toLowerCase()),
+    }),
+  ),
 ];
 
-export function getApplicableRules(observerPositions: string[]): {
+export function getApplicableRules(observerCourses: {
+  course_name: string;
+  position: string;
+}[]): {
   descriptions: string[];
-  filter: (slot: { la_position: string }) => boolean;
+  filter: (slot: { la_position: string; course_name: string }) => boolean;
 } {
-  const active = OBSERVATION_RULES.filter((r) => r.applies(observerPositions));
+  const active = OBSERVATION_RULES.filter((r) => r.applies(observerCourses));
 
   if (active.length === 0) {
     return { descriptions: [], filter: () => true };
