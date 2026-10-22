@@ -4,6 +4,9 @@ import { headers } from "next/headers";
 import { getAuth } from "@/lib/auth";
 import {
   FEATURE_FLAGS,
+  LA_APPLICATION_DUE_DATE_KEY,
+  LA_APPLICATION_LINK_KEY,
+  LA_APPLICATION_OPEN_KEY,
   OBSERVATION_ENABLED_WEEKS_KEY,
   OBSERVATION_WEEK_ALLOWLIST_PREFIX,
   OBSERVATION_WEEK_RANGE,
@@ -23,6 +26,9 @@ export async function GET() {
   const { env } = await getCloudflareContext({ async: true });
   const keys = [
     ...FEATURE_FLAGS.map((f) => f.key),
+    LA_APPLICATION_OPEN_KEY,
+    LA_APPLICATION_LINK_KEY,
+    LA_APPLICATION_DUE_DATE_KEY,
     QUARTER_START_KEY,
     OBSERVATION_ENABLED_WEEKS_KEY,
     ...OBSERVATION_WEEK_RANGE.map(

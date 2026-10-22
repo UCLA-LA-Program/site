@@ -1,4 +1,7 @@
 export const MAINTENANCE_KEY = "MAINTENANCE_MODE";
+export const LA_APPLICATION_OPEN_KEY = "LA_APPLICATION_OPEN";
+export const LA_APPLICATION_LINK_KEY = "LA_APPLICATION_LINK";
+export const LA_APPLICATION_DUE_DATE_KEY = "LA_APPLICATION_DUE_DATE";
 
 export const FEATURE_FLAGS = [
   { key: MAINTENANCE_KEY, label: "Under Maintenance" },
