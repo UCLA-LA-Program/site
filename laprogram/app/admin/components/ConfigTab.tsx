@@ -12,6 +12,9 @@ import { Loader2, Volume2 } from "lucide-react";
 import { fetcher } from "@/lib/utils";
 import {
   FEATURE_FLAGS,
+  LA_APPLICATION_DUE_DATE_KEY,
+  LA_APPLICATION_LINK_KEY,
+  LA_APPLICATION_OPEN_KEY,
   OBSERVATION_ENABLED_WEEKS_KEY,
   OBSERVATION_WEEK_ALLOWLIST_PREFIX,
   OBSERVATION_WEEK_RANGE,
@@ -130,6 +133,64 @@ export function ConfigTab() {
                 </div>
               </label>
             ))}
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card size="sm">
+        <CardHeader>
+          <CardTitle>LA Application</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <label className="flex cursor-pointer items-center gap-2 rounded-md py-0.5 text-sm hover:bg-muted/30">
+            <Checkbox
+              checked={data[LA_APPLICATION_OPEN_KEY] === "true"}
+              onCheckedChange={() =>
+                setValue(
+                  LA_APPLICATION_OPEN_KEY,
+                  data[LA_APPLICATION_OPEN_KEY] === "true" ? "false" : "true",
+                )
+              }
+            />
+            <div>
+              <span className="font-medium">LA application open</span>
+              <span className="ml-2 text-xs text-muted-foreground">
+                {LA_APPLICATION_OPEN_KEY}
+              </span>
+            </div>
+          </label>
+
+          <div className="space-y-1">
+            <label htmlFor="la-application-link" className="text-sm font-medium">
+              LA application link
+            </label>
+            <Input
+              id="la-application-link"
+              type="url"
+              placeholder="https://example.com/application"
+              value={data[LA_APPLICATION_LINK_KEY] ?? ""}
+              onChange={(e) =>
+                setValue(LA_APPLICATION_LINK_KEY, e.target.value.trim())
+              }
+            />
+          </div>
+
+          <div className="space-y-1">
+            <label
+              htmlFor="la-application-due-date"
+              className="text-sm font-medium"
+            >
+              LA application due date
+            </label>
+            <Input
+              id="la-application-due-date"
+              type="date"
+              className="w-40"
+              value={data[LA_APPLICATION_DUE_DATE_KEY] ?? ""}
+              onChange={(e) =>
+                setValue(LA_APPLICATION_DUE_DATE_KEY, e.target.value)
+              }
+            />
           </div>
         </CardContent>
       </Card>

@@ -43,7 +43,17 @@ import { isLS7 } from "@/lib/utils";
 export const ClosingSection = withForm({
   defaultValues,
   validators: { onSubmit: feedbackFormSchema },
-  render: function Render({ form }) {
+  props: {} as {
+    laApplicationOpen: boolean;
+    laApplicationLink: string;
+    laApplicationDueDate: string;
+  },
+  render: function Render({
+    form,
+    laApplicationOpen,
+    laApplicationLink,
+    laApplicationDueDate,
+  }) {
     const anchor = useComboboxAnchor();
     return (
       <FieldGroup>
@@ -52,6 +62,32 @@ export const ClosingSection = withForm({
           fieldName="courses_without_las"
           label="Which courses without LAs would you like the LA Program to support?"
         />
+
+        <form.Subscribe selector={(state) => state.values.feedback_type}>
+          {(feedbackType) =>
+            feedbackType === "mid_quarter" &&
+            laApplicationOpen &&
+            laApplicationLink && (
+              <Field>
+                <FieldLabel>
+                  Are you interested in becoming an LA next quarter?
+                </FieldLabel>
+                <FieldDescription>
+                  You can apply {" "}
+                  <a
+                    href={laApplicationLink}
+                    className="underline-offset-2 hover:underline text-primary"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    here
+                  </a>
+                  {laApplicationDueDate ? ` (due ${laApplicationDueDate})` : ""}.
+                </FieldDescription>
+              </Field>
+            )
+          }
+        </form.Subscribe>
 
         <form.Field name="become_la">
           {(field) => {

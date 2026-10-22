@@ -5,6 +5,11 @@ import { ContactUs } from "@/components/ContactUs";
 import { getCloudflareContext } from "@opennextjs/cloudflare";
 import { getAuth } from "@/lib/auth";
 import {
+  LA_APPLICATION_DUE_DATE_KEY,
+  LA_APPLICATION_LINK_KEY,
+  LA_APPLICATION_OPEN_KEY,
+} from "@/lib/constants";
+import {
   ROLE_OPTIONS,
   STUDENT_FEEDBACK_TYPE_OPTIONS,
   LA_FEEDBACK_TYPE_OPTIONS,
@@ -14,16 +19,60 @@ export const metadata: Metadata = {
   title: "Feedback",
 };
 
+function normalizeExternalUrl(raw: string | null): string {
+  if (!raw) return "";
+  const trimmed = raw.trim();
+  try {
+    const parsed = new URL(trimmed);
+    return parsed.protocol === "https:" || parsed.protocol === "http:"
+      ? parsed.toString()
+      : "";
+  } catch {
+    return "";
+  }
+}
+
+function formatDueDate(raw: string | null): string {
+  if (!raw) return "";
+  const match = raw.trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return "";
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) return "";
+  const date = new Date(Date.UTC(year, month - 1, day));
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 export default async function FeedbackPage() {
   const { env } = await getCloudflareContext({ async: true });
 
   const auth = await getAuth();
-  const [mq, eq, obs, hla, ta, session] = await Promise.all([
+  const [
+    mq,
+    eq,
+    obs,
+    hla,
+    ta,
+    laApplicationOpenRaw,
+    laApplicationLinkRaw,
+    laApplicationDueDateRaw,
+    session,
+  ] = await Promise.all([
     env.config.get("MID_QUARTER_FEEDBACK"),
     env.config.get("END_OF_QUARTER_FEEDBACK"),
     env.config.get("OBSERVATION_FEEDBACK"),
     env.config.get("HEAD_LA_FEEDBACK"),
     env.config.get("TA_FEEDBACK"),
+    env.config.get(LA_APPLICATION_OPEN_KEY),
+    env.config.get(LA_APPLICATION_LINK_KEY),
+    env.config.get(LA_APPLICATION_DUE_DATE_KEY),
     auth.api.getSession({ headers: await headers() }),
   ]);
 
@@ -58,6 +107,10 @@ export default async function FeedbackPage() {
     }
   });
 
+  const laApplicationOpen = on(laApplicationOpenRaw);
+  const laApplicationLink = normalizeExternalUrl(laApplicationLinkRaw);
+  const laApplicationDueDate = formatDueDate(laApplicationDueDateRaw);
+
   return (
     <main className="flex flex-1 flex-col items-center justify-start px-8 py-12">
       <div className="animate-fade-up w-full max-w-3xl">
@@ -85,6 +138,9 @@ export default async function FeedbackPage() {
                 roleOptions={roleOptions}
                 feedbackTypeOptions={feedbackTypeOptions}
                 laFeedbackTypeOptions={laFeedbackTypeOptions}
+                laApplicationOpen={laApplicationOpen}
+                laApplicationLink={laApplicationLink}
+                laApplicationDueDate={laApplicationDueDate}
                 user={
                   session
                     ? {

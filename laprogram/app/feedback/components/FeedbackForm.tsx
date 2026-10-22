@@ -44,6 +44,9 @@ type FeedbackFormProps = {
   roleOptions: Option[];
   feedbackTypeOptions: Option[];
   laFeedbackTypeOptions: Option[];
+  laApplicationOpen: boolean;
+  laApplicationLink: string;
+  laApplicationDueDate: string;
   user: { name: string; email: string } | null;
 };
 
@@ -51,6 +54,9 @@ export function FeedbackForm({
   roleOptions,
   feedbackTypeOptions,
   laFeedbackTypeOptions,
+  laApplicationOpen,
+  laApplicationLink,
+  laApplicationDueDate,
   user,
 }: FeedbackFormProps) {
   const [submitted, setSubmitted] = useState(false);
@@ -336,7 +342,12 @@ export function FeedbackForm({
                   feedbackType === "end_of_quarter") && (
                   <>
                     <FieldSeparator />
-                    <ClosingSection form={form} />
+                    <ClosingSection
+                      form={form}
+                      laApplicationOpen={laApplicationOpen}
+                      laApplicationLink={laApplicationLink}
+                      laApplicationDueDate={laApplicationDueDate}
+                    />
                   </>
                 )}
               </>
